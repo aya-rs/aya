@@ -37,21 +37,25 @@ fn main() -> Result<()> {
         .context("failed to run cargo metadata")?;
     let Metadata { workspace_root, .. } = &metadata;
 
-    let mut libbpf_submodule_status = Command::new("git");
-    let output = libbpf_submodule_status
+    let mut submodule_status = Command::new("git");
+    let output = submodule_status
         .arg("-C")
         .arg(workspace_root)
         .arg("submodule")
         .arg("status")
-        .arg(LIBBPF_DIR)
         .output()
-        .with_context(|| format!("failed to run {libbpf_submodule_status:?}"))?;
+        .with_context(|| format!("failed to run {submodule_status:?}"))?;
     let Output { status, .. } = &output;
     if !status.success() {
-        bail!("{libbpf_submodule_status:?} failed: {output:?}")
+        bail!("{submodule_status:?} failed: {output:?}")
     }
     let Output { stdout, .. } = output;
-    if !stdout.starts_with(b" ") {
+    // `git submodule status` ends with '\n', so split() yields a trailing empty slice without this.
+    if stdout
+        .trim_ascii_end()
+        .split(|&b| b == b'\n')
+        .any(|line| !line.starts_with(b" "))
+    {
         // Initialize the submodules.
         exec(Command::new("git").arg("-C").arg(workspace_root).args([
             "submodule",
