@@ -50,8 +50,9 @@ pub struct KProbe {
 }
 
 pub(crate) struct KProbeAttachTarget<'a> {
-    function: &'a OsStr,
-    offset: u64,
+    pub(crate) function: &'a OsStr,
+    pub(crate) offset: u64,
+    pub(crate) pid: Option<u32>,
 }
 
 impl KProbe {
@@ -93,6 +94,7 @@ impl KProbe {
                 target: KProbeAttachTarget {
                     function: fn_name.as_ref(),
                     offset,
+                    pid: None,
                 },
                 kind: *kind,
             },
@@ -120,8 +122,12 @@ impl Probe for KProbe {
     type Error = KProbeError;
 
     fn into_common_target(target: Self::AttachTarget<'_>) -> (&OsStr, u64, Option<u32>) {
-        let KProbeAttachTarget { function, offset } = target;
-        (function, offset, None)
+        let KProbeAttachTarget {
+            function,
+            offset,
+            pid,
+        } = target;
+        (function, offset, pid)
     }
 
     fn file_error(filename: PathBuf, io_error: io::Error) -> Self::Error {
