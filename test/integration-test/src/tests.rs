@@ -91,6 +91,7 @@ mod hash_map;
 mod info;
 mod inode_storage;
 mod iter;
+mod jumptable;
 mod kprobe;
 mod ksyms;
 mod linear_data_structures;

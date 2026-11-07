@@ -20,6 +20,8 @@ pub struct Package<'a> {
     pub root_dir: &'a str,
     pub no_default_features: bool,
     pub features: &'a [&'a str],
+    /// Extra `rustc` flags for this package, such as `-Ctarget-cpu=v4` or `-Clink-arg=...`.
+    pub rustflags: &'a [&'a str],
 }
 
 fn target_arch_fixup(target_arch: Cow<'_, str>) -> Cow<'_, str> {
@@ -128,6 +130,7 @@ pub fn build_ebpf<'a>(
         root_dir,
         no_default_features,
         features,
+        rustflags: package_rustflags,
     } in packages
     {
         // We have a build-dependency on `name`, so cargo will automatically rebuild us if `name`'s
@@ -190,7 +193,10 @@ pub fn build_ebpf<'a>(
                 "-Cdebuginfo=2",
                 SEPARATOR,
                 "-Clink-arg=--btf",
-            ] {
+            ]
+            .into_iter()
+            .chain(package_rustflags.iter().flat_map(|flag| [SEPARATOR, flag]))
+            {
                 rustflags.push(s);
             }
 

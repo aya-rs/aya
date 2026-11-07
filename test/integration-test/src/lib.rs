@@ -16,6 +16,7 @@ bpf_file!(
     KSYMS_TYPED_MISSING_VAR => "ksyms_typed_missing_var.bpf.o",
     KSYMS_TYPED_MISSING_KFUNC => "ksyms_typed_missing_kfunc.bpf.o",
     KSYMS_TYPELESS_MISSING => "ksyms_typeless_missing.bpf.o",
+    JUMPTABLE => "jumptable.bpf.o",
 
     ENUM_SIGNED_32_RELOC_BPF => "enum_signed_32_reloc.bpf.o",
     ENUM_SIGNED_32_RELOC_BTF => "enum_signed_32_reloc.bpf.target.o",
@@ -105,6 +106,7 @@ bpf_file!(
     INODE_STORAGE => "inode-storage",
     CGRP_STORAGE => "cgrp-storage",
     UPROBE_MULTI => "uprobe-multi",
+    JUMPTABLE_RUST => "jumptable",
 );
 
 #[cfg(test)]
