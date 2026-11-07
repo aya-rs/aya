@@ -1,6 +1,6 @@
 //! Cgroup socket address programs.
 
-use std::{hash::Hash, os::fd::AsFd, path::Path};
+use std::{os::fd::AsFd as _, path::Path};
 
 use aya_obj::generated::{bpf_link_type, bpf_prog_type::BPF_PROG_TYPE_CGROUP_SOCK_ADDR};
 pub use aya_obj::programs::CgroupSockAddrAttachType;
@@ -8,12 +8,11 @@ pub use aya_obj::programs::CgroupSockAddrAttachType;
 use crate::{
     VerifierLogLevel,
     programs::{
-        CgroupAttachMode, FdLink, Link, LinkError, ProgAttachLink, ProgramData, ProgramError,
-        ProgramType, define_link_wrapper, id_as_key, impl_try_from_fdlink, impl_try_into_fdlink,
-        load_program_with_attach_type,
+        FdLink, LinkError, ProgramData, ProgramError, ProgramType,
+        cgroup::{define_cgroup_link, impl_cgroup_attach},
+        impl_try_from_fdlink, impl_try_into_fdlink, load_program_with_attach_type,
     },
-    sys::{LinkTarget, SyscallError, bpf_link_create, bpf_link_update},
-    util::KernelVersion,
+    sys::{SyscallError, bpf_link_update},
 };
 
 /// A program that can be used to inspect or modify socket addresses (`struct sockaddr`).
@@ -69,42 +68,11 @@ impl CgroupSockAddr {
         load_program_with_attach_type(BPF_PROG_TYPE_CGROUP_SOCK_ADDR, *attach_type, data)
     }
 
-    /// Attaches the program to the given cgroup.
-    ///
-    /// The returned value can be used to detach, see [`CgroupSockAddr::detach`].
-    pub fn attach<T: AsFd>(
-        &mut self,
-        cgroup: T,
-        mode: CgroupAttachMode,
-    ) -> Result<CgroupSockAddrLinkId, ProgramError> {
-        let Self { data, attach_type } = self;
-        let prog_fd = data.fd()?;
-        let prog_fd = prog_fd.as_fd();
-        let cgroup_fd = cgroup.as_fd();
-        if KernelVersion::at_least(5, 7, 0) {
-            let link_fd = bpf_link_create(
-                prog_fd,
-                LinkTarget::Fd(cgroup_fd),
-                *attach_type,
-                mode.into(),
-                None,
-            )
-            .map_err(|io_error| SyscallError {
-                call: "bpf_link_create",
-                io_error,
-            })?;
-            data.links
-                .insert(CgroupSockAddrLink::new(CgroupSockAddrLinkInner::Fd(
-                    FdLink::new(link_fd),
-                )))
-        } else {
-            let link = ProgAttachLink::attach(prog_fd, cgroup_fd, *attach_type, mode)?;
-
-            data.links.insert(CgroupSockAddrLink::new(
-                CgroupSockAddrLinkInner::ProgAttach(link),
-            ))
-        }
-    }
+    impl_cgroup_attach!(
+        CgroupSockAddrLinkId,
+        CgroupSockAddrLinkInner,
+        self.attach_type
+    );
 
     /// Atomically replaces the program referenced by the provided link.
     ///
@@ -155,40 +123,7 @@ impl CgroupSockAddr {
     }
 }
 
-#[derive(Debug, Hash, Eq, PartialEq)]
-enum CgroupSockAddrLinkIdInner {
-    Fd(<FdLink as Link>::Id),
-    ProgAttach(<ProgAttachLink as Link>::Id),
-}
-
-#[derive(Debug)]
-enum CgroupSockAddrLinkInner {
-    Fd(FdLink),
-    ProgAttach(ProgAttachLink),
-}
-
-impl Link for CgroupSockAddrLinkInner {
-    type Id = CgroupSockAddrLinkIdInner;
-    type Error = ProgramError;
-
-    fn id(&self) -> Self::Id {
-        match self {
-            Self::Fd(fd) => CgroupSockAddrLinkIdInner::Fd(fd.id()),
-            Self::ProgAttach(p) => CgroupSockAddrLinkIdInner::ProgAttach(p.id()),
-        }
-    }
-
-    fn detach(self) -> Result<(), Self::Error> {
-        match self {
-            Self::Fd(fd) => fd.detach().map_err(Into::into),
-            Self::ProgAttach(p) => p.detach(),
-        }
-    }
-}
-
-id_as_key!(CgroupSockAddrLinkInner, CgroupSockAddrLinkIdInner);
-
-define_link_wrapper!(
+define_cgroup_link!(
     CgroupSockAddrLink,
     CgroupSockAddrLinkId,
     CgroupSockAddrLinkInner,
