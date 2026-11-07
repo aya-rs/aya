@@ -16,7 +16,14 @@ use super::MapError;
 /// Errors occurring from working with XDP maps.
 pub enum XdpMapError {
     /// Chained programs are not supported.
-    #[error("chained programs are not supported by the current kernel")]
+    ///
+    /// This occurs either because the map was declared with a 4-byte value
+    /// (no program-fd slot) or because the kernel does not support chained
+    /// programs for this map type.
+    #[error(
+        "chained programs are not supported: either the map uses a 4-byte \
+         value layout or the current kernel lacks the required feature"
+    )]
     ChainedProgramNotSupported,
 
     /// Map operation failed.
