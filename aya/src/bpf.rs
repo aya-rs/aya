@@ -22,8 +22,8 @@ use crate::{
     maps::{Map, MapData, MapError},
     programs::{
         BtfTracePoint, CgroupDevice, CgroupSkb, CgroupSock, CgroupSockAddr, CgroupSockopt,
-        CgroupSysctl, Extension, FEntry, FExit, FlowDissector, Iter, KProbe, LircMode2, Lsm,
-        LsmCgroup, PerfEvent, ProbeKind, Program, ProgramData, ProgramError, RawTracePoint,
+        CgroupSysctl, Extension, FEntry, FExit, FModRet, FlowDissector, Iter, KProbe, LircMode2,
+        Lsm, LsmCgroup, PerfEvent, ProbeKind, Program, ProgramData, ProgramError, RawTracePoint,
         SchedClassifier, SkLookup, SkMsg, SkReuseport, SkSkb, SockOps, SocketFilter, TracePoint,
         UProbe, Xdp, uprobe::AttachMode,
     },
@@ -477,6 +477,7 @@ impl<'a> EbpfLoader<'a> {
                             ProgramSection::Extension
                             | ProgramSection::FEntry { sleepable: _ }
                             | ProgramSection::FExit { sleepable: _ }
+                            | ProgramSection::FModRet { sleepable: _ }
                             | ProgramSection::Lsm { sleepable: _ }
                             | ProgramSection::LsmCgroup
                             | ProgramSection::BtfTracePoint
@@ -844,6 +845,14 @@ impl<'a> EbpfLoader<'a> {
                                 data.flags = BPF_F_SLEEPABLE;
                             }
                             Program::FExit(FExit { data })
+                        }
+                        ProgramSection::FModRet { sleepable } => {
+                            let mut data =
+                                ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level);
+                            if *sleepable {
+                                data.flags = BPF_F_SLEEPABLE;
+                            }
+                            Program::FModRet(FModRet { data })
                         }
                         ProgramSection::FlowDissector => Program::FlowDissector(FlowDissector {
                             data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
