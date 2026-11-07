@@ -147,6 +147,7 @@ use crate::{
         bpf_prog_get_fd_by_id, bpf_prog_query, bpf_prog_test_run, bpf_prog_test_run_raw_tp,
         bpf_prog_test_run_tracing, iter_link_ids, retry_with_verifier_logs,
     },
+    token::BpfToken,
     util::{KernelVersion, ifindex_from_ifname},
 };
 
@@ -520,6 +521,41 @@ impl Program {
         }
     }
 
+    /// Sets the BPF token used to load the program.
+    pub(crate) fn set_token(&mut self, token: BpfToken) {
+        match self {
+            Self::KProbe(p) => p.data.token = Some(token),
+            Self::UProbe(p) => p.data.token = Some(token),
+            Self::TracePoint(p) => p.data.token = Some(token),
+            Self::SocketFilter(p) => p.data.token = Some(token),
+            Self::ReusePortSocketFilter(p) => p.data.token = Some(token),
+            Self::Xdp(p) => p.data.token = Some(token),
+            Self::SkMsg(p) => p.data.token = Some(token),
+            Self::SkSkb(p) => p.data.token = Some(token),
+            Self::SockOps(p) => p.data.token = Some(token),
+            Self::SchedClassifier(p) => p.data.token = Some(token),
+            Self::CgroupSkb(p) => p.data.token = Some(token),
+            Self::CgroupSysctl(p) => p.data.token = Some(token),
+            Self::CgroupSockopt(p) => p.data.token = Some(token),
+            Self::LircMode2(p) => p.data.token = Some(token),
+            Self::PerfEvent(p) => p.data.token = Some(token),
+            Self::RawTracePoint(p) => p.data.token = Some(token),
+            Self::Lsm(p) => p.data.token = Some(token),
+            Self::LsmCgroup(p) => p.data.token = Some(token),
+            Self::BtfTracePoint(p) => p.data.token = Some(token),
+            Self::FEntry(p) => p.data.token = Some(token),
+            Self::FExit(p) => p.data.token = Some(token),
+            Self::FlowDissector(p) => p.data.token = Some(token),
+            Self::Extension(p) => p.data.token = Some(token),
+            Self::CgroupSockAddr(p) => p.data.token = Some(token),
+            Self::SkLookup(p) => p.data.token = Some(token),
+            Self::SkReuseport(p) => p.data.token = Some(token),
+            Self::CgroupSock(p) => p.data.token = Some(token),
+            Self::CgroupDevice(p) => p.data.token = Some(token),
+            Self::Iter(p) => p.data.token = Some(token),
+        }
+    }
+
     /// Returns the file descriptor of a program.
     ///
     /// Can be used to add a program to a [`crate::maps::ProgramArray`] or attach an [`Extension`] program.
@@ -606,6 +642,7 @@ pub(crate) struct ProgramData<T: Link> {
     pub(crate) attach_btf_id: Option<u32>,
     pub(crate) attach_prog_fd: Option<ProgramFd>,
     pub(crate) btf_fd: Option<Arc<crate::MockableFd>>,
+    pub(crate) token: Option<BpfToken>,
     pub(crate) verifier_log_level: VerifierLogLevel,
     pub(crate) path: Option<PathBuf>,
     pub(crate) flags: u32,
@@ -627,6 +664,7 @@ impl<T: Link> ProgramData<T> {
             attach_btf_id: None,
             attach_prog_fd: None,
             btf_fd,
+            token: None,
             verifier_log_level,
             path: None,
             flags: 0,
@@ -654,6 +692,7 @@ impl<T: Link> ProgramData<T> {
             attach_btf_id,
             attach_prog_fd: None,
             btf_fd: None,
+            token: None,
             verifier_log_level,
             path: Some(path.to_path_buf()),
             flags: 0,
@@ -766,6 +805,7 @@ fn load_program<T: Link>(
         attach_btf_id,
         attach_prog_fd,
         btf_fd,
+        token,
         verifier_log_level,
         path: _,
         flags,
@@ -824,6 +864,7 @@ fn load_program<T: Link>(
         line_info_rec_size: *line_info_rec_size,
         line_info: line_info.clone(),
         flags: *flags,
+        token_fd: token.as_ref().map(AsFd::as_fd),
     };
 
     let (ret, verifier_log) = retry_with_verifier_logs(10, |logger| {
