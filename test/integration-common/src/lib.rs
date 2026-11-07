@@ -306,3 +306,13 @@ pub mod test_run {
     pub const CHANGE_TAIL_GROW_LEN: u32 = 32;
     pub const CHANGE_TAIL_SHRINK_LEN: u32 = 20;
 }
+
+pub mod syscall_args {
+    /// The six arguments of the `splice(2)` syscall captured by the kprobe, in
+    /// argument order.
+    ///
+    /// A fresh map starts zeroed and every sentinel value used by the test is
+    /// nonzero, so a captured array matching the sentinels proves the probe
+    /// ran and every read used the syscall calling convention.
+    pub type SpliceArgs = [u64; 6];
+}
