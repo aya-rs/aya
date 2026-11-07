@@ -7,4 +7,3 @@ ignores:
   - "**/CHANGELOG.md"
   - "bazel-*/**/*"
   - "target/**/*"
-  - "xtask/libbpf/**/*"
