@@ -323,6 +323,7 @@ impl ProducerData {
         })
     }
 
+    #[inline]
     fn next<'a>(&'a mut self, consumer: &'a mut ConsumerPos) -> Option<RingBufItem<'a>> {
         let Self {
             mmap,
