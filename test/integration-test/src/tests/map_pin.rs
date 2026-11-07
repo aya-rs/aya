@@ -263,3 +263,31 @@ fn loader_reuses_kernel_normalized_maps(
         original.map_flags(),
     );
 }
+
+#[test_log::test]
+fn pin_type_preserved_after_from_pin() {
+    if !is_program_supported(ProgramType::SocketFilter).unwrap() {
+        return;
+    }
+
+    let mut bpf: Ebpf = Ebpf::load(crate::MAP_TEST).unwrap();
+
+    let hash_to_pin: HashMap<_, u32, u8> = HashMap::try_from(bpf.map_mut("BAR").unwrap()).unwrap();
+
+    let mut rng = rand::rng();
+    let pin_path = Path::new("/sys/fs/bpf/")
+        .join(format!("test_pin_type_preserved_{:x}", rng.random::<u64>()));
+    hash_to_pin.pin(&pin_path).unwrap();
+
+    defer! {
+        drop(std::fs::remove_file(&pin_path));
+    }
+
+    let reopened_map_data = MapData::from_pin(&pin_path).unwrap();
+    let reopened_map = Map::from_map_data(reopened_map_data).unwrap();
+
+    assert!(
+        matches!(reopened_map, Map::HashMap(_)),
+        "Expected map to be reconstructed as Map::HashMap"
+    );
+}
