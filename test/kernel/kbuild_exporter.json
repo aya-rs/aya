@@ -1,0 +1,21 @@
+{
+  "format": 1,
+  "platforms": {
+    "linux_x86_64": {
+      "url": "https://github.com/tamird/linux.bzl/releases/download/kbuild-exporter-3ebc87c59c178d1a3998763a70ce8e1a588534c7/kbuild-exporter-linux-x86_64.tar.gz",
+      "integrity": "sha256-ZWpiWfL8lSw9fLtr4VfGQ8K37xWAdbyG4w6GzrsbGWs="
+    },
+    "linux_aarch64": {
+      "url": "https://github.com/tamird/linux.bzl/releases/download/kbuild-exporter-3ebc87c59c178d1a3998763a70ce8e1a588534c7/kbuild-exporter-linux-aarch64.tar.gz",
+      "integrity": "sha256-ruvn0SVMwVHG3cnw6IVdRIqaRgrgEJCneNn3towipNY="
+    },
+    "macos_aarch64": {
+      "url": "https://github.com/tamird/linux.bzl/releases/download/kbuild-exporter-3ebc87c59c178d1a3998763a70ce8e1a588534c7/kbuild-exporter-macos-aarch64.tar.gz",
+      "integrity": "sha256-JK+AB4k6EceNbtyQy3h/SnZwZshSC+o3HePxv2I8zeM="
+    },
+    "macos_x86_64": {
+      "url": "https://github.com/tamird/linux.bzl/releases/download/kbuild-exporter-3ebc87c59c178d1a3998763a70ce8e1a588534c7/kbuild-exporter-macos-x86_64.tar.gz",
+      "integrity": "sha256-qSZwRVH6rIBUWFnKGWTDRkz2kWCwLy5R1ShUgxs3g3g="
+    }
+  }
+}
