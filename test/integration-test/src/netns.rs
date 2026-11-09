@@ -43,6 +43,25 @@ where
     })
 }
 
+/// Disables IPv6 on `iface` in the current network namespace.
+///
+/// The XDP programs under test redirect *every* packet that arrives on the
+/// interface into an AF_XDP socket, so IPv6 link-local chatter (duplicate
+/// address detection and MLD reports the kernel emits when the link comes up)
+/// would be counted alongside the test's UDP packets and break the exact
+/// `rx.available()` assertions. Call this before bringing the link up so no such
+/// traffic is ever generated. No-op when the kernel was built without IPv6 (the
+/// sysctl is absent), which is the case for the minimal VM test kernels.
+fn disable_ipv6(iface: &CStr) {
+    let iface = iface.to_str().expect("interface name is valid UTF-8");
+    let path = format!("/proc/sys/net/ipv6/conf/{iface}/disable_ipv6");
+    match fs::write(&path, "1") {
+        Ok(()) => {}
+        Err(err) if err.kind() == io::ErrorKind::NotFound => {}
+        Err(err) => panic!("failed to disable IPv6 on `{iface}`: {err}"),
+    }
+}
+
 /// A second network namespace connected to the test namespace via a veth pair.
 ///
 /// Creates a topology where `veth0` (10.0.0.1) lives in the test namespace and
@@ -96,6 +115,10 @@ impl PeerNsGuard {
                 Self::PEER_IFACE,
             )
         });
+
+        // Keep veth0 silent: disable IPv6 before it comes up so no link-local
+        // DAD/MLD traffic is redirected into the AF_XDP sockets under test.
+        disable_ipv6(Self::IFACE);
 
         // Bring up veth0.
         unsafe {
@@ -178,6 +201,10 @@ impl PeerNsGuard {
                 Self::PEER_IFACE,
                 io::Error::last_os_error()
             );
+            // veth1's link-local DAD/MLD would arrive on veth0 and be redirected
+            // into the AF_XDP socket, so silence it before the link comes up.
+            disable_ipv6(Self::PEER_IFACE);
+
             netlink::add_addr_v4(idx as i32, Self::PEER_IP, 24).unwrap_or_else(|e| {
                 panic!(
                     "failed to add addr to `{:?}` in peer netns: {e}",
