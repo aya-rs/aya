@@ -131,7 +131,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    upper-case hex representation) format hints for the `[u8; 6]` type,
    which is the standard one in Linux to store physical addresses in.
    
-   Tested with: https://github.com/vadorovsky/aya-examples/tree/main/xdp-mac
+   Tested with: https://github.com/vadorovsky/aya-examples/tree/6db52e813/xdp-mac
  - <csr-id-83ec27f06b6859f455f2b2baf985b8fd3fb4adc5/> Add display hints
    This change adds optional display hints:
    
@@ -142,7 +142,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    It also gets rid of dyn-fmt and instead comes with our own parser
    implementation.
    
-   Tested on: https://github.com/vadorovsky/aya-examples/tree/main/tc
+   Tested on: https://github.com/vadorovsky/aya-examples/tree/63a9e13c0/tc
 
 ### Commit Statistics
 

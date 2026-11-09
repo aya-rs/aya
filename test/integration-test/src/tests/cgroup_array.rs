@@ -39,7 +39,12 @@ fn current_task_under_cgroup(
         return;
     }
 
+    let directory = tempfile::Builder::new()
+        .prefix("cgroup-array-pin-")
+        .tempdir_in("/sys/fs/bpf")
+        .unwrap();
     let mut bpf = EbpfLoader::new()
+        .default_map_pin_directory(directory.path())
         .load(crate::CGROUP_ARRAY)
         .expect("load cgroup_array program");
 
@@ -56,7 +61,7 @@ fn current_task_under_cgroup(
             .unwrap_or_else(|err| panic!("load {prog}: {err}"));
         program
             .attach(
-                "trigger_current_task_under_cgroup",
+                ["trigger_current_task_under_cgroup"],
                 "/proc/self/exe",
                 UProbeScope::AllProcesses,
             )
@@ -98,7 +103,12 @@ fn skb_under_cgroup_loads() {
         return;
     }
 
+    let directory = tempfile::Builder::new()
+        .prefix("cgroup-array-pin-")
+        .tempdir_in("/sys/fs/bpf")
+        .unwrap();
     let mut bpf = EbpfLoader::new()
+        .default_map_pin_directory(directory.path())
         .load(crate::CGROUP_ARRAY)
         .expect("load cgroup_array program");
 

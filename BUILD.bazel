@@ -1,2 +1,4 @@
 # Defines the root Bazel package used by the //:Cargo.toml and //:Cargo.lock
 # labels in MODULE.bazel.
+
+exports_files(["pyproject.toml"])

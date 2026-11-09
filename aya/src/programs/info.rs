@@ -15,7 +15,7 @@ use super::{
     utils::{boot_time, get_fdinfo},
 };
 use crate::{
-    FEATURES,
+    kernel_features::{FEATURES, Feature},
     sys::{
         SyscallError, bpf_get_object, bpf_prog_get_fd_by_id, bpf_prog_get_info_by_fd,
         feature_probe::{is_prog_info_license_supported, is_prog_info_map_ids_supported},
@@ -140,7 +140,7 @@ impl ProgramInfo {
     /// Introduced in kernel v4.15.
     pub fn name_as_str(&self) -> Option<&str> {
         let name = std::str::from_utf8(self.name()).ok()?;
-        (FEATURES.bpf_name() || !name.is_empty()).then_some(name)
+        (!name.is_empty() || FEATURES.is_supported(Feature::BpfName)).then_some(name)
     }
 
     /// Returns true if the program is defined with a GPL-compatible license.

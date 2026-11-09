@@ -1,5 +1,12 @@
+load("@rules_rust//rust:defs.bzl", "rust_doc_test")
 load("//bazel:rust.bzl", "aya_rust_crate")
 
 aya_rust_crate(
     name = "aya",
+)
+
+rust_doc_test(
+    name = "netlink-request-doc-test",
+    crate = ":aya",
+    rustdoc_flags = ["--test-args=sys::netlink::request_tests"],
 )

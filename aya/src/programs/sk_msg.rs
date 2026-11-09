@@ -9,9 +9,11 @@ use aya_obj::generated::{
 use crate::{
     maps::sock::SockMapFd,
     programs::{
-        CgroupAttachMode, ProgAttachLink, ProgAttachLinkId, ProgramData, ProgramError, ProgramType,
-        define_link_wrapper, load_program_with_attach_type,
+        CgroupAttachMode, FdLink, Link, ProgAttachLink, ProgramData, ProgramError, ProgramType,
+        define_link_wrapper, id_as_key, impl_try_into_fdlink, load_program_with_attach_type,
     },
+    sys::{LinkTarget, SyscallError, bpf_link_create},
+    util::KernelVersion,
 };
 
 /// A program used to intercept messages sent with `sendmsg()`/`sendfile()`.
@@ -55,7 +57,7 @@ use crate::{
 /// let mut client = TcpStream::connect("127.0.0.1:1234")?;
 /// let mut intercept_egress: SockHash<_, u32> = bpf.map_mut("INTERCEPT_EGRESS").unwrap().try_into()?;
 ///
-/// intercept_egress.insert(1234, client.as_raw_fd(), 0)?;
+/// intercept_egress.insert(&1234, client.as_raw_fd(), 0)?;
 ///
 /// // the write will be intercepted
 /// client.write_all(b"foo")?;
@@ -85,23 +87,83 @@ impl SkMsg {
     ///
     /// The returned value can be used to detach, see [`SkMsg::detach`].
     pub fn attach(&mut self, map: &SockMapFd) -> Result<SkMsgLinkId, ProgramError> {
-        let prog_fd = self.fd()?;
+        let Self { data } = self;
+        let prog_fd = data.fd()?;
         let prog_fd = prog_fd.as_fd();
-        let link = ProgAttachLink::attach(
-            prog_fd,
-            map.as_fd(),
-            BPF_SK_MSG_VERDICT,
-            CgroupAttachMode::Single,
-        )?;
-
-        self.data.links.insert(SkMsgLink::new(link))
+        let attach_type = BPF_SK_MSG_VERDICT;
+        // Sockmap links were added in Linux 6.10.
+        // https://github.com/torvalds/linux/commit/699c23f02
+        let link = if KernelVersion::at_least(6, 10, 0) {
+            let link_fd = bpf_link_create(
+                prog_fd,
+                LinkTarget::Fd(map.as_fd()),
+                attach_type,
+                CgroupAttachMode::Single.into(),
+                None,
+            )
+            .map_err(|io_error| SyscallError {
+                call: "bpf_link_create",
+                io_error,
+            })?;
+            SkMsgLinkInner::Fd(FdLink::new(link_fd))
+        } else {
+            let link = ProgAttachLink::attach(
+                prog_fd,
+                map.as_fd(),
+                attach_type,
+                CgroupAttachMode::Single,
+            )?;
+            SkMsgLinkInner::ProgAttach(link)
+        };
+        data.links.insert(SkMsgLink::new(link))
     }
 }
+
+#[derive(Debug, Hash, Eq, PartialEq)]
+enum SkMsgLinkIdInner {
+    Fd(<FdLink as Link>::Id),
+    ProgAttach(<ProgAttachLink as Link>::Id),
+}
+
+#[derive(Debug)]
+enum SkMsgLinkInner {
+    Fd(FdLink),
+    ProgAttach(ProgAttachLink),
+}
+
+impl Link for SkMsgLinkInner {
+    type Id = SkMsgLinkIdInner;
+    type Error = ProgramError;
+
+    fn id(&self) -> Self::Id {
+        match self {
+            Self::Fd(fd) => SkMsgLinkIdInner::Fd(fd.id()),
+            Self::ProgAttach(p) => SkMsgLinkIdInner::ProgAttach(p.id()),
+        }
+    }
+
+    fn detach(self) -> Result<(), Self::Error> {
+        match self {
+            Self::Fd(fd) => fd.detach().map_err(Into::into),
+            Self::ProgAttach(p) => p.detach(),
+        }
+    }
+}
+
+id_as_key!(SkMsgLinkInner, SkMsgLinkIdInner);
 
 define_link_wrapper!(
     SkMsgLink,
     SkMsgLinkId,
-    ProgAttachLink,
-    ProgAttachLinkId,
+    SkMsgLinkInner,
+    SkMsgLinkIdInner,
     SkMsg,
 );
+
+impl_try_into_fdlink!(SkMsgLink, SkMsgLinkInner);
+
+impl From<ProgAttachLink> for SkMsgLink {
+    fn from(link: ProgAttachLink) -> Self {
+        Self::new(SkMsgLinkInner::ProgAttach(link))
+    }
+}

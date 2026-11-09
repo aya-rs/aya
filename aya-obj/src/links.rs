@@ -26,6 +26,7 @@ impl TryFrom<u32> for bpf_link_type {
             x if x == Self::BPF_LINK_TYPE_TCX as u32 => Self::BPF_LINK_TYPE_TCX,
             x if x == Self::BPF_LINK_TYPE_UPROBE_MULTI as u32 => Self::BPF_LINK_TYPE_UPROBE_MULTI,
             x if x == Self::BPF_LINK_TYPE_NETKIT as u32 => Self::BPF_LINK_TYPE_NETKIT,
+            x if x == Self::BPF_LINK_TYPE_SOCKMAP as u32 => Self::BPF_LINK_TYPE_SOCKMAP,
             _ => return Err(InvalidTypeBinding { value: link_type }),
         })
     }
@@ -104,6 +105,9 @@ impl TryFrom<u32> for bpf_attach_type {
             x if x == Self::BPF_CGROUP_UNIX_GETSOCKNAME as u32 => Self::BPF_CGROUP_UNIX_GETSOCKNAME,
             x if x == Self::BPF_NETKIT_PRIMARY as u32 => Self::BPF_NETKIT_PRIMARY,
             x if x == Self::BPF_NETKIT_PEER as u32 => Self::BPF_NETKIT_PEER,
+            x if x == Self::BPF_TRACE_KPROBE_SESSION as u32 => Self::BPF_TRACE_KPROBE_SESSION,
+            x if x == Self::BPF_TRACE_UPROBE_SESSION as u32 => Self::BPF_TRACE_UPROBE_SESSION,
+            x if x == Self::BPF_TRACE_FSESSION as u32 => Self::BPF_TRACE_FSESSION,
             _ => return Err(InvalidTypeBinding { value: attach_type }),
         })
     }

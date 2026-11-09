@@ -1,6 +1,5 @@
 #![no_std]
 #![no_main]
-#![expect(unused_crate_dependencies, reason = "used in other bins")]
 
 #[cfg(not(test))]
 extern crate ebpf_panic;
@@ -73,7 +72,7 @@ macro_rules! define_per_cpu_array_test {
         fn $set_prog(ctx: ProbeContext) -> Result<(), c_long> {
             let index: u32 = ctx.arg(0).ok_or(-1)?;
             let value: u32 = ctx.arg(1).ok_or(-1)?;
-            $array_map.set(index, value, 0).map_err(c_long::from)?;
+            $array_map.set(index, &value, 0).map_err(c_long::from)?;
             Ok(())
         }
     };

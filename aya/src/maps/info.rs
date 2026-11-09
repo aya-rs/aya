@@ -10,7 +10,7 @@ use aya_obj::generated::{bpf_map_info, bpf_map_type};
 
 use super::{MapError, MapFd};
 use crate::{
-    FEATURES,
+    kernel_features::{FEATURES, Feature},
     sys::{
         SyscallError, bpf_get_object, bpf_map_get_fd_by_id, bpf_map_get_info_by_fd, iter_map_ids,
     },
@@ -96,7 +96,7 @@ impl MapInfo {
     /// Introduced in kernel v4.15.
     pub fn name_as_str(&self) -> Option<&str> {
         let name = std::str::from_utf8(self.name()).ok()?;
-        (FEATURES.bpf_name() || !name.is_empty()).then_some(name)
+        (!name.is_empty() || FEATURES.is_supported(Feature::BpfName)).then_some(name)
     }
 
     /// Returns a file descriptor referencing the map.
@@ -347,6 +347,11 @@ pub enum MapType {
     /// Introduced in kernel v6.9.
     #[doc(alias = "BPF_MAP_TYPE_ARENA")]
     Arena = bpf_map_type::BPF_MAP_TYPE_ARENA as isize,
+    /// An Instruction Array map type.
+    ///
+    /// Introduced in kernel v6.19.
+    #[doc(alias = "BPF_MAP_TYPE_INSN_ARRAY")]
+    InsnArray = bpf_map_type::BPF_MAP_TYPE_INSN_ARRAY as isize,
 }
 
 impl TryFrom<bpf_map_type> for MapType {
@@ -390,6 +395,7 @@ impl TryFrom<bpf_map_type> for MapType {
             bpf_map_type::BPF_MAP_TYPE_USER_RINGBUF => Self::UserRingBuf,
             bpf_map_type::BPF_MAP_TYPE_CGRP_STORAGE => Self::CgrpStorage,
             bpf_map_type::BPF_MAP_TYPE_ARENA => Self::Arena,
+            bpf_map_type::BPF_MAP_TYPE_INSN_ARRAY => Self::InsnArray,
             bpf_map_type::__MAX_BPF_MAP_TYPE => {
                 return Err(MapError::InvalidMapType {
                     map_type: map_type as u32,

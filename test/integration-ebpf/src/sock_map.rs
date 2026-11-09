@@ -1,13 +1,12 @@
 #![no_std]
 #![no_main]
-#![expect(unused_crate_dependencies, reason = "used in other bins")]
 
 use aya_ebpf::{
     bindings::sk_action::{SK_DROP, SK_PASS},
     btf_maps::{Array, SockMap as BtfSockMap},
-    macros::{btf_map, map, sk_lookup},
+    macros::{btf_map, map, sk_lookup, sk_msg, stream_parser, stream_verdict},
     maps::SockMap as LegacySockMap,
-    programs::SkLookupContext,
+    programs::{SkBuffContext, SkLookupContext, SkMsgContext},
 };
 #[cfg(not(test))]
 extern crate ebpf_panic;
@@ -27,7 +26,7 @@ macro_rules! define_sk_lookup {
         fn $prog(ctx: SkLookupContext) -> u32 {
             match $map.redirect_sk_lookup(&ctx, 0, 0) {
                 Ok(()) => SK_PASS,
-                Err(errno) => match LAST_ERRNO.set(0, errno, 0) {
+                Err(errno) => match LAST_ERRNO.set(0, &errno, 0) {
                     // Single-slot ARRAY set is infallible at runtime.
                     Ok(()) | Err(_) => SK_DROP,
                 },
@@ -38,3 +37,18 @@ macro_rules! define_sk_lookup {
 
 define_sk_lookup!(SOCKETS_LEGACY, sk_lookup_legacy);
 define_sk_lookup!(SOCKETS_BTF, sk_lookup_btf);
+
+#[sk_msg]
+const fn message(_ctx: SkMsgContext) -> u32 {
+    SK_PASS
+}
+
+#[stream_parser]
+const fn parser(ctx: SkBuffContext) -> u32 {
+    ctx.len()
+}
+
+#[stream_verdict]
+const fn verdict(_ctx: SkBuffContext) -> u32 {
+    SK_PASS
+}

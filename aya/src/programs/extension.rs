@@ -43,7 +43,7 @@ pub enum ExtensionError {
 /// let mut bpf = EbpfLoader::new().extension("extension").load_file("app.o")?;
 /// let prog: &mut Xdp = bpf.program_mut("main").unwrap().try_into()?;
 /// prog.load()?;
-/// prog.attach("eth0", XdpMode::default())?;
+/// prog.attach(c"eth0", XdpMode::default())?;
 ///
 /// let prog_fd = prog.fd().unwrap();
 /// let prog_fd = prog_fd.try_clone().unwrap();

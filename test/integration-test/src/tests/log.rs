@@ -50,7 +50,7 @@ fn log() {
         buffer
             .set(
                 0,
-                Buffer {
+                &Buffer {
                     buf: [0xff; BUF_LEN],
                     len: 3,
                 },
@@ -74,7 +74,7 @@ fn log() {
     let prog: &mut UProbe = bpf.program_mut("test_log").unwrap().try_into().unwrap();
     prog.load().unwrap();
     prog.attach(
-        "trigger_ebpf_program",
+        ["trigger_ebpf_program"],
         "/proc/self/exe",
         UProbeScope::AllProcesses,
     )
@@ -154,6 +154,15 @@ fn log() {
         records.next(),
         Some(&CapturedLog {
             body: "ip as octets: ipv4: 10.0.0.1, ipv6: 2001:db8::1".into(),
+            level: Level::Info,
+            target: "log".into(),
+        })
+    );
+
+    assert_eq!(
+        records.next(),
+        Some(&CapturedLog {
+            body: "ip as segments: ipv6: 2001:db8::1".into(),
             level: Level::Info,
             target: "log".into(),
         })
@@ -257,7 +266,7 @@ fn log_level_only_error_warn() {
     let prog: &mut UProbe = bpf.program_mut("test_log").unwrap().try_into().unwrap();
     prog.load().unwrap();
     prog.attach(
-        "trigger_ebpf_program",
+        ["trigger_ebpf_program"],
         "/proc/self/exe",
         UProbeScope::AllProcesses,
     )
@@ -316,7 +325,7 @@ fn log_level_prevents_verif_fail() {
         .unwrap();
     prog.load().unwrap();
     prog.attach(
-        "trigger_ebpf_program",
+        ["trigger_ebpf_program"],
         "/proc/self/exe",
         UProbeScope::AllProcesses,
     )

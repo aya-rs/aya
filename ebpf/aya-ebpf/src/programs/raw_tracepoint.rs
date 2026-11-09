@@ -25,8 +25,8 @@ impl RawTracePointContext {
     /// For example, the [`sys_enter` tracepoint][sys] passes
     /// `struct pt_regs *regs` as arg(0) and the syscall id as arg(1).
     ///
-    /// [bpf]: https://github.com/torvalds/linux/blob/v6.15/include/uapi/linux/bpf.h#L7181-L7183
-    /// [sys]: https://github.com/torvalds/linux/blob/v6.15/include/trace/events/syscalls.h#L20
+    /// [bpf]: https://github.com/torvalds/linux/blob/0ff41df1c/include/uapi/linux/bpf.h#L7181-L7183
+    /// [sys]: https://github.com/torvalds/linux/blob/0ff41df1c/include/trace/events/syscalls.h#L20
     pub fn arg<T: Argument>(&self, n: usize) -> T {
         raw_tracepoint_arg(unsafe { &*self.ctx }, n)
     }

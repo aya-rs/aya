@@ -1,5 +1,6 @@
 //! Program links.
 use std::{
+    convert::Infallible,
     ffi::CString,
     io,
     os::fd::{AsFd as _, AsRawFd as _, BorrowedFd, RawFd},
@@ -30,11 +31,14 @@ pub trait Link: std::fmt::Debug + Eq + std::hash::Hash + 'static {
     /// Unique Id
     type Id: std::fmt::Debug + Eq + std::hash::Hash + hashbrown::Equivalent<Self>;
 
+    /// The error returned when detaching the link.
+    type Error: Into<ProgramError>;
+
     /// Returns the link id
     fn id(&self) -> Self::Id;
 
     /// Detaches the `LinkOwnedLink` is gone... but this doesn't work :(
-    fn detach(self) -> Result<(), ProgramError>;
+    fn detach(self) -> Result<(), Self::Error>;
 }
 
 /// Program attachment mode.
@@ -89,6 +93,7 @@ where
             .take(&link_id)
             .ok_or(ProgramError::NotAttached)?
             .detach()
+            .map_err(Into::into)
     }
 
     pub(crate) fn forget(&mut self, link_id: T::Id) -> Result<T, ProgramError> {
@@ -99,7 +104,7 @@ where
 impl<T: Link> Links<T> {
     pub(crate) fn remove_all(&mut self) -> Result<(), ProgramError> {
         for link in self.links.drain() {
-            link.detach()?;
+            link.detach().map_err(Into::into)?;
         }
         Ok(())
     }
@@ -186,6 +191,9 @@ pub enum LinkType {
     /// A Netkit link type.
     #[doc(alias = "BPF_LINK_TYPE_NETKIT")]
     Netkit = bpf_link_type::BPF_LINK_TYPE_NETKIT as isize,
+    /// A socket map link type.
+    #[doc(alias = "BPF_LINK_TYPE_SOCKMAP")]
+    SockMap = bpf_link_type::BPF_LINK_TYPE_SOCKMAP as isize,
 }
 
 impl TryFrom<bpf_link_type> for LinkType {
@@ -207,6 +215,7 @@ impl TryFrom<bpf_link_type> for LinkType {
             bpf_link_type::BPF_LINK_TYPE_TCX => Ok(Self::Tcx),
             bpf_link_type::BPF_LINK_TYPE_UPROBE_MULTI => Ok(Self::UProbeMulti),
             bpf_link_type::BPF_LINK_TYPE_NETKIT => Ok(Self::Netkit),
+            bpf_link_type::BPF_LINK_TYPE_SOCKMAP => Ok(Self::SockMap),
             bpf_link_type::__MAX_BPF_LINK_TYPE => Err(LinkError::UnknownLinkType(link_type as u32)),
         }
     }
@@ -305,12 +314,13 @@ impl FdLink {
 
 impl Link for FdLink {
     type Id = FdLinkId;
+    type Error = Infallible;
 
     fn id(&self) -> Self::Id {
         FdLinkId(self.fd.as_raw_fd())
     }
 
-    fn detach(self) -> Result<(), ProgramError> {
+    fn detach(self) -> Result<(), Self::Error> {
         // detach is a noop since it consumes self. once self is consumed, drop will be triggered
         // and the link will be detached.
         //
@@ -419,6 +429,7 @@ impl ProgAttachLink {
 
 impl Link for ProgAttachLink {
     type Id = ProgAttachLinkId;
+    type Error = ProgramError;
 
     fn id(&self) -> Self::Id {
         ProgAttachLinkId(
@@ -428,7 +439,7 @@ impl Link for ProgAttachLink {
         )
     }
 
-    fn detach(self) -> Result<(), ProgramError> {
+    fn detach(self) -> Result<(), Self::Error> {
         bpf_prog_detach(
             self.prog_fd.as_fd(),
             self.target_fd.as_fd(),
@@ -488,7 +499,6 @@ macro_rules! define_link_wrapper {
         #[derive(Debug)]
         pub struct $wrapper(Option<$base>);
 
-        #[expect(clippy::allow_attributes, reason = "macro")]
         #[allow(dead_code, reason = "macro")]
         // allow dead code since currently XDP/TC are the only consumers of inner and
         // into_inner
@@ -511,20 +521,21 @@ macro_rules! define_link_wrapper {
                 use $crate::programs::links::Link as _;
 
                 if let Some(base) = self.0.take() {
-                    let _unused: Result<(), ProgramError> = base.detach();
+                    let _unused: Result<(), ProgramError> = base.detach().map_err(Into::into);
                 }
             }
         }
 
         impl $crate::programs::Link for $wrapper {
             type Id = $wrapper_id;
+            type Error = ProgramError;
 
             fn id(&self) -> Self::Id {
                 $wrapper_id(self.0.as_ref().unwrap().id())
             }
 
-            fn detach(mut self) -> Result<(), ProgramError> {
-                self.0.take().unwrap().detach()
+            fn detach(mut self) -> Result<(), Self::Error> {
+                self.0.take().unwrap().detach().map_err(Into::into)
             }
         }
 
@@ -571,10 +582,14 @@ macro_rules! impl_try_into_fdlink {
             type Error = $crate::programs::LinkError;
 
             fn try_from(value: $wrapper) -> Result<Self, Self::Error> {
-                if let $inner::Fd(fd) = value.into_inner() {
-                    Ok(fd)
-                } else {
-                    Err($crate::programs::LinkError::InvalidLink)
+                match value.into_inner() {
+                    $inner::Fd(fd) => Ok(fd),
+                    inner => {
+                        // FdLink and PerfLink clean up on drop. Other links, such as ProgAttachLink
+                        // and NlLink, need an explicit detach(), which the wrapper's Drop calls.
+                        drop($wrapper::new(inner));
+                        Err($crate::programs::LinkError::InvalidLink)
+                    }
                 }
             }
         }
@@ -627,7 +642,7 @@ pub(crate) enum LinkRef {
 }
 
 bitflags::bitflags! {
-    /// Flags which are use to build a set of MprogOptions.
+    /// Flags used to build a [`LinkOrder`].
     #[derive(Clone, Copy, Debug, Default)]
     pub(crate) struct MprogFlags: u32 {
         const REPLACE = BPF_F_REPLACE;
@@ -648,12 +663,14 @@ bitflags::bitflags! {
 ///
 /// ```no_run
 /// # let mut bpf = aya::Ebpf::load(&[])?;
-/// use aya::programs::{tc, SchedClassifier, TcAttachType, tc::TcAttachOptions, LinkOrder};
+/// use aya::programs::{LinkOrder, SchedClassifier, TcAttach, TcAttachType};
 ///
 /// let prog: &mut SchedClassifier = bpf.program_mut("redirect_ingress").unwrap().try_into()?;
 /// prog.load()?;
-/// let options = TcAttachOptions::TcxOrder(LinkOrder::first());
-/// prog.attach_with_options("eth0", TcAttachType::Ingress, options)?;
+/// prog.attach(c"eth0", TcAttach::Tcx {
+///     attach_type: TcAttachType::Ingress,
+///     order: LinkOrder::first(),
+/// })?;
 ///
 /// # Ok::<(), aya::EbpfError>(())
 /// ```
@@ -773,12 +790,13 @@ mod tests {
 
     impl Link for TestLink {
         type Id = TestLinkId;
+        type Error = std::convert::Infallible;
 
         fn id(&self) -> Self::Id {
             TestLinkId(self.id.0, self.id.1)
         }
 
-        fn detach(self) -> Result<(), ProgramError> {
+        fn detach(self) -> Result<(), Self::Error> {
             *self.detached.borrow_mut() += 1;
             Ok(())
         }

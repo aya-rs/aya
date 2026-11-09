@@ -15,6 +15,10 @@ impl std::fmt::Display for Errors {
             if i != 0 {
                 writeln!(f)?;
             }
+            #[expect(
+                clippy::use_debug,
+                reason = "anyhow debug formatting includes error context"
+            )]
             write!(f, "{error:?}")?;
         }
         Ok(())
@@ -151,6 +155,11 @@ fn run() -> anyhow::Result<()> {
 
     // Iterate files in /bin.
     let read_dir = std::fs::read_dir("/bin").context("read_dir(/bin) failed")?;
+    #[expect(
+        clippy::print_stdout,
+        clippy::use_debug,
+        reason = "init reports each test command on the VM console"
+    )]
     let errors = read_dir
         .map(|entry| {
             let entry = entry.context("read_dir(/bin) failed")?;
@@ -175,7 +184,7 @@ fn run() -> anyhow::Result<()> {
         .filter_map(|result| {
             // TODO(https://github.com/rust-lang/rust-clippy/issues/14112): Remove this allowance
             // when the lint behaves more sensibly.
-            #[expect(clippy::manual_ok_err)]
+            #[expect(clippy::manual_ok_err, reason = "type ascription")]
             match result {
                 Ok(()) => None,
                 Err(err) => Some(err),
@@ -189,6 +198,12 @@ fn run() -> anyhow::Result<()> {
     }
 }
 
+#[expect(
+    clippy::print_stdout,
+    clippy::use_debug,
+    clippy::panic,
+    reason = "init reports test results and cannot recover from failed reboot"
+)]
 fn main() {
     match run() {
         Ok(()) => {

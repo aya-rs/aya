@@ -1,5 +1,6 @@
-use core::{borrow::Borrow, marker::PhantomData, ptr};
+use core::{marker::PhantomData, ptr};
 
+use super::{PerfEventValue, read_value};
 use crate::{
     EbpfContext,
     bindings::{BPF_F_CURRENT_CPU, bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY},
@@ -29,18 +30,37 @@ impl<T> PerfEventArray<T> {
         }
     }
 
-    pub fn output<C: EbpfContext>(&self, ctx: &C, data: impl Borrow<T>, flags: u32) {
+    /// Reads the perf event stored at `index`.
+    ///
+    /// The returned value includes the counter and the time it was enabled and running. The latter
+    /// two values allow callers to account for PMU multiplexing.
+    ///
+    /// # Locality
+    ///
+    /// The [`PerfEventScope`] used to open the event determines where it can be read from eBPF. For
+    /// `PerfEventScope::CallingProcess` and `PerfEventScope::OneProcess`, the eBPF program must
+    /// execute in the target task. For `PerfEventScope::AllProcessesOneCpu`, it must execute on the
+    /// target CPU. Otherwise, this method returns `Err(-EINVAL)`.
+    ///
+    /// [`PerfEventScope`]: https://docs.rs/aya/latest/aya/programs/perf_event/enum.PerfEventScope.html
+    ///
+    /// # Errors
+    ///
+    /// Returns a negative error code from `bpf_perf_event_read_value()`.
+    ///
+    /// # Minimum kernel version
+    ///
+    /// The minimum kernel version required to use this method is 4.15.
+    #[inline(always)]
+    pub fn read_value(&self, index: u32) -> Result<PerfEventValue, i32> {
+        read_value(self.def.as_ptr(), index)
+    }
+
+    pub fn output<C: EbpfContext>(&self, ctx: &C, data: &T, flags: u32) {
         self.output_at_index(ctx, BPF_F_CURRENT_CPU as u32, data, flags);
     }
 
-    pub fn output_at_index<C: EbpfContext>(
-        &self,
-        ctx: &C,
-        index: u32,
-        data: impl Borrow<T>,
-        flags: u32,
-    ) {
-        let data = data.borrow();
+    pub fn output_at_index<C: EbpfContext>(&self, ctx: &C, index: u32, data: &T, flags: u32) {
         let flags = (u64::from(flags) << 32) | u64::from(index);
         unsafe {
             bpf_perf_event_output(

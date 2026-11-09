@@ -38,6 +38,7 @@ use crate::{
 ///
 /// // set array[1] = 42 for all cpus
 /// let nr_cpus = nr_cpus().map_err(|(_, error)| error)?;
+/// let nr_cpus = nr_cpus.get() as usize;
 /// array.set(1, PerCpuValues::try_from(vec![42u32; nr_cpus])?, 0)?;
 ///
 /// // retrieve the values at index 1 for all cpus

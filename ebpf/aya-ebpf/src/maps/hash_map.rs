@@ -1,4 +1,4 @@
-use core::{borrow::Borrow, marker::PhantomData};
+use core::marker::PhantomData;
 
 use aya_ebpf_bindings::bindings::bpf_map_type;
 
@@ -46,16 +46,16 @@ macro_rules! define_hash_map {
             /// aliased by another element in the map, causing garbage to be read, or corruption in
             /// case of writes.
             #[inline]
-            pub unsafe fn get(&self, key: impl Borrow<K>) -> Option<&V> {
-                unsafe { get(self.def.as_ptr(), key.borrow()) }
+            pub unsafe fn get(&self, key: &K) -> Option<&V> {
+                unsafe { get(self.def.as_ptr(), key) }
             }
 
             /// Retrieve the value associate with `key` from the map.
             /// The same caveat as `get` applies, but this returns a raw pointer and it's up to the
             /// caller to decide whether it's safe to dereference the pointer or not.
             #[inline]
-            pub fn get_ptr(&self, key: impl Borrow<K>) -> Option<*const V> {
-                get_ptr(self.def.as_ptr(), key.borrow())
+            pub fn get_ptr(&self, key: &K) -> Option<*const V> {
+                get_ptr(self.def.as_ptr(), key)
             }
 
             /// Retrieve the value associate with `key` from the map.
@@ -63,23 +63,18 @@ macro_rules! define_hash_map {
             /// concurrent writes, but it's up to the caller to decide whether it's safe to
             /// dereference the pointer or not.
             #[inline]
-            pub fn get_ptr_mut(&self, key: impl Borrow<K>) -> Option<*mut V> {
-                get_ptr_mut(self.def.as_ptr(), key.borrow())
+            pub fn get_ptr_mut(&self, key: &K) -> Option<*mut V> {
+                get_ptr_mut(self.def.as_ptr(), key)
             }
 
             #[inline]
-            pub fn insert(
-                &self,
-                key: impl Borrow<K>,
-                value: impl Borrow<V>,
-                flags: u64,
-            ) -> Result<(), i32> {
-                insert(self.def.as_ptr(), key.borrow(), value.borrow(), flags)
+            pub fn insert(&self, key: &K, value: &V, flags: u64) -> Result<(), i32> {
+                insert(self.def.as_ptr(), key, value, flags)
             }
 
             #[inline]
-            pub fn remove(&self, key: impl Borrow<K>) -> Result<(), i32> {
-                remove(self.def.as_ptr(), key.borrow())
+            pub fn remove(&self, key: &K) -> Result<(), i32> {
+                remove(self.def.as_ptr(), key)
             }
         }
     };

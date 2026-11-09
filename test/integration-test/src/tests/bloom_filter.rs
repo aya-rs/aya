@@ -48,7 +48,15 @@ fn bloom_filter_basic(
         return;
     }
 
+    let object = aya_obj::Object::parse(crate::BLOOM_FILTER).unwrap();
+    assert_eq!(object.maps["FILTER"].map_extra(), 3);
+
+    let directory = tempfile::Builder::new()
+        .prefix("bloom-pin-")
+        .tempdir_in("/sys/fs/bpf")
+        .unwrap();
     let mut bpf = EbpfLoader::new()
+        .default_map_pin_directory(directory.path())
         .load(crate::BLOOM_FILTER)
         .expect("load bloom_filter program");
 
@@ -63,7 +71,7 @@ fn bloom_filter_basic(
             .unwrap_or_else(|err| panic!("program {prog_name} is not a uprobe: {err}"));
         prog.load()
             .unwrap_or_else(|err| panic!("load {prog_name}: {err}"));
-        prog.attach(symbol, "/proc/self/exe", UProbeScope::AllProcesses)
+        prog.attach([symbol], "/proc/self/exe", UProbeScope::AllProcesses)
             .unwrap_or_else(|err| panic!("attach {prog_name}: {err}"));
     }
 
@@ -88,9 +96,9 @@ fn bloom_filter_basic(
         "unexpected BloomFilter result for absent value: {absent_status}"
     );
 
-    filter.contains(PRESENT, 0).unwrap();
+    filter.contains(&PRESENT, 0).unwrap();
 
-    match filter.contains(USER_ABSENT, 0) {
+    match filter.contains(&USER_ABSENT, 0) {
         Ok(())
         // Bloom filters can yield false positives; treat both a miss and a hit as valid.
         | Err(MapError::ElementNotFound) => {}
@@ -99,8 +107,8 @@ fn bloom_filter_basic(
         }
     }
 
-    filter.insert(USER_PRESENT, 0).unwrap();
-    filter.contains(USER_PRESENT, 0).unwrap();
+    filter.insert(&USER_PRESENT, 0).unwrap();
+    filter.contains(&USER_PRESENT, 0).unwrap();
 
     trigger_bloom_contains(CONTAINS_PRESENT_INDEX, USER_PRESENT);
     assert_eq!(array.get(&CONTAINS_PRESENT_INDEX, 0).unwrap(), 0);

@@ -1,8 +1,3 @@
-#![expect(
-    unused_crate_dependencies,
-    reason = "integration-ebpf library target; see below"
-)]
-
 use std::{
     env,
     ffi::OsString,
@@ -13,6 +8,8 @@ use std::{
 
 use anyhow::{Context as _, Ok, Result, anyhow};
 use cargo_metadata::{Metadata, MetadataCommand, Package, Target, TargetKind};
+// Keep this build dependency in Cargo's graph to invalidate eBPF artifacts after source changes.
+use integration_ebpf as _;
 use xtask::{AYA_BUILD_INTEGRATION_BPF, LIBBPF_DIR, exec, install_libbpf_headers_cmd};
 
 /// This file, along with the xtask crate, allows analysis tools such as `cargo check`, `cargo
@@ -29,7 +26,7 @@ use xtask::{AYA_BUILD_INTEGRATION_BPF, LIBBPF_DIR, exec, install_libbpf_headers_
 /// that naively attempting to `cargo test --no-run` this crate will produce binaries that fail at
 /// runtime because the stubs are inadequate for actually running the tests.
 fn main() -> Result<()> {
-    println!("cargo:rerun-if-env-changed={AYA_BUILD_INTEGRATION_BPF}");
+    println!("cargo::rerun-if-env-changed={AYA_BUILD_INTEGRATION_BPF}");
 
     // TODO(https://github.com/rust-lang/cargo/issues/4001): generalize this and move it to
     // aya-build if we can determine that we're in a check build.
@@ -80,7 +77,6 @@ fn main() -> Result<()> {
         ("ext.bpf.c", false),
         ("iter.bpf.c", true),
         ("main.bpf.c", false),
-        ("multimap-btf.bpf.c", false),
         ("ringbuf-btf.bpf.c", true),
         ("enum_signed_32_checked_variants_reloc.bpf.c", true),
         ("enum_signed_32_reloc.bpf.c", true),
@@ -91,10 +87,18 @@ fn main() -> Result<()> {
         ("enum_unsigned_64_checked_variants_reloc.bpf.c", true),
         ("enum_unsigned_64_reloc.bpf.c", true),
         ("field_reloc.bpf.c", true),
+        ("flex_array_reloc.bpf.c", true),
+        ("nonfinal_zero_array_reloc.bpf.c", false),
+        ("nested_array_bounds_reloc.bpf.c", false),
+        ("target_fixed_array_reloc.bpf.c", true),
+        ("target_nonfinal_zero_array_reloc.bpf.c", true),
         ("pointer_reloc.bpf.c", true),
         ("struct_flavors_reloc.bpf.c", true),
         ("text_64_64_reloc.c", false),
         ("variables_reloc.bpf.c", false),
+        ("func_info_missing_callee.bpf.c", false),
+        ("func_info_missing_program.bpf.c", false),
+        ("func_info_absent.bpf.c", false),
         ("ksyms.bpf.c", true),
         ("ksyms_strong.bpf.c", true),
         ("ksyms_typed_missing_var.bpf.c", true),
@@ -116,7 +120,7 @@ fn main() -> Result<()> {
         };
 
         let libbpf_dir = workspace_root.join(LIBBPF_DIR);
-        println!("cargo:rerun-if-changed={libbpf_dir}");
+        println!("cargo::rerun-if-changed={libbpf_dir}");
 
         let libbpf_headers_dir = out_dir.join("libbpf_headers");
         let mut cmd = install_libbpf_headers_cmd(&libbpf_dir, &libbpf_headers_dir);
@@ -164,7 +168,7 @@ fn main() -> Result<()> {
             use std::{io::Write as _, os::unix::ffi::OsStrExt as _};
 
             let mut stdout = std::io::stdout().lock();
-            stdout.write_all(b"cargo:rerun-if-changed=")?;
+            stdout.write_all(b"cargo::rerun-if-changed=")?;
             stdout.write_all(path.as_os_str().as_bytes())?;
             stdout.write_all(b"\n")?;
 

@@ -1,6 +1,5 @@
 #![no_std]
 #![no_main]
-#![expect(unused_crate_dependencies, reason = "used in other bins")]
 
 #[cfg(not(test))]
 extern crate ebpf_panic;
@@ -18,7 +17,7 @@ const RESULT_SLOTS: u32 = CONTAINS_ABSENT_INDEX + 1;
 #[btf_map]
 static RESULT: BtfArray<i32, { RESULT_SLOTS as usize }, 0> = BtfArray::new();
 
-#[btf_map]
+#[btf_map(pin_by_name)]
 static FILTER: BtfBloomFilter<u32, 64, 0, 3> = BtfBloomFilter::new();
 
 #[map]
@@ -47,16 +46,16 @@ macro_rules! define_bloom_filter_test {
         fn $insert_prog(ctx: ProbeContext) -> Result<(), i32> {
             let index: u32 = ctx.arg(0).ok_or(-1)?;
             let value: u32 = ctx.arg(1).ok_or(-1)?;
-            let result = map_result($filter_map.insert(value, 0));
-            $result_map.set(index, result, 0)
+            let result = map_result($filter_map.insert(&value, 0));
+            $result_map.set(index, &result, 0)
         }
 
         #[uprobe]
         fn $contains_prog(ctx: ProbeContext) -> Result<(), i32> {
             let index: u32 = ctx.arg(0).ok_or(-1)?;
             let value: u32 = ctx.arg(1).ok_or(-1)?;
-            let result = map_result($filter_map.contains(value));
-            $result_map.set(index, result, 0)
+            let result = map_result($filter_map.contains(&value));
+            $result_map.set(index, &result, 0)
         }
     };
 }

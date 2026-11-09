@@ -89,14 +89,14 @@ fn directory_listing_urls<'a>(
         // Normalize Apache directory listing links to absolute URLs so callers
         // can compare and inspect them without carrying base URL state, e.g.
         // `/mainline/v6.18.32/`, `arm64/`, and `linux-modules-...deb`.
-        if href.starts_with('/') {
-            if let Some(scheme_end) = base_url.find("://") {
-                let host_start = scheme_end + "://".len();
-                let origin_end = base_url[host_start..]
-                    .find('/')
-                    .map_or(base_url.len(), |index| host_start + index);
-                return Cow::Owned(format!("{}{}", &base_url[..origin_end], href));
-            }
+        if href.starts_with('/')
+            && let Some(scheme_end) = base_url.find("://")
+        {
+            let host_start = scheme_end + "://".len();
+            let origin_end = base_url[host_start..]
+                .find('/')
+                .map_or(base_url.len(), |index| host_start + index);
+            return Cow::Owned(format!("{}{}", &base_url[..origin_end], href));
         }
 
         match href.split_once("://") {
@@ -114,6 +114,7 @@ struct UbuntuMainlineKernelUrls {
 
 fn ubuntu_mainline_kernel_urls(
     client: &HttpClient,
+    mainline_html: &str,
     version: &str,
     architecture: KernelArchitecture,
 ) -> Result<UbuntuMainlineKernelUrls> {
@@ -124,10 +125,7 @@ fn ubuntu_mainline_kernel_urls(
     // release directories while architecture artifacts are still missing.
     // Check only a bounded number of recent builds so an unavailable LTS line
     // fails instead of degrading indefinitely.
-    let mainline_html = client
-        .get_text(UBUNTU_MAINLINE_URL)
-        .context("failed to list Ubuntu Mainline releases")?;
-    let mut mainline_versions = directory_listing_urls(&mainline_html, UBUNTU_MAINLINE_URL)
+    let mut mainline_versions = directory_listing_urls(mainline_html, UBUNTU_MAINLINE_URL)
         .filter_map(|url| {
             let name = url_file_name(url.as_ref()).ok()?;
             let patch = name.strip_prefix(&format!("v{version}."))?;
@@ -267,10 +265,15 @@ fn download_ubuntu_mainline_kernel_archives(
     fs::create_dir_all(&output_dir)
         .with_context(|| format!("failed to create {}", output_dir.display()))?;
 
+    // Every requested kernel series uses the same release index. Fetch it once
+    // so resolving multiple series does not repeat this network dependency.
+    let mainline_html = client
+        .get_text(UBUNTU_MAINLINE_URL)
+        .context("failed to list Ubuntu Mainline releases")?;
     let mut archives = Vec::new();
     let mut keep = HashSet::new();
     for version in versions {
-        let urls = ubuntu_mainline_kernel_urls(client, version, architecture)
+        let urls = ubuntu_mainline_kernel_urls(client, &mainline_html, version, architecture)
             .with_context(|| format!("failed to resolve Ubuntu Mainline kernel {version}"))?;
         let mut keep_archive = |archive: &Path| -> Result<()> {
             let file_name = archive
@@ -444,7 +447,7 @@ const PE_MACHINE_AARCH64: u16 = 0xaa64;
 // arm64 kernels we cover, and these fields have the same layout across those
 // lines. Older 5.10/5.15 arm64 kernels do not carry this header; those fail the
 // zimg check below and continue using the original kernel image.
-// https://github.com/torvalds/linux/blob/v6.18/drivers/firmware/efi/libstub/zboot-header.S#L14-L30
+// https://github.com/torvalds/linux/blob/7d0a66e4b/drivers/firmware/efi/libstub/zboot-header.S#L14-L30
 const EFI_ZBOOT_MAGIC_OFFSET: usize = 0x04;
 const EFI_ZBOOT_MAGIC: &[u8; 4] = b"zimg";
 const EFI_ZBOOT_PAYLOAD_OFFSET_OFFSET: usize = 0x08;
@@ -452,7 +455,7 @@ const EFI_ZBOOT_PAYLOAD_SIZE_OFFSET: usize = 0x0c;
 const EFI_ZBOOT_COMPRESSION_OFFSET: usize = 0x18;
 const EFI_ZBOOT_COMPRESSION_LEN: usize = 0x20;
 // arm64 Image header magic:
-// https://github.com/torvalds/linux/blob/v6.18/arch/arm64/include/asm/image.h#L6-L43
+// https://github.com/torvalds/linux/blob/7d0a66e4b/arch/arm64/include/asm/image.h#L6-L43
 const ARM64_IMAGE_MAGIC_OFFSET: usize = 0x38;
 const ARM64_IMAGE_MAGIC: &[u8; 4] = b"ARMd";
 
@@ -496,7 +499,7 @@ fn is_aarch64_pe_image(path: &Path) -> Result<bool> {
 }
 
 // Parsed subset of the EFI zboot header fields we need.
-// https://github.com/torvalds/linux/blob/v6.18/drivers/firmware/efi/libstub/zboot-header.S#L14-L30
+// https://github.com/torvalds/linux/blob/7d0a66e4b/drivers/firmware/efi/libstub/zboot-header.S#L14-L30
 struct EfiZbootHeader<'a> {
     compression: &'a str,
     payload_offset: usize,

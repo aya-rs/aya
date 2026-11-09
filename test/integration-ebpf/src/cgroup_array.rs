@@ -1,6 +1,5 @@
 #![no_std]
 #![no_main]
-#![expect(unused_crate_dependencies, reason = "used in other bins")]
 
 #[cfg(not(test))]
 extern crate ebpf_panic;
@@ -14,7 +13,7 @@ use aya_ebpf::{
 };
 use integration_common::cgroup_array::{NOT_UNDER_INDEX, TestResult, UNDER_INDEX};
 
-#[btf_map]
+#[btf_map(pin_by_name)]
 static CGROUPS: BtfCgroupArray<2, 0> = BtfCgroupArray::new();
 
 #[btf_map]

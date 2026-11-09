@@ -6,8 +6,8 @@ use core::{
 
 use aya_ebpf_bindings::helpers::{
     bpf_clone_redirect, bpf_get_socket_uid, bpf_l3_csum_replace, bpf_l4_csum_replace,
-    bpf_skb_adjust_room, bpf_skb_change_proto, bpf_skb_change_type, bpf_skb_load_bytes,
-    bpf_skb_pull_data, bpf_skb_store_bytes,
+    bpf_skb_adjust_room, bpf_skb_change_head, bpf_skb_change_proto, bpf_skb_change_tail,
+    bpf_skb_change_type, bpf_skb_load_bytes, bpf_skb_pull_data, bpf_skb_store_bytes,
 };
 use aya_ebpf_cty::c_long;
 
@@ -46,6 +46,19 @@ impl SkBuff {
     #[inline]
     pub fn set_mark(&self, mark: u32) {
         unsafe { (*self.as_raw_ptr()).mark = mark }
+    }
+
+    // Not public: writes to `tc_classid` are only accepted from sched_cls and
+    // sched_act programs, so this is exposed publicly on `TcContext` only.
+    // https://github.com/torvalds/linux/blob/e5f0a698b/net/core/filter.c#L9032-L9050
+    // The other program types built on `SkBuff` reject the field outright:
+    // socket_filter, cgroup_skb, and sk_skb.
+    // https://github.com/torvalds/linux/blob/e5f0a698b/net/core/filter.c#L8727-L8741
+    // https://github.com/torvalds/linux/blob/e5f0a698b/net/core/filter.c#L8756-L8765
+    // https://github.com/torvalds/linux/blob/e5f0a698b/net/core/filter.c#L9369-L9380
+    #[inline]
+    pub(crate) fn set_tc_classid(&self, classid: u16) {
+        unsafe { (*self.as_raw_ptr()).tc_classid = u32::from(classid) }
     }
 
     #[inline]
@@ -154,6 +167,18 @@ impl SkBuff {
     #[inline]
     pub fn adjust_room(&self, len_diff: i32, mode: u32, flags: u64) -> Result<(), c_long> {
         let ret = unsafe { bpf_skb_adjust_room(self.as_raw_ptr(), len_diff, mode, flags) };
+        if ret == 0 { Ok(()) } else { Err(ret) }
+    }
+
+    #[inline]
+    pub fn change_head(&self, len: u32, flags: u64) -> Result<(), c_long> {
+        let ret = unsafe { bpf_skb_change_head(self.as_raw_ptr(), len, flags) };
+        if ret == 0 { Ok(()) } else { Err(ret) }
+    }
+
+    #[inline]
+    pub fn change_tail(&self, len: u32, flags: u64) -> Result<(), c_long> {
+        let ret = unsafe { bpf_skb_change_tail(self.as_raw_ptr(), len, flags) };
         if ret == 0 { Ok(()) } else { Err(ret) }
     }
 

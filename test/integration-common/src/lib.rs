@@ -136,7 +136,13 @@ pub mod raw_tracepoint {
 }
 
 pub mod ring_buf {
-    // This structure's definition is duplicated in the probe.
+    #[repr(C, align(32))]
+    #[derive(Clone, Copy)]
+    pub struct AlignedEvent(pub [u64; 4]);
+
+    #[cfg(feature = "user")]
+    unsafe impl aya::Pod for AlignedEvent {}
+
     #[repr(C)]
     #[derive(Clone, Copy, Debug, Eq, PartialEq, Default)]
     pub struct Registers {
@@ -183,9 +189,14 @@ pub mod printk {
     pub const TEST_ISIZE: isize = isize::MIN;
 }
 
+pub mod btf_maps {
+    pub type ArrayValue = [[u32; 3]; 2];
+}
+
 pub mod btf_map_of_maps {
     /// Capacity of each inner array shared between userspace and the eBPF probes.
     pub const INNER_MAX_ENTRIES: u32 = 10;
+    pub const RING_VALUE: u64 = 0x1234_5678_9ABC_DEF0;
 
     #[derive(Copy, Clone, Debug, Eq, PartialEq)]
     #[repr(C)]
@@ -281,8 +292,17 @@ pub mod stack_trace {
     unsafe impl aya::Pod for TestResult {}
 }
 
+pub mod tc_classid {
+    pub const EXPECTED_CLASSID: u16 = 0xbeef;
+}
+
 pub mod test_run {
     pub const XDP_MODIFY_VAL: u8 = 0xAA;
     pub const IF_INDEX: u32 = 1;
     pub const XDP_MODIFY_LEN: usize = 16;
+
+    pub const CHANGE_HEAD_LEN: usize = 14;
+    pub const CHANGE_HEAD_VAL: u8 = 0xBB;
+    pub const CHANGE_TAIL_GROW_LEN: u32 = 32;
+    pub const CHANGE_TAIL_SHRINK_LEN: u32 = 20;
 }

@@ -105,7 +105,7 @@ pub use cgroup_storage::{CgroupStorage, PerCpuCgroupStorage};
 pub use hash_map::{HashMap, LruHashMap, LruPerCpuHashMap, PerCpuHashMap};
 pub use lpm_trie::LpmTrie;
 pub use per_cpu_array::PerCpuArray;
-pub use perf::{PerfEventArray, PerfEventByteArray};
+pub use perf::{PerfEventArray, PerfEventByteArray, PerfEventValue};
 pub use program_array::ProgramArray;
 pub use queue::Queue;
 pub use reuseport_sock_array::ReusePortSockArray;

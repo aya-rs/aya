@@ -37,18 +37,16 @@ pub(crate) fn helper_from_item(item: &ForeignItemStatic, call_index: usize) -> O
     {
         let generics = &segments.last().unwrap().arguments;
         if let PathArguments::AngleBracketed(AngleBracketedGenericArguments { args, .. }) = generics
+            && let Some(GenericArgument::Type(ty)) = args.first()
+            && let Type::FnPtr(TypeFnPtr { inputs, output, .. }) = ty
         {
-            if let Some(GenericArgument::Type(ty)) = args.first() {
-                if let Type::FnPtr(TypeFnPtr { inputs, output, .. }) = ty {
-                    return Some(Helper {
-                        ident: &item.ident,
-                        ty,
-                        inputs,
-                        output,
-                        call_index,
-                    });
-                }
-            }
+            return Some(Helper {
+                ident: &item.ident,
+                ty,
+                inputs,
+                output,
+                call_index,
+            });
         }
     }
 

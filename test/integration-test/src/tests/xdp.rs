@@ -5,9 +5,12 @@ use aya::{
     Ebpf,
     maps::{Array, CpuMap, DevMap, DevMapHash, XskMap},
     programs::{ProgramError, Xdp, XdpError, XdpMode, xdp::XdpLinkId},
-    test_helpers::NetNsGuard,
+    sys::is_devmap_prog_id_supported,
+    test_helpers::{NetNsGuard, with_netlink_xdp},
     util::KernelVersion,
 };
+use aya_obj::generated::XDP_FLAGS_SKB_MODE;
+use libbpf_rs::libbpf_sys::bpf_xdp_query_id;
 use object::{Object as _, ObjectSection as _, ObjectSymbol as _, SymbolSection};
 use rstest::rstest;
 use xdpilone::{BufIdx, IfInfo, Socket, SocketConfig, Umem, UmemConfig};
@@ -37,21 +40,61 @@ fn veth_connectivity() {
 }
 
 #[test_log::test]
-#[expect(
-    clippy::big_endian_bytes,
-    reason = "packet headers are encoded in network byte order"
-)]
-fn af_xdp() {
-    let (_netns, peer) = PeerNsGuard::with_netns();
-
-    let mut bpf = Ebpf::load(crate::XSK_MAP).unwrap();
-    let mut socks: XskMap<_> = bpf.take_map("SOCKS").unwrap().try_into().unwrap();
-
-    let xdp: &mut Xdp = bpf
-        .program_mut("redirect_sock")
+fn netlink_attach_to_link_replaces_program() {
+    if KernelVersion::current().unwrap() < KernelVersion::new(5, 7, 0) {
+        eprintln!("skipping test - atomic netlink XDP replacement requires Linux 5.7");
+        return;
+    }
+    let _netns = NetNsGuard::new().unwrap();
+    let if_index = unsafe { libc::if_nametoindex(c"lo".as_ptr()) };
+    assert_ne!(if_index, 0);
+    let attached_program = || {
+        let mut id = 0;
+        // SAFETY: The output pointer is writable. Query the SKB attachment on this interface.
+        let result =
+            unsafe { bpf_xdp_query_id(if_index as i32, XDP_FLAGS_SKB_MODE as i32, &raw mut id) };
+        assert_eq!(result, 0);
+        id
+    };
+    let mut old_bpf = Ebpf::load(crate::XDP_SEC).unwrap();
+    let old: &mut Xdp = old_bpf
+        .program_mut("xdp_plain")
         .unwrap()
         .try_into()
         .unwrap();
+    old.load().unwrap();
+    let old_program_id = old.info().unwrap().id();
+    let id = with_netlink_xdp(|| old.attach(if_index, XdpMode::Skb)).unwrap();
+    let old_link = old.take_link(id).unwrap();
+    assert_eq!(attached_program(), old_program_id);
+
+    let mut new_bpf = Ebpf::load(crate::XDP_SEC).unwrap();
+    let new: &mut Xdp = new_bpf
+        .program_mut("xdp_plain")
+        .unwrap()
+        .try_into()
+        .unwrap();
+    new.load().unwrap();
+    let new_program_id = new.info().unwrap().id();
+    assert_ne!(old_program_id, new_program_id);
+    let id = new.attach_to_link(old_link).unwrap();
+    drop(old_bpf);
+    assert_eq!(attached_program(), new_program_id);
+    new.detach(id).unwrap();
+    assert_eq!(attached_program(), 0);
+}
+
+#[rstest]
+#[case::legacy("SOCKS", "redirect_sock")]
+#[case::btf("SOCKS_BTF", "redirect_sock_btf")]
+#[test_attr(test_log::test)]
+fn af_xdp(#[case] socks_name: &str, #[case] prog_name: &str) {
+    let (_netns, peer) = PeerNsGuard::with_netns();
+
+    let mut bpf = Ebpf::load(crate::XSK_MAP).unwrap();
+    let mut socks: XskMap<_> = bpf.take_map(socks_name).unwrap().try_into().unwrap();
+
+    let xdp: &mut Xdp = bpf.program_mut(prog_name).unwrap().try_into().unwrap();
     xdp.load().unwrap();
     xdp.attach(PeerNsGuard::IFACE_NAME, XdpMode::default())
         .unwrap();
@@ -127,8 +170,13 @@ fn af_xdp() {
     let (udp, payload) = buf.split_at(8);
     let ports = &udp[..4];
     let (src, dst_port) = ports.split_at(2);
-    assert_eq!(src, port.to_be_bytes().as_slice()); // Source
-    assert_eq!(dst_port, 1777u16.to_be_bytes().as_slice()); // Dest
+    #[expect(
+        clippy::big_endian_bytes,
+        reason = "packet headers are encoded in network byte order"
+    )]
+    let (src_be, dst_be) = (port.to_be_bytes(), 1777u16.to_be_bytes());
+    assert_eq!(src, src_be.as_slice()); // Source
+    assert_eq!(dst_port, dst_be.as_slice()); // Dest
     assert_eq!(payload, b"hello AF_XDP");
 
     assert_eq!(rx.available(), 1);
@@ -223,7 +271,7 @@ fn cpumap_chain(#[case] cpus_name: &str, #[case] prog_name: &str) {
     // Load the main program
     let xdp: &mut Xdp = bpf.program_mut(prog_name).unwrap().try_into().unwrap();
     xdp.load().unwrap();
-    let result = xdp.attach("lo", XdpMode::default());
+    let result = xdp.attach(c"lo", XdpMode::default());
     // Generic devices did not support cpumap XDP programs until 5.15.
     //
     // See https://github.com/torvalds/linux/commit/11941f8a85362f612df61f4aaab0e41b64d2111d.
@@ -313,15 +361,15 @@ fn devmap_set(
 
     // Load each probe so the BPF verifier validates the wrapper-generated
     // bytecode. `redirect` works on every kernel that supports the map type;
-    // `get` reads `bpf_devmap_val::bpf_prog.id` so it requires 5.8+.
+    // `get` reads `bpf_devmap_val::bpf_prog.id` so it requires program-ID support.
     for prog in [dev_prog, dev_hash_prog] {
         let xdp: &mut Xdp = bpf.program_mut(prog).unwrap().try_into().unwrap();
         xdp.load().unwrap();
     }
-    let kernel_version = KernelVersion::current().unwrap();
-    if kernel_version < KernelVersion::new(5, 8, 0) {
+    if !is_devmap_prog_id_supported().unwrap() {
+        let kernel_version = KernelVersion::current().unwrap();
         eprintln!(
-            "skipping {dev_get_prog} and {dev_hash_get_prog} on kernel {kernel_version:?}, bpf_devmap_val was added in 5.8; see https://github.com/torvalds/linux/commit/fbee97feed9b"
+            "skipping {dev_get_prog} and {dev_hash_get_prog} on kernel {kernel_version:?}, devmap program IDs are unavailable; see https://github.com/torvalds/linux/commit/fbee97fee"
         );
         return;
     }

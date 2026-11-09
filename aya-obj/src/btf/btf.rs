@@ -7,7 +7,7 @@ use std::{
 
 use bytes::BufMut as _;
 use log::debug;
-use object::{Endianness, SectionIndex};
+use object::{Endian as _, Endianness, SectionIndex};
 
 use crate::{
     Object,
@@ -19,7 +19,7 @@ use crate::{
         relocation::Relocation,
     },
     extern_types::ExternCollection,
-    generated::{btf_ext_header, btf_header},
+    generated::{bpf_core_relo, bpf_func_info, bpf_line_info, btf_ext_header, btf_header},
     util::{HashMap, bytes_of},
 };
 
@@ -176,91 +176,52 @@ pub enum BtfError {
     },
 }
 
-/// Available BTF features
-#[derive(Default, Debug)]
-pub struct BtfFeatures {
-    btf_func: bool,
-    btf_func_global: bool,
-    btf_datasec: bool,
-    btf_datasec_zero: bool,
-    btf_float: bool,
-    btf_decl_tag: bool,
-    btf_type_tag: bool,
-    btf_enum64: bool,
+/// A kernel BTF capability that may be needed while sanitizing BTF data.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub enum BtfFeature {
+    /// `BTF_KIND_FUNC` and `BTF_KIND_FUNC_PROTO`.
+    Func,
+    /// Global `BTF_KIND_FUNC` linkage.
+    FuncGlobal,
+    /// `BTF_KIND_VAR` and `BTF_KIND_DATASEC`.
+    DataSec,
+    /// `BTF_KIND_DATASEC` types with zero entries.
+    DataSecZero,
+    /// `BTF_KIND_FLOAT`.
+    Float,
+    /// `BTF_KIND_DECL_TAG`.
+    DeclTag,
+    /// `BTF_KIND_TYPE_TAG`.
+    TypeTag,
+    /// `BTF_KIND_ENUM64` and signed `BTF_KIND_ENUM`.
+    Enum64,
 }
 
-impl BtfFeatures {
-    #[doc(hidden)]
-    #[expect(
-        clippy::fn_params_excessive_bools,
-        reason = "this interface is terrible"
-    )]
-    #[expect(clippy::too_many_arguments, reason = "this interface is terrible")]
-    pub const fn new(
-        btf_func: bool,
-        btf_func_global: bool,
-        btf_datasec: bool,
-        btf_datasec_zero: bool,
-        btf_float: bool,
-        btf_decl_tag: bool,
-        btf_type_tag: bool,
-        btf_enum64: bool,
-    ) -> Self {
+struct BtfFeatureResolver<F> {
+    is_feature_supported: F,
+    cache: HashMap<BtfFeature, bool>,
+}
+
+impl<F> BtfFeatureResolver<F> {
+    fn new(is_feature_supported: F) -> Self {
         Self {
-            btf_func,
-            btf_func_global,
-            btf_datasec,
-            btf_datasec_zero,
-            btf_float,
-            btf_decl_tag,
-            btf_type_tag,
-            btf_enum64,
+            is_feature_supported,
+            cache: HashMap::new(),
         }
     }
 
-    /// Returns true if `BTF_TYPE_FUNC` is supported.
-    pub const fn btf_func(&self) -> bool {
-        self.btf_func
-    }
+    fn is_supported(&mut self, feature: BtfFeature) -> bool
+    where
+        F: FnMut(BtfFeature) -> bool,
+    {
+        let Self {
+            is_feature_supported,
+            cache,
+        } = self;
 
-    /// Returns true if `BTF_TYPE_FUNC_GLOBAL` is supported.
-    pub const fn btf_func_global(&self) -> bool {
-        self.btf_func_global
-    }
-
-    /// Returns true if `BTF_TYPE_DATASEC` is supported.
-    pub const fn btf_datasec(&self) -> bool {
-        self.btf_datasec
-    }
-
-    /// Returns true if zero-length `DATASec` entries are accepted.
-    pub const fn btf_datasec_zero(&self) -> bool {
-        self.btf_datasec_zero
-    }
-
-    /// Returns true if `BTF_FLOAT` is supported.
-    pub const fn btf_float(&self) -> bool {
-        self.btf_float
-    }
-
-    /// Returns true if `BTF_DECL_TAG` is supported.
-    pub const fn btf_decl_tag(&self) -> bool {
-        self.btf_decl_tag
-    }
-
-    /// Returns true if `BTF_TYPE_TAG` is supported.
-    pub const fn btf_type_tag(&self) -> bool {
-        self.btf_type_tag
-    }
-
-    /// Returns true if `BTF_KIND_FUNC_PROTO` is supported.
-    pub const fn btf_kind_func_proto(&self) -> bool {
-        self.btf_func && self.btf_decl_tag
-    }
-
-    /// Returns true if `BTF_KIND_ENUM64` is supported.
-    pub const fn btf_enum64(&self) -> bool {
-        self.btf_enum64
+        *cache
+            .entry(feature)
+            .or_insert_with(|| is_feature_supported(feature))
     }
 }
 
@@ -410,23 +371,18 @@ impl Btf {
     }
 
     pub(crate) fn string_at(&self, offset: u32) -> Result<Cow<'_, str>, BtfError> {
-        let btf_header {
-            hdr_len,
-            mut str_off,
-            str_len,
-            ..
-        } = self.header;
-        str_off += hdr_len;
-        if offset >= str_off + str_len {
-            return Err(BtfError::InvalidStringOffset {
-                offset: offset as usize,
-            });
-        }
+        let Self {
+            header: _,
+            strings,
+            types: _,
+            _endianness,
+            externs: _,
+        } = self;
 
         let offset = offset as usize;
-
-        let s = CStr::from_bytes_until_nul(&self.strings[offset..])
-            .map_err(|FromBytesUntilNulError { .. }| BtfError::InvalidStringOffset { offset })?;
+        let err = || BtfError::InvalidStringOffset { offset };
+        let s = strings.get(offset..).ok_or_else(err)?;
+        let s = CStr::from_bytes_until_nul(s).map_err(|FromBytesUntilNulError { .. }| err())?;
 
         Ok(s.to_string_lossy())
     }
@@ -465,12 +421,14 @@ impl Btf {
 
     pub(crate) fn type_size(&self, root_type_id: u32) -> Result<usize, BtfError> {
         let mut type_id = root_type_id;
-        let mut n_elems = 1;
+        let mut n_elems: u32 = 1;
         for () in core::iter::repeat_n((), MAX_RESOLVE_DEPTH) {
             let ty = self.types.type_by_id(type_id)?;
             let size = match ty {
                 BtfType::Array(Array { array, .. }) => {
-                    n_elems = array.len;
+                    n_elems = n_elems
+                        .checked_mul(array.len)
+                        .ok_or(BtfError::InvalidTypeInfo)?;
                     type_id = array.element_type;
                     continue;
                 }
@@ -485,7 +443,10 @@ impl Btf {
                     }
                 }
             };
-            return Ok((size * n_elems) as usize);
+            return size
+                .checked_mul(n_elems)
+                .map(|size| size as usize)
+                .ok_or(BtfError::InvalidTypeInfo);
         }
 
         Err(BtfError::MaximumTypeDepthReached {
@@ -503,19 +464,22 @@ impl Btf {
     }
 
     // This follows the same logic as libbpf's bpf_object__sanitize_btf() function.
-    // https://github.com/libbpf/libbpf/blob/05f94ddbb837f5f4b3161e341eed21be307eaa04/src/libbpf.c#L2701
+    // https://github.com/libbpf/libbpf/blob/05f94ddbb/src/libbpf.c#L2701
     //
     // Fixup: The loader needs to adjust values in the BTF before it's loaded into the kernel.
     // Sanitize: Replace an unsupported BTF type with a placeholder type.
     //
     // In addition to the libbpf logic, it performs some fixups to the BTF generated by bpf-linker
     // for Aya programs. These fixups are gradually moving into bpf-linker itself.
-    pub(crate) fn fixup_and_sanitize(
+    pub(crate) fn fixup_and_sanitize<F>(
         &mut self,
         section_infos: &HashMap<String, (SectionIndex, u64)>,
         symbol_offsets: &HashMap<String, u64>,
-        features: &BtfFeatures,
-    ) -> Result<(), BtfError> {
+        feature_supported: F,
+    ) -> Result<(), BtfError>
+    where
+        F: FnMut(BtfFeature) -> bool,
+    {
         if !self.externs.is_empty() {
             let datasec_id = self
                 .externs
@@ -525,6 +489,7 @@ impl Btf {
         }
         let enum64_placeholder_id = OnceCell::new();
         let filler_var_id = OnceCell::new();
+        let mut features = BtfFeatureResolver::new(feature_supported);
         let mut types = mem::take(&mut self.types);
         for i in 0..types.types.len() {
             let t = &mut types.types[i];
@@ -539,11 +504,11 @@ impl Btf {
                     ptr.name_offset = 0;
                 }
                 // Sanitize VAR if they are not supported.
-                BtfType::Var(v) if !features.btf_datasec => {
+                BtfType::Var(v) if !features.is_supported(BtfFeature::DataSec) => {
                     *t = BtfType::Int(Int::new(v.name_offset, 1, IntEncoding::None, 0));
                 }
                 // Sanitize DATASEC if they are not supported.
-                BtfType::DataSec(d) if !features.btf_datasec => {
+                BtfType::DataSec(d) if !features.is_supported(BtfFeature::DataSec) => {
                     debug!("{kind}: not supported. replacing with STRUCT");
 
                     // STRUCT aren't allowed to have "." in their name, fixup this if needed.
@@ -579,7 +544,7 @@ impl Btf {
                 //
                 // DATASEC sizes aren't always set by LLVM so we need to fix them
                 // here before loading the btf to the kernel.
-                BtfType::DataSec(d) if features.btf_datasec => {
+                BtfType::DataSec(d) if features.is_supported(BtfFeature::DataSec) => {
                     // Start DataSec Fixups
                     let name = self.string_at(d.name_offset)?;
                     let name = name.into_owned();
@@ -614,9 +579,17 @@ impl Btf {
                         let mut section_size = d.size;
                         let name_offset = d.name_offset;
 
-                        // Kernels before 5.12 reject zero-length DATASEC. See
-                        // https://github.com/torvalds/linux/commit/13ca51d5eb358edcb673afccb48c3440b9fda21b.
-                        if entries.is_empty() && !features.btf_datasec_zero {
+                        // For a DATASEC with zero entries, inject a filler in either case:
+                        // 1. Its section size is zero. The kernel rejects zero-sized DATASECs,
+                        //    so the filler makes the size non-zero.
+                        //    https://github.com/torvalds/linux/blob/9f4ad9e42/kernel/bpf/btf.c#L3543-L3546
+                        // 2. Its section size is non-zero, but the kernel does not support
+                        //    zero-entry DATASECs, as on kernels before Linux 5.12.
+                        //    https://github.com/torvalds/linux/commit/13ca51d5e
+                        if entries.is_empty()
+                            && (section_size == 0
+                                || !features.is_supported(BtfFeature::DataSecZero))
+                        {
                             let filler_var_id = *filler_var_id.get_or_init(|| {
                                 let filler_type_name = self.add_string("__aya_datasec_filler_type");
                                 let filler_type_id = add_type(
@@ -643,7 +616,7 @@ impl Btf {
                             });
                             let filler_len = section_size.max(1);
                             debug!(
-                                "{kind} {name}: injecting filler entry for zero-length DATASEC (len={filler_len})"
+                                "{kind} {name}: injecting filler entry for zero-entry DATASEC (len={filler_len})"
                             );
                             entries.push(DataSecEntry {
                                 btf_type: filler_var_id,
@@ -688,7 +661,7 @@ impl Btf {
                     }
                 }
                 // Fixup FUNC_PROTO.
-                BtfType::FuncProto(ty) if features.btf_func => {
+                BtfType::FuncProto(ty) if features.is_supported(BtfFeature::Func) => {
                     for (i, param) in ty.params.iter_mut().enumerate() {
                         if param.name_offset == 0 && param.btf_type != 0 {
                             param.name_offset = self.add_string(&format!("param{i}"));
@@ -696,7 +669,7 @@ impl Btf {
                     }
                 }
                 // Sanitize FUNC_PROTO.
-                BtfType::FuncProto(ty) if !features.btf_func => {
+                BtfType::FuncProto(ty) if !features.is_supported(BtfFeature::Func) => {
                     debug!("{kind}: not supported. replacing with ENUM");
                     let members: Vec<BtfEnum> = ty
                         .params
@@ -713,56 +686,52 @@ impl Btf {
                 BtfType::Func(ty) => {
                     let name = self.string_at(ty.name_offset)?;
                     // Sanitize FUNC.
-                    if !features.btf_func {
+                    if !features.is_supported(BtfFeature::Func) {
                         debug!("{kind}: not supported. replacing with TYPEDEF");
                         *t = BtfType::Typedef(Typedef::new(ty.name_offset, ty.btf_type));
-                    } else if !features.btf_func_global
-                        || name == "memset"
-                        || name == "memcpy"
-                        || name == "memmove"
-                        || name == "memcmp"
-                    {
+                    } else if ty.linkage() == FuncLinkage::Global {
                         // Sanitize BTF_FUNC_GLOBAL when not supported and ensure that
                         // memory builtins are marked as static. Globals are type checked
                         // and verified separately from their callers, while instead we
                         // want tracking info (eg bound checks) to be propagated to the
                         // memory builtins.
-                        if ty.linkage() == FuncLinkage::Global {
-                            if features.btf_func_global {
-                                debug!("changing FUNC {name} linkage to BTF_FUNC_STATIC");
-                            } else {
-                                debug!(
-                                    "{kind}: BTF_FUNC_GLOBAL not supported. replacing with BTF_FUNC_STATIC",
-                                );
-                            }
+                        if matches!(name.as_ref(), "memset" | "memcpy" | "memmove" | "memcmp") {
+                            debug!("changing FUNC {name} linkage to BTF_FUNC_STATIC");
+                            ty.set_linkage(FuncLinkage::Static);
+                        } else if !features.is_supported(BtfFeature::FuncGlobal) {
+                            debug!(
+                                "{kind}: BTF_FUNC_GLOBAL not supported. replacing with BTF_FUNC_STATIC",
+                            );
                             ty.set_linkage(FuncLinkage::Static);
                         }
                     }
                 }
                 // Sanitize FLOAT.
-                BtfType::Float(ty) if !features.btf_float => {
+                BtfType::Float(ty) if !features.is_supported(BtfFeature::Float) => {
                     debug!("{kind}: not supported. replacing with STRUCT");
                     *t = BtfType::Struct(Struct::new(0, vec![], ty.size));
                 }
                 // Sanitize DECL_TAG.
-                BtfType::DeclTag(ty) if !features.btf_decl_tag => {
+                BtfType::DeclTag(ty) if !features.is_supported(BtfFeature::DeclTag) => {
                     debug!("{kind}: not supported. replacing with INT");
                     *t = BtfType::Int(Int::new(ty.name_offset, 1, IntEncoding::None, 0));
                 }
                 // Sanitize TYPE_TAG.
-                BtfType::TypeTag(ty) if !features.btf_type_tag => {
+                BtfType::TypeTag(ty) if !features.is_supported(BtfFeature::TypeTag) => {
                     debug!("{kind}: not supported. replacing with CONST");
                     *t = BtfType::Const(Const::new(ty.btf_type));
                 }
                 // Sanitize Signed ENUMs.
-                BtfType::Enum(ty) if !features.btf_enum64 && ty.is_signed() => {
+                BtfType::Enum(ty)
+                    if !features.is_supported(BtfFeature::Enum64) && ty.is_signed() =>
+                {
                     debug!("{kind}: signed ENUMs not supported. Marking as unsigned");
                     ty.set_signed(false);
                 }
                 // Sanitize ENUM64.
-                BtfType::Enum64(ty) if !features.btf_enum64 => {
+                BtfType::Enum64(ty) if !features.is_supported(BtfFeature::Enum64) => {
                     // Kernels before 6.0 do not support ENUM64. See
-                    // https://github.com/torvalds/linux/commit/6089fb325cf737eeb2c4d236c94697112ca860da.
+                    // https://github.com/torvalds/linux/commit/6089fb325.
                     debug!("{kind}: not supported. replacing with UNION");
 
                     // `ty` is borrowed from `types` and we use that borrow
@@ -904,14 +873,13 @@ impl Btf {
                         f.set_linkage(FuncLinkage::Global);
                     }
 
-                    if let Some(placeholder_name_offset) = placeholder_name_offset {
-                        if let BtfType::FuncProto(func_proto) =
+                    if let Some(placeholder_name_offset) = placeholder_name_offset
+                        && let BtfType::FuncProto(func_proto) =
                             &mut self.types.types[proto_id as usize]
-                        {
-                            for param in &mut func_proto.params {
-                                if param.btf_type != 0 && param.name_offset == 0 {
-                                    param.name_offset = placeholder_name_offset;
-                                }
+                    {
+                        for param in &mut func_proto.params {
+                            if param.btf_type != 0 && param.name_offset == 0 {
+                                param.name_offset = placeholder_name_offset;
                             }
                         }
                     }
@@ -966,19 +934,28 @@ impl Object {
     /// Fixes up and sanitizes BTF data.
     ///
     /// Mostly, it removes unsupported types and works around LLVM behaviours.
-    pub fn fixup_and_sanitize_btf(
+    /// `feature_supported` is called only when the object contains non-empty BTF data. The
+    /// predicate it returns is called only when that BTF data requires a feature, and at most once
+    /// for each required feature.
+    pub fn fixup_and_sanitize_btf<F>(
         &mut self,
-        features: &BtfFeatures,
-    ) -> Result<Option<&Btf>, BtfError> {
+        feature_supported: impl FnOnce() -> Option<F>,
+    ) -> Result<Option<&Btf>, BtfError>
+    where
+        F: FnMut(BtfFeature) -> bool,
+    {
         if let Some(obj_btf) = &mut self.btf {
             if obj_btf.is_empty() {
                 return Ok(None);
             }
+            let Some(feature_supported) = feature_supported() else {
+                return Ok(None);
+            };
             // fixup btf
             obj_btf.fixup_and_sanitize(
                 &self.section_infos,
                 &self.symbol_offset_by_name,
-                features,
+                feature_supported,
             )?;
             Ok(Some(obj_btf))
         } else {
@@ -1055,6 +1032,9 @@ impl BtfExt {
         };
 
         let btf_ext_header {
+            magic: _,
+            version: _,
+            flags: _,
             hdr_len,
             func_info_off,
             func_info_len,
@@ -1062,29 +1042,35 @@ impl BtfExt {
             line_info_len,
             core_relo_off,
             core_relo_len,
-            ..
         } = header;
 
-        let rec_size = |offset, len| {
-            let offset = hdr_len as usize + offset as usize;
+        let hdr_len = hdr_len as usize;
+        let rec_size = |offset: u32, len: u32, minimum| {
+            let offset = offset as usize;
             let len = len as usize;
-            // check that there's at least enough space for the `rec_size` field
-            if (len > 0 && len < 4) || offset + len > data.len() {
-                return Err(BtfError::InvalidInfo {
-                    offset,
-                    len,
-                    section_len: data.len(),
-                });
-            }
-            let read_u32 = if endianness == Endianness::Little {
-                u32::from_le_bytes
-            } else {
-                u32::from_be_bytes
+
+            let section_len = data.len();
+            let offset = hdr_len.checked_add(offset).ok_or(BtfError::InvalidInfo {
+                offset: hdr_len,
+                len: offset,
+                section_len,
+            })?;
+            let invalid = || BtfError::InvalidInfo {
+                offset,
+                len,
+                section_len,
             };
-            Ok(if len > 0 {
-                read_u32(data[offset..offset + 4].try_into().unwrap()) as usize
-            } else {
+            let end = offset.checked_add(len).ok_or_else(invalid)?;
+            let data = data.get(offset..end).ok_or_else(invalid)?;
+            Ok(if len == 0 {
                 0
+            } else {
+                let (data, _remainder) = data.split_first_chunk().ok_or_else(invalid)?;
+                let rec_size = endianness.read_u32(*data) as usize;
+                if rec_size < minimum {
+                    return Err(invalid());
+                }
+                rec_size
             })
         };
 
@@ -1093,9 +1079,9 @@ impl BtfExt {
             relocations: Vec::new(),
             func_info: FuncInfo::new(),
             line_info: LineInfo::new(),
-            func_info_rec_size: rec_size(func_info_off, func_info_len)?,
-            line_info_rec_size: rec_size(line_info_off, line_info_len)?,
-            core_relo_rec_size: rec_size(core_relo_off, core_relo_len)?,
+            func_info_rec_size: rec_size(func_info_off, func_info_len, size_of::<bpf_func_info>())?,
+            line_info_rec_size: rec_size(line_info_off, line_info_len, size_of::<bpf_line_info>())?,
+            core_relo_rec_size: rec_size(core_relo_off, core_relo_len, size_of::<bpf_core_relo>())?,
             data: data.to_vec(),
             _endianness: endianness,
         };
@@ -1104,16 +1090,18 @@ impl BtfExt {
         ext.func_info.data.extend(
             SecInfoIter::new(ext.func_info_data(), ext.func_info_rec_size, endianness)
                 .map(move |sec| {
-                    let name = btf
-                        .string_at(sec.name_offset)
-                        .ok()
-                        .map(String::from)
-                        .unwrap();
+                    let SecInfo {
+                        name_offset,
+                        num_info,
+                        data,
+                    } = sec?;
+                    let name = btf.string_at(name_offset)?;
+                    let name = name.into_owned();
                     let info = FuncSecInfo::parse(
-                        sec.name_offset,
-                        sec.num_info,
+                        name_offset,
+                        num_info,
                         func_info_rec_size,
-                        sec.data,
+                        data,
                         endianness,
                     );
                     Ok((name, info))
@@ -1125,16 +1113,18 @@ impl BtfExt {
         ext.line_info.data.extend(
             SecInfoIter::new(ext.line_info_data(), ext.line_info_rec_size, endianness)
                 .map(move |sec| {
-                    let name = btf
-                        .string_at(sec.name_offset)
-                        .ok()
-                        .map(String::from)
-                        .unwrap();
+                    let SecInfo {
+                        name_offset,
+                        num_info,
+                        data,
+                    } = sec?;
+                    let name = btf.string_at(name_offset)?;
+                    let name = name.into_owned();
                     let info = LineSecInfo::parse(
-                        sec.name_offset,
-                        sec.num_info,
+                        name_offset,
+                        num_info,
                         line_info_rec_size,
-                        sec.data,
+                        data,
                         endianness,
                     );
                     Ok((name, info))
@@ -1146,13 +1136,17 @@ impl BtfExt {
         ext.relocations.extend(
             SecInfoIter::new(ext.core_relo_data(), ext.core_relo_rec_size, endianness)
                 .map(move |sec| {
-                    let relos = sec
-                        .data
+                    let SecInfo {
+                        name_offset,
+                        num_info: _,
+                        data,
+                    } = sec?;
+                    let relos = data
                         .chunks(rec_size)
                         .enumerate()
                         .map(|(n, rec)| unsafe { Relocation::parse(rec, n) })
                         .collect::<Result<Vec<_>, _>>()?;
-                    Ok((sec.name_offset, relos))
+                    Ok((name_offset, relos))
                 })
                 .collect::<Result<Vec<_>, _>>()?,
         );
@@ -1161,7 +1155,8 @@ impl BtfExt {
     }
 
     fn info_data(&self, offset: u32, len: u32) -> &[u8] {
-        let offset = (self.header.hdr_len + offset) as usize;
+        // The subsection bounds were validated by `parse` in usize arithmetic.
+        let offset = self.header.hdr_len as usize + offset as usize;
         let data = &self.data[offset..offset + len as usize];
         if len > 0 {
             // skip `rec_size`
@@ -1198,7 +1193,6 @@ impl BtfExt {
 
 pub(crate) struct SecInfoIter<'a> {
     data: &'a [u8],
-    offset: usize,
     rec_size: usize,
     endianness: Endianness,
 }
@@ -1208,39 +1202,58 @@ impl<'a> SecInfoIter<'a> {
         Self {
             data,
             rec_size,
-            offset: 0,
             endianness,
         }
     }
 }
 
 impl<'a> Iterator for SecInfoIter<'a> {
-    type Item = SecInfo<'a>;
+    type Item = Result<SecInfo<'a>, BtfError>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let data = self.data;
-        if self.offset + 8 >= data.len() {
+        let Self {
+            data,
+            rec_size,
+            endianness,
+        } = self;
+
+        // Taking the remainder makes an error terminal, like exhaustion.
+        let remainder = mem::take(data);
+        if remainder.is_empty() {
             return None;
         }
 
-        let read_u32 = if self.endianness == Endianness::Little {
-            u32::from_le_bytes
-        } else {
-            u32::from_be_bytes
-        };
-        let name_offset = read_u32(data[self.offset..self.offset + 4].try_into().unwrap());
-        self.offset += 4;
-        let num_info = u32::from_ne_bytes(data[self.offset..self.offset + 4].try_into().unwrap());
-        self.offset += 4;
+        Some((|| {
+            let section_len = remainder.len();
+            let invalid_header = || BtfError::InvalidInfo {
+                offset: 0,
+                len: 8,
+                section_len,
+            };
+            let (name_offset, remainder) =
+                remainder.split_first_chunk().ok_or_else(invalid_header)?;
+            let name_offset = endianness.read_u32(*name_offset);
+            let (num_info, remainder) = remainder.split_first_chunk().ok_or_else(invalid_header)?;
+            let num_info = endianness.read_u32(*num_info);
+            let count = usize::try_from(num_info).expect("u32 fits in usize");
+            let invalid = || BtfError::InvalidInfo {
+                offset: 8,
+                len: rec_size.saturating_mul(count),
+                section_len,
+            };
+            if num_info == 0 || *rec_size == 0 {
+                return Err(invalid());
+            }
+            let len = rec_size.checked_mul(count).ok_or_else(invalid)?;
+            let (section_data, remainder) = remainder.split_at_checked(len).ok_or_else(invalid)?;
+            *data = remainder;
 
-        let data = &data[self.offset..self.offset + (self.rec_size * num_info as usize)];
-        self.offset += self.rec_size * num_info as usize;
-
-        Some(SecInfo {
-            name_offset,
-            num_info,
-            data,
-        })
+            Ok(SecInfo {
+                name_offset,
+                num_info,
+                data: section_data,
+            })
+        })())
     }
 }
 
@@ -1324,9 +1337,314 @@ pub(crate) struct SecInfo<'a> {
 #[cfg(test)]
 mod tests {
     use assert_matches::assert_matches;
+    use rstest::rstest;
 
     use super::*;
     use crate::btf::{BtfParam, DeclTag, Float, Func, FuncProto, Ptr, TypeTag};
+
+    #[test]
+    fn test_btf_string_offsets() {
+        let mut btf = Btf::new();
+        let name = btf.add_string("foo");
+        let btf = Btf::parse(&btf.to_bytes(), Endianness::default()).unwrap();
+        assert_eq!(btf.string_at(0).unwrap(), "");
+        assert_eq!(btf.string_at(name).unwrap(), "foo");
+        for offset in [
+            btf.strings.len() as u32,
+            btf.strings.len() as u32 + 1,
+            u32::MAX,
+        ] {
+            assert_matches!(
+                btf.string_at(offset),
+                Err(BtfError::InvalidStringOffset { offset: actual }) => {
+                    assert_eq!(actual, offset as usize);
+                }
+            );
+        }
+    }
+
+    fn btf_ext_with_sections(sections: [&[u8]; 3]) -> Vec<u8> {
+        let [func, line, core] = sections;
+        let func_info_len = func.len() as u32;
+        let line_info_len = line.len() as u32;
+        let header = btf_ext_header {
+            magic: 0xeb9f,
+            version: 1,
+            flags: 0,
+            hdr_len: size_of::<btf_ext_header>() as u32,
+            func_info_off: 0,
+            func_info_len,
+            line_info_off: func_info_len,
+            line_info_len,
+            core_relo_off: func_info_len + line_info_len,
+            core_relo_len: core.len() as u32,
+        };
+        // SAFETY: btf_ext_header contains initialized integer fields without padding.
+        let mut data = unsafe { bytes_of(&header) }.to_vec();
+        for section in sections {
+            data.extend_from_slice(section);
+        }
+        data
+    }
+
+    #[rstest]
+    #[case::func(0, 8)]
+    #[case::line(1, 16)]
+    fn test_btf_ext_invalid_section_name(#[case] section: usize, #[case] rec_size: u32) {
+        let mut records: Vec<_> = [rec_size, 1, 1]
+            .into_iter()
+            .flat_map(u32::to_ne_bytes)
+            .collect();
+        records.resize(records.len() + rec_size as usize, 0);
+        let mut sections = [&[][..]; 3];
+        sections[section] = &records;
+        let data = btf_ext_with_sections(sections);
+        assert_matches!(
+            BtfExt::parse(&data, Endianness::default(), &Btf::new()),
+            Err(BtfError::InvalidStringOffset { offset: 1 })
+        );
+    }
+
+    #[rstest]
+    #[case::func(0, 8)]
+    #[case::line(1, 16)]
+    #[case::core(2, 16)]
+    fn test_btf_ext_short_records(#[case] section: usize, #[case] minimum: u32) {
+        for rec_size in (0..minimum).rev() {
+            let mut records: Vec<_> = [rec_size, 0, 1]
+                .into_iter()
+                .flat_map(u32::to_ne_bytes)
+                .collect();
+            records.resize(records.len() + rec_size as usize, 0);
+            let mut sections = [&[][..]; 3];
+            sections[section] = &records;
+            let data = btf_ext_with_sections(sections);
+            assert_matches!(
+                BtfExt::parse(&data, Endianness::default(), &Btf::new()),
+                Err(BtfError::InvalidInfo {
+                    offset: 32,
+                    len: _,
+                    section_len: _
+                })
+            );
+        }
+    }
+
+    #[rstest]
+    fn test_btf_ext_record_sizes(#[values(0, 4)] extra: u32) {
+        let func: Vec<_> = [8 + extra, 0, 1, 16, 42]
+            .into_iter()
+            .chain(std::iter::repeat_n(0, extra as usize / 4))
+            .flat_map(u32::to_ne_bytes)
+            .collect();
+        let line: Vec<_> = [16 + extra, 0, 1, 24, 1, 2, 3]
+            .into_iter()
+            .chain(std::iter::repeat_n(0, extra as usize / 4))
+            .flat_map(u32::to_ne_bytes)
+            .collect();
+        let data = btf_ext_with_sections([&func, &line, &[]]);
+        let ext = BtfExt::parse(&data, Endianness::default(), &Btf::new()).unwrap();
+        let FuncSecInfo {
+            _sec_name_offset: _,
+            num_info,
+            func_info,
+        } = &ext.func_info.data[""];
+        assert_eq!(*num_info, 1);
+        assert_matches!(func_info.as_slice(), [func] => {
+            assert_eq!(func.insn_off, 2);
+            assert_eq!(func.type_id, 42);
+        });
+        let LineSecInfo {
+            _sec_name_offset: _,
+            num_info,
+            line_info,
+        } = &ext.line_info.data[""];
+        assert_eq!(*num_info, 1);
+        assert_matches!(line_info.as_slice(), [line] => {
+            assert_eq!(line.insn_off, 3);
+            assert_eq!(line.file_name_off, 1);
+            assert_eq!(line.line_off, 2);
+            assert_eq!(line.line_col, 3);
+        });
+    }
+
+    #[test]
+    fn test_btf_ext_invalid_subsection_offset() {
+        let mut data = btf_ext_with_sections([&[], &[], &[]]);
+        data[8..12].copy_from_slice(&u32::MAX.to_ne_bytes());
+        assert_matches!(
+            BtfExt::parse(&data, Endianness::default(), &Btf::new()),
+            Err(BtfError::InvalidInfo {
+                offset: _,
+                len: _,
+                section_len: 32
+            })
+        );
+    }
+
+    #[rstest]
+    #[case::func(0, 8)]
+    #[case::line(1, 16)]
+    #[case::core(2, 16)]
+    fn test_btf_ext_oversized_count(#[case] section: usize, #[case] rec_size: u32) {
+        let records: Vec<_> = [rec_size, 0, u32::MAX, 0]
+            .into_iter()
+            .flat_map(u32::to_ne_bytes)
+            .collect();
+        let mut sections = [&[][..]; 3];
+        sections[section] = &records;
+        let data = btf_ext_with_sections(sections);
+        assert_matches!(
+            BtfExt::parse(&data, Endianness::default(), &Btf::new()),
+            Err(BtfError::InvalidInfo {
+                offset: 8,
+                len: _,
+                section_len: 12
+            })
+        );
+    }
+
+    #[rstest]
+    fn test_btf_ext_section_endianness(
+        #[values(Endianness::Little, Endianness::Big)] endianness: Endianness,
+    ) {
+        let data: Vec<_> = [7, 2, 1, 2, 3, 4]
+            .into_iter()
+            .flat_map(|value| endianness.write_u32(value))
+            .collect();
+        let mut iter = SecInfoIter::new(&data, 8, endianness);
+        assert_matches!(iter.next(), Some(Ok(SecInfo { name_offset, num_info, data: records })) => {
+            assert_eq!(name_offset, 7);
+            assert_eq!(num_info, 2);
+            assert_eq!(records, &data[8..]);
+        });
+        assert_matches!(iter.next(), None);
+    }
+
+    #[rstest]
+    fn test_btf_ext_truncated_section_header(#[values(false, true)] after_record: bool) {
+        for len in 1..8 {
+            let mut data = Vec::new();
+            if after_record {
+                data.extend([0, 1, 0, 0].into_iter().flat_map(u32::to_ne_bytes));
+            }
+            data.resize(data.len() + len, 0);
+            let mut iter = SecInfoIter::new(&data, 8, Endianness::default());
+            if after_record {
+                assert_matches!(
+                    iter.next(),
+                    Some(Ok(SecInfo {
+                        name_offset: 0,
+                        num_info: 1,
+                        data: _
+                    }))
+                );
+            }
+            assert_matches!(iter.next(), Some(Err(BtfError::InvalidInfo { offset: 0, len: 8, section_len })) => {
+                assert_eq!(section_len, len);
+            });
+            assert_matches!(iter.next(), None);
+        }
+    }
+
+    #[rstest]
+    #[case::zero_count(8, 0, 0)]
+    #[case::zero_size(0, 1, 0)]
+    #[case::overflow(usize::MAX, 2, usize::MAX)]
+    fn test_btf_ext_invalid_record_count(
+        #[case] rec_size: usize,
+        #[case] count: u32,
+        #[case] len: usize,
+    ) {
+        let data: Vec<_> = [0, count].into_iter().flat_map(u32::to_ne_bytes).collect();
+        let mut iter = SecInfoIter::new(&data, rec_size, Endianness::default());
+        assert_matches!(iter.next(), Some(Err(BtfError::InvalidInfo { offset: 8, len: actual_len, section_len: 8 })) => {
+            assert_eq!(actual_len, len);
+        });
+        assert_matches!(iter.next(), None);
+    }
+
+    #[test]
+    fn test_btf_ext_truncated_record() {
+        let data: Vec<_> = [0, 1, 0].into_iter().flat_map(u32::to_ne_bytes).collect();
+        let mut iter = SecInfoIter::new(&data, 8, Endianness::default());
+        assert_matches!(
+            iter.next(),
+            Some(Err(BtfError::InvalidInfo {
+                offset: 8,
+                len: 8,
+                section_len: 12
+            }))
+        );
+        assert_matches!(iter.next(), None);
+    }
+
+    fn supports<const N: usize>(supported: [BtfFeature; N]) -> impl Fn(BtfFeature) -> bool {
+        move |feature| supported.contains(&feature)
+    }
+
+    #[test]
+    fn fixup_and_sanitize_does_not_probe_unused_features() {
+        let mut btf = Btf::new();
+        btf.add_type(BtfType::Int(Int::new(0, 4, IntEncoding::Signed, 0)));
+        let mut calls = 0;
+
+        btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), |_: BtfFeature| {
+            calls += 1;
+            true
+        })
+        .unwrap();
+
+        assert_eq!(calls, 0);
+    }
+
+    #[test]
+    fn fixup_and_sanitize_probes_each_feature_once() {
+        let mut btf = Btf::new();
+        let first = btf.add_type(BtfType::Float(Float::new(0, 4)));
+        let second = btf.add_type(BtfType::Float(Float::new(0, 8)));
+        let mut calls = 0;
+
+        btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), |feature| {
+            assert_eq!(feature, BtfFeature::Float);
+            calls += 1;
+            false
+        })
+        .unwrap();
+
+        assert_eq!(calls, 1);
+        assert_matches!(btf.type_by_id(first).unwrap(), BtfType::Struct(_));
+        assert_matches!(btf.type_by_id(second).unwrap(), BtfType::Struct(_));
+    }
+
+    #[test]
+    fn fixup_and_sanitize_only_probes_func_global_when_needed() {
+        for (name, linkage, expected_linkage, expected_probes) in [
+            ("static", FuncLinkage::Static, FuncLinkage::Static, 0),
+            ("memcpy", FuncLinkage::Global, FuncLinkage::Static, 0),
+            ("global", FuncLinkage::Global, FuncLinkage::Global, 1),
+        ] {
+            let mut btf = Btf::new();
+            let name_offset = btf.add_string(name);
+            let func_type_id = btf.add_type(BtfType::Func(Func::new(name_offset, 0, linkage)));
+            let mut func_global_probes = 0;
+
+            btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), |feature| match feature {
+                BtfFeature::Func => true,
+                BtfFeature::FuncGlobal => {
+                    func_global_probes += 1;
+                    true
+                }
+                feature => panic!("unexpected probe for {feature:?}"),
+            })
+            .unwrap();
+
+            assert_eq!(func_global_probes, expected_probes, "{name}");
+            assert_matches!(btf.type_by_id(func_type_id).unwrap(), BtfType::Func(func) => {
+                assert_eq!(func.linkage(), expected_linkage, "{name}");
+            });
+        }
+    }
 
     #[test]
     fn test_parse_header() {
@@ -1356,8 +1674,8 @@ mod tests {
     fn test_parse_btf() {
         // this generated BTF data is from an XDP program that simply returns XDP_PASS
         // compiled using clang
-        let data: &[u8] = if cfg!(target_endian = "little") {
-            &[
+        let data: &[u8] = cfg_select! {
+            target_endian = "little" => &[
                 0x9f, 0xeb, 0x01, 0x00, 0x18, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0c, 0x01,
                 0x00, 0x00, 0x0c, 0x01, 0x00, 0x00, 0xe1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                 0x00, 0x00, 0x00, 0x02, 0x02, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x06, 0x00,
@@ -1395,9 +1713,8 @@ mod tests {
                 0x68, 0x61, 0x72, 0x00, 0x5f, 0x5f, 0x41, 0x52, 0x52, 0x41, 0x59, 0x5f, 0x53, 0x49,
                 0x5a, 0x45, 0x5f, 0x54, 0x59, 0x50, 0x45, 0x5f, 0x5f, 0x00, 0x5f, 0x6c, 0x69, 0x63,
                 0x65, 0x6e, 0x73, 0x65, 0x00, 0x6c, 0x69, 0x63, 0x65, 0x6e, 0x73, 0x65, 0x00,
-            ]
-        } else {
-            &[
+            ],
+            target_endian = "big" => &[
                 0xeb, 0x9f, 0x01, 0x00, 0x00, 0x00, 0x00, 0x18, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                 0x01, 0x0c, 0x00, 0x00, 0x01, 0x0c, 0x00, 0x00, 0x00, 0xe1, 0x00, 0x00, 0x00, 0x00,
                 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x01, 0x04, 0x00,
@@ -1435,7 +1752,7 @@ mod tests {
                 0x68, 0x61, 0x72, 0x00, 0x5f, 0x5f, 0x41, 0x52, 0x52, 0x41, 0x59, 0x5f, 0x53, 0x49,
                 0x5a, 0x45, 0x5f, 0x54, 0x59, 0x50, 0x45, 0x5f, 0x5f, 0x00, 0x5f, 0x6c, 0x69, 0x63,
                 0x65, 0x6e, 0x73, 0x65, 0x00, 0x6c, 0x69, 0x63, 0x65, 0x6e, 0x73, 0x65, 0x00,
-            ]
+            ],
         };
         assert_eq!(data.len(), 517);
         let btf = Btf::parse(data, Endianness::default()).unwrap();
@@ -1564,9 +1881,7 @@ mod tests {
         let name_offset = btf.add_string("&mut int");
         let ptr_type_id = btf.add_type(BtfType::Ptr(Ptr::new(name_offset, int_type_id)));
 
-        let features = Default::default();
-
-        btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), &features)
+        btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), supports([]))
             .unwrap();
         assert_matches!(btf.type_by_id(ptr_type_id).unwrap(), BtfType::Ptr(fixed) => {
             assert_eq!(fixed.name_offset, 0);
@@ -1594,12 +1909,7 @@ mod tests {
             VarLinkage::Static,
         )));
 
-        let features = BtfFeatures {
-            btf_datasec: false,
-            ..Default::default()
-        };
-
-        btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), &features)
+        btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), supports([]))
             .unwrap();
         assert_matches!(btf.type_by_id(var_type_id).unwrap(), BtfType::Int(fixed) => {
             assert_eq!(fixed.name_offset, name_offset);
@@ -1636,12 +1946,7 @@ mod tests {
         let datasec_type_id =
             btf.add_type(BtfType::DataSec(DataSec::new(name_offset, variables, 0)));
 
-        let features = BtfFeatures {
-            btf_datasec: false,
-            ..Default::default()
-        };
-
-        btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), &features)
+        btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), supports([]))
             .unwrap();
         assert_matches!(btf.type_by_id(datasec_type_id).unwrap(), BtfType::Struct(fixed) => {
             assert_eq!(fixed.name_offset , name_offset);
@@ -1688,15 +1993,10 @@ mod tests {
         let datasec_type_id =
             btf.add_type(BtfType::DataSec(DataSec::new(name_offset, variables, 0)));
 
-        let features = BtfFeatures {
-            btf_datasec: true,
-            ..Default::default()
-        };
-
         btf.fixup_and_sanitize(
             &HashMap::from([(".data/foo".to_owned(), (SectionIndex(0), 32u64))]),
             &HashMap::from([("foo".to_owned(), 64u64)]),
-            &features,
+            supports([BtfFeature::DataSec]),
         )
         .unwrap();
 
@@ -1720,6 +2020,27 @@ mod tests {
         // Ensure we can convert to bytes and back again
         let raw = btf.to_bytes();
         Btf::parse(&raw, Endianness::default()).unwrap();
+    }
+
+    #[test]
+    fn test_fixup_zero_sized_zero_entry_datasec_injects_filler() {
+        let mut btf = Btf::new();
+        let name = ".empty";
+        let name_offset = btf.add_string(name);
+        let datasec_type_id =
+            btf.add_type(BtfType::DataSec(DataSec::new(name_offset, Vec::new(), 0)));
+
+        btf.fixup_and_sanitize(
+            &HashMap::from([(name.to_owned(), (SectionIndex(0), 0))]),
+            &HashMap::new(),
+            supports([BtfFeature::DataSec, BtfFeature::DataSecZero]),
+        )
+        .unwrap();
+
+        assert_matches!(btf.type_by_id(datasec_type_id).unwrap(), BtfType::DataSec(fixed) => {
+            assert_eq!(fixed.size, 1);
+            assert_matches!(*fixed.entries, [DataSecEntry { offset: 0, size: 1, .. }]);
+        });
     }
 
     #[test]
@@ -1807,12 +2128,7 @@ mod tests {
             FuncLinkage::Static,
         )));
 
-        let features = BtfFeatures {
-            btf_func: false,
-            ..Default::default()
-        };
-
-        btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), &features)
+        btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), supports([]))
             .unwrap();
         assert_matches!(btf.type_by_id(func_proto_type_id).unwrap(), BtfType::Enum(fixed) => {
             assert_eq!(fixed.name_offset, 0);
@@ -1864,13 +2180,12 @@ mod tests {
         let func_proto = BtfType::FuncProto(FuncProto::new(params, int_type_id));
         let func_proto_type_id = btf.add_type(func_proto);
 
-        let features = BtfFeatures {
-            btf_func: true,
-            ..Default::default()
-        };
-
-        btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), &features)
-            .unwrap();
+        btf.fixup_and_sanitize(
+            &HashMap::new(),
+            &HashMap::new(),
+            supports([BtfFeature::Func]),
+        )
+        .unwrap();
 
         assert_matches!(btf.type_by_id(func_proto_type_id).unwrap(), BtfType::FuncProto(fixed) => {
             assert_matches!(*fixed.params, [
@@ -1926,14 +2241,12 @@ mod tests {
             FuncLinkage::Global,
         )));
 
-        let features = BtfFeatures {
-            btf_func: true,
-            btf_func_global: false,
-            ..Default::default()
-        };
-
-        btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), &features)
-            .unwrap();
+        btf.fixup_and_sanitize(
+            &HashMap::new(),
+            &HashMap::new(),
+            supports([BtfFeature::Func]),
+        )
+        .unwrap();
 
         assert_matches!(btf.type_by_id(func_type_id).unwrap(), BtfType::Func(fixed) => {
             assert_eq!(fixed.linkage(), FuncLinkage::Static);
@@ -1977,14 +2290,12 @@ mod tests {
                 FuncLinkage::Global,
             )));
 
-            let features = BtfFeatures {
-                btf_func: true,
-                btf_func_global: true, // to force function name check
-                ..Default::default()
-            };
-
-            btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), &features)
-                .unwrap();
+            btf.fixup_and_sanitize(
+                &HashMap::new(),
+                &HashMap::new(),
+                supports([BtfFeature::Func, BtfFeature::FuncGlobal]),
+            )
+            .unwrap();
 
             assert_matches!(btf.type_by_id(func_type_id).unwrap(), BtfType::Func(fixed) => {
                 assert_eq!(fixed.linkage(), FuncLinkage::Static);
@@ -2002,12 +2313,7 @@ mod tests {
         let name_offset = btf.add_string("float");
         let float_type_id = btf.add_type(BtfType::Float(Float::new(name_offset, 16)));
 
-        let features = BtfFeatures {
-            btf_float: false,
-            ..Default::default()
-        };
-
-        btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), &features)
+        btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), supports([]))
             .unwrap();
         assert_matches!(btf.type_by_id(float_type_id).unwrap(), BtfType::Struct(fixed) => {
             assert_eq!(fixed.name_offset, 0);
@@ -2041,12 +2347,7 @@ mod tests {
         let decl_tag_type_id =
             btf.add_type(BtfType::DeclTag(DeclTag::new(name_offset, var_type_id, -1)));
 
-        let features = BtfFeatures {
-            btf_decl_tag: false,
-            ..Default::default()
-        };
-
-        btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), &features)
+        btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), supports([]))
             .unwrap();
         assert_matches!(btf.type_by_id(decl_tag_type_id).unwrap(), BtfType::Int(fixed) => {
             assert_eq!(fixed.name_offset, name_offset);
@@ -2068,12 +2369,7 @@ mod tests {
         let type_tag_type = btf.add_type(BtfType::TypeTag(TypeTag::new(name_offset, int_type_id)));
         btf.add_type(BtfType::Ptr(Ptr::new(0, type_tag_type)));
 
-        let features = BtfFeatures {
-            btf_type_tag: false,
-            ..Default::default()
-        };
-
-        btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), &features)
+        btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), supports([]))
             .unwrap();
         assert_matches!(btf.type_by_id(type_tag_type).unwrap(), BtfType::Const(fixed) => {
             assert_eq!(fixed.btf_type, int_type_id);
@@ -2131,12 +2427,7 @@ mod tests {
         );
         let enum_type_id = btf.add_type(BtfType::Enum(enum64_type));
 
-        let features = BtfFeatures {
-            btf_enum64: false,
-            ..Default::default()
-        };
-
-        btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), &features)
+        btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), supports([]))
             .unwrap();
 
         assert_matches!(btf.type_by_id(enum_type_id).unwrap(), BtfType::Enum(fixed) => {
@@ -2175,12 +2466,7 @@ mod tests {
         );
         let enum_type_id = btf.add_type(BtfType::Enum64(enum64_type));
 
-        let features = BtfFeatures {
-            btf_enum64: false,
-            ..Default::default()
-        };
-
-        btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), &features)
+        btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), supports([]))
             .unwrap();
 
         assert_matches!(btf.type_by_id(enum_type_id).unwrap(), BtfType::Union(fixed) => {

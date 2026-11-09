@@ -73,7 +73,7 @@ fn per_cpu_array_basic(
             .unwrap_or_else(|err| panic!("program {prog_name} is not a uprobe: {err}"));
         prog.load()
             .unwrap_or_else(|err| panic!("load {prog_name}: {err}"));
-        prog.attach(symbol, "/proc/self/exe", UProbeScope::AllProcesses)
+        prog.attach([symbol], "/proc/self/exe", UProbeScope::AllProcesses)
             .unwrap_or_else(|err| panic!("attach {prog_name}: {err}"));
     }
 
@@ -85,7 +85,7 @@ fn per_cpu_array_basic(
 
     // Write a uniform value across every CPU slot so the uprobe (which runs
     // on an arbitrary CPU) observes a deterministic value.
-    let cpu_count = nr_cpus().unwrap();
+    let cpu_count = nr_cpus().unwrap().get() as usize;
     let initial = PerCpuValues::try_from(vec![VALUE; cpu_count]).unwrap();
     array.set(INDEX, initial, 0).unwrap();
 

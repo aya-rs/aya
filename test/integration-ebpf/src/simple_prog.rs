@@ -1,6 +1,5 @@
 #![no_std]
 #![no_main]
-#![expect(unused_crate_dependencies, reason = "used in other bins")]
 
 use aya_ebpf::{macros::socket_filter, programs::SkBuffContext};
 #[cfg(not(test))]

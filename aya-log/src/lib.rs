@@ -20,7 +20,11 @@
 //!
 //! // start reading aya-log records and log them using the default logger
 //! let logger = EbpfLogger::init(&mut bpf).unwrap();
-//! let mut logger = tokio::io::unix::AsyncFd::with_interest(logger, tokio::io::Interest::READABLE).unwrap();
+//! // SAFETY: The logger owns its map FD, and flushing does not close or replace it.
+//! let mut logger = unsafe {
+//!     tokio::io::unix::AsyncFd::register_with_interest(logger, tokio::io::Interest::READABLE)
+//! }
+//! .unwrap();
 //! tokio::task::spawn(async move {
 //!     loop {
 //!         let mut guard = logger.readable_mut().await.unwrap();
@@ -56,8 +60,6 @@
 //! [env_logger]: https://docs.rs/env_logger
 //! [Log]: https://docs.rs/log/0.4.14/log/trait.Log.html
 //! [log]: https://docs.rs/log
-
-#![cfg_attr(test, expect(unused_crate_dependencies, reason = "used in doctests"))]
 
 use std::{
     fmt::{LowerHex, UpperHex},
@@ -756,13 +758,13 @@ fn log_buf<T: ?Sized + Log>(mut buf: &[u8], logger: &T) -> Result<(), ()> {
                 full_log_msg.push_str(&value.format(last_hint.take())?);
             }
             ArgumentKind::ArrU16Len8 => {
-                let data: [u8; 16] = value
+                let (chunks, []) = value.as_chunks::<2>() else {
+                    return Err(());
+                };
+                let chunks: [[u8; 2]; 8] = chunks
                     .try_into()
                     .map_err(|std::array::TryFromSliceError { .. }| ())?;
-                let mut value: [u16; 8] = Default::default();
-                for (i, s) in data.chunks_exact(2).enumerate() {
-                    value[i] = (u16::from(s[1]) << 8) | u16::from(s[0]);
-                }
+                let value = chunks.map(u16::from_ne_bytes);
                 full_log_msg.push_str(&value.format(last_hint.take())?);
             }
             ArgumentKind::Bytes => {
@@ -778,7 +780,7 @@ fn log_buf<T: ?Sized + Log>(mut buf: &[u8], logger: &T) -> Result<(), ()> {
                 let value = value
                     .try_into()
                     .map_err(|std::array::TryFromSliceError { .. }| ())?;
-                let ptr = usize::from_ne_bytes(value) as *const ();
+                let ptr = ptr::without_provenance::<()>(usize::from_ne_bytes(value));
                 full_log_msg.push_str(&ptr.format(last_hint.take())?);
             }
         }
@@ -1236,7 +1238,7 @@ mod test {
         len += DisplayHint::Ip.write(&mut input[len..]).unwrap().get();
 
         let ipv6 = Ipv6Addr::new(0x2001, 0xdb8, 0, 0, 0, 0, 0x1, 0x1);
-        let ipv6_arr = ipv6.octets();
+        let ipv6_arr = ipv6.segments();
         len += ipv6_arr.write(&mut input[len..]).unwrap().get();
 
         let len = u16::try_from(len).unwrap();

@@ -1,4 +1,4 @@
-use core::{borrow::Borrow, marker::PhantomData};
+use core::marker::PhantomData;
 
 use aya_ebpf_bindings::bindings::BPF_F_NO_PREALLOC;
 
@@ -38,22 +38,17 @@ impl<K, V> LpmTrie<K, V> {
     map_constructors!(Key<K>, V, BPF_MAP_TYPE_LPM_TRIE, extra_flags BPF_F_NO_PREALLOC, phantom _kv);
 
     #[inline]
-    pub fn get(&self, key: impl Borrow<Key<K>>) -> Option<&V> {
-        lookup(self.def.as_ptr(), key.borrow()).map(|p| unsafe { p.as_ref() })
+    pub fn get(&self, key: &Key<K>) -> Option<&V> {
+        lookup(self.def.as_ptr(), key).map(|p| unsafe { p.as_ref() })
     }
 
     #[inline]
-    pub fn insert(
-        &self,
-        key: impl Borrow<Key<K>>,
-        value: impl Borrow<V>,
-        flags: u64,
-    ) -> Result<(), i32> {
-        insert(self.def.as_ptr(), key.borrow(), value.borrow(), flags)
+    pub fn insert(&self, key: &Key<K>, value: &V, flags: u64) -> Result<(), i32> {
+        insert(self.def.as_ptr(), key, value, flags)
     }
 
     #[inline]
-    pub fn remove(&self, key: impl Borrow<Key<K>>) -> Result<(), i32> {
-        remove(self.def.as_ptr(), key.borrow())
+    pub fn remove(&self, key: &Key<K>) -> Result<(), i32> {
+        remove(self.def.as_ptr(), key)
     }
 }

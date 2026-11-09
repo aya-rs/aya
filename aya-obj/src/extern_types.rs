@@ -146,14 +146,14 @@ impl Object {
 
             if let Some(ext) = obj_btf.externs.get_mut(sym_name) {
                 if ext.is_resolved {
-                    if let Some(existing_addr) = ext.ksym_addr {
-                        if existing_addr != addr {
-                            return Err(KsymsError::AmbiguousResolution {
-                                name: sym_name.to_string(),
-                                first_addr: existing_addr,
-                                second_addr: addr,
-                            });
-                        }
+                    if let Some(existing_addr) = ext.ksym_addr
+                        && existing_addr != addr
+                    {
+                        return Err(KsymsError::AmbiguousResolution {
+                            name: sym_name.to_string(),
+                            first_addr: existing_addr,
+                            second_addr: addr,
+                        });
                     }
                     continue;
                 }

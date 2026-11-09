@@ -248,7 +248,7 @@ impl ConsumerPos {
         // Publish the new position after reading the record. The kernel pairs this with an Acquire
         // load before reusing the record's storage [1].
         //
-        // [1]: https://github.com/torvalds/linux/blob/2772d7df/kernel/bpf/ringbuf.c#L422
+        // [1]: https://github.com/torvalds/linux/blob/2772d7df3/kernel/bpf/ringbuf.c#L422
         metadata.as_ref().store(*pos, Ordering::Release);
         *needs_wakeup = true;
     }
@@ -303,7 +303,7 @@ impl ProducerData {
         // when mmap()'ed in user-space, simplifying both kernel and
         // user-space implementations significantly.
         //
-        // [0]: https://github.com/torvalds/linux/blob/3f01e9fe/kernel/bpf/ringbuf.c#L108-L124
+        // [0]: https://github.com/torvalds/linux/blob/3f01e9fed/kernel/bpf/ringbuf.c#L108-L124
         let len = page_size + 2 * usize::try_from(byte_size).unwrap();
         let mmap = MMap::new(fd, len, PROT_READ, MAP_SHARED, offset.try_into().unwrap())?;
 
@@ -397,7 +397,7 @@ impl ProducerData {
             // overflow correctly at all, and it's not clear that one can produce events after the
             // producer position has wrapped around.
             //
-            // [1]: https://github.com/torvalds/linux/blob/4b810bf0/kernel/bpf/ringbuf.c#L434-L440
+            // [1]: https://github.com/torvalds/linux/blob/4b810bf03/kernel/bpf/ringbuf.c#L434-L440
             *consumer != *producer_cache
         }
 
@@ -419,7 +419,7 @@ impl ProducerData {
             // The kernel commits the record with a fully ordered xchg [1]. Pair it with an Acquire
             // load so data written by the producer is visible after the busy bit is cleared.
             //
-            // [1]: https://github.com/torvalds/linux/blob/eb26cbb1/kernel/bpf/ringbuf.c#L488
+            // [1]: https://github.com/torvalds/linux/blob/eb26cbb1a/kernel/bpf/ringbuf.c#L488
             let header = unsafe { &*header_ptr }.load(Ordering::Acquire);
             if header & BPF_RINGBUF_BUSY_BIT != 0 {
                 Item::Busy
@@ -442,6 +442,6 @@ fn load_producer_pos(producer: &MMap) -> usize {
     // This value is written using Release by the kernel [1], and should be read with
     // Acquire to ensure that the prior writes to the entry header are visible.
     //
-    // [1]: https://github.com/torvalds/linux/blob/eb26cbb1/kernel/bpf/ringbuf.c#L447-L448
+    // [1]: https://github.com/torvalds/linux/blob/eb26cbb1a/kernel/bpf/ringbuf.c#L447-L448
     unsafe { producer.ptr().cast::<AtomicUsize>().as_ref() }.load(Ordering::Acquire)
 }

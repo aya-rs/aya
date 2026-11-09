@@ -1,0 +1,27 @@
+load("//bazel:python_lint.bzl", "ruff_test", "ty_test")
+
+filegroup(
+    name = "python",
+    srcs = glob(["**/*.py"]),
+    tags = ["python"],
+)
+
+ruff_test(
+    name = "ruff",
+    size = "small",
+    srcs = [":python"],
+)
+
+ty_test(
+    name = "ty",
+    size = "small",
+    srcs = [":python"],
+)
+
+test_suite(
+    name = "check",
+    tests = [
+        ":ruff",
+        ":ty",
+    ],
+)

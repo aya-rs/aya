@@ -1,0 +1,34 @@
+name: Set up a pinned Rust toolchain
+description: Install Aya's committed stable or nightly Rust toolchain
+
+inputs:
+  toolchain:
+    description: Immutable Rust toolchain to install
+    required: true
+  components:
+    description: Rust toolchain components to install
+    required: false
+  targets:
+    description: Rust targets to install
+    required: false
+
+runs:
+  using: composite
+  steps:
+    - uses: dtolnay/rust-toolchain@master
+      with:
+        toolchain: ${{ inputs.toolchain }}
+        components: ${{ inputs.components }}
+        targets: ${{ inputs.targets }}
+
+    - name: Alias the pinned Rust nightly
+      if: startsWith(inputs.toolchain, 'nightly-')
+      shell: bash
+      env:
+        RUST_NIGHTLY: ${{ inputs.toolchain }}
+      run: |
+        set -euo pipefail
+
+        # Aya invokes `nightly` internally.
+        ln -s "$(rustup run "$RUST_NIGHTLY" rustc --print sysroot)" \
+          "$(rustup show home)/toolchains/nightly-$(rustup run "$RUST_NIGHTLY" rustc --print host-tuple)"

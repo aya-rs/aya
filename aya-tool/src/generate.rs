@@ -101,14 +101,14 @@ fn c_header_from_btf(path: &Path) -> Result<String, Error> {
 }
 
 fn extract_ctypes_prefix(s: &[String]) -> (Vec<String>, Option<String>) {
-    if let Some(index) = s.iter().position(|el| el == "--ctypes-prefix") {
-        if index < s.len() - 1 {
-            let mut flags = Vec::new();
-            flags.extend_from_slice(&s[0..index]);
-            // skip ["--ctypes-prefix", "value"]
-            flags.extend_from_slice(&s[index + 2..]);
-            return (flags, s.get(index + 1).cloned());
-        }
+    if let Some(index) = s.iter().position(|el| el == "--ctypes-prefix")
+        && index < s.len() - 1
+    {
+        let mut flags = Vec::new();
+        flags.extend_from_slice(&s[0..index]);
+        // skip ["--ctypes-prefix", "value"]
+        flags.extend_from_slice(&s[index + 2..]);
+        return (flags, s.get(index + 1).cloned());
     }
 
     (s.to_vec(), None)

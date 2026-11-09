@@ -6,6 +6,8 @@
   * [Ask for Help](#ask-for-help)
   * [Pull Request Lifecycle](#pull-request-lifecycle)
   * [Pull Request Checklist](#pull-request-checklist)
+  * [Workflow Dependencies](#workflow-dependencies)
+  * [Source References](#source-references)
   * [Documentation Style](#documentation-style)
 
 Welcome! We are glad that you want to contribute to our project! 💖
@@ -148,6 +150,31 @@ accept and merge it. Theses requirements are described in the
 
 It is recommended that you run the integration tests locally before submitting
 your Pull Request. Please see [Aya Integration Tests] for more information.
+
+## Workflow Dependencies
+
+Install GitHub's lockfile generator with
+`gh extension install github/gh-actions-lock`. After editing workflows or
+repository actions, regenerate and verify their dependencies:
+
+```sh
+gh actions-lock --no-narrow
+gh actions-lock --verify
+```
+
+Commit `.github/workflows/actions.lock` with the workflow changes. The
+`--no-narrow` option preserves major-version references such as `@v2`; the
+lockfile records their exact commits. Dependabot groups action version bumps
+into a monthly pull request and updates the corresponding lockfile entries.
+If a tag or branch advances without changing its name, its locked commit stays
+in place. Use `gh actions-lock --relock --no-narrow` to update those pins
+manually.
+
+## Source References
+
+When citing another project's source code to justify a claim or explain
+behavior, use a GitHub permalink pinned to a commit. Abbreviate the commit
+SHA to nine hexadecimal digits.
 
 ## Documentation Style
 

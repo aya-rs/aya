@@ -43,7 +43,7 @@ use crate::programs::{
 /// # Ok::<(), Error>(())
 /// ```
 ///
-/// [1]: https://github.com/torvalds/linux/commit/9e15db66136a14cde3f35691f1d839d950118826
+/// [1]: https://github.com/torvalds/linux/commit/9e15db661
 #[derive(Debug)]
 #[doc(alias = "BPF_TRACE_RAW_TP")]
 #[doc(alias = "BPF_PROG_TYPE_TRACING")]

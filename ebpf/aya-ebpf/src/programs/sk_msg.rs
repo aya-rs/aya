@@ -20,11 +20,11 @@ impl SkMsgContext {
     }
 
     pub fn data(&self) -> usize {
-        unsafe { (*self.msg).__bindgen_anon_1.data as usize }
+        unsafe { (*self.msg).__bindgen_anon_1.data.expose_provenance() }
     }
 
     pub fn data_end(&self) -> usize {
-        unsafe { (*self.msg).__bindgen_anon_2.data_end as usize }
+        unsafe { (*self.msg).__bindgen_anon_2.data_end.expose_provenance() }
     }
 
     pub fn push_data(&self, start: u32, len: u32, flags: u64) -> Result<(), i32> {

@@ -7,7 +7,7 @@ use std::{
     ffi::{OsStr, OsString},
     fmt::{Arguments, Write as _},
     fs::{self, File, OpenOptions},
-    io::{BufRead as _, BufReader, Write},
+    io::{BufRead as _, BufReader, BufWriter, Write},
     os::unix::ffi::OsStrExt as _,
     path::{Path, PathBuf},
     process::{Child, ChildStdin, Command, Output, Stdio},
@@ -535,7 +535,8 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                     .with_context(|| {
                         format!("failed to create {} for writing", initrd_image.display())
                     })?;
-                let mut initrd_archive = CpioArchiveBuilder::new(initrd_image_file);
+                let buffered_file = BufWriter::new(initrd_image_file);
+                let mut initrd_archive = CpioArchiveBuilder::new(buffered_file);
                 let mtime_secs = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
                 let mtime = u32::try_from(mtime_secs).with_context(|| {
                     format!("cpio supports only `u32` mtimes, got {mtime_secs}")
@@ -567,22 +568,13 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                         mtime,
                     )?;
                 }
-                for (name, path) in &test_distro {
-                    if name == "init" {
-                        initrd_archive.append_file(
-                            PathBuf::from("init"),
-                            path,
-                            executable_mode,
-                            mtime,
-                        )?;
+                for (name, source) in &test_distro {
+                    let path = if name == "init" {
+                        PathBuf::from("init")
                     } else {
-                        initrd_archive.append_file(
-                            Path::new("sbin").join(name),
-                            path,
-                            executable_mode,
-                            mtime,
-                        )?;
-                    }
+                        Path::new("sbin").join(name)
+                    };
+                    initrd_archive.append_file(path, source, executable_mode, mtime)?;
                 }
 
                 // At this point we need to make a slight detour!
@@ -643,6 +635,7 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                 // Append the required trailer entry as the last one, then
                 // write the initramfs to the output file.
                 initrd_archive.append_trailer()?;
+                initrd_archive.inner.flush()?;
                 drop(initrd_archive);
 
                 let mut qemu = Command::new(format!("qemu-system-{guest_arch}"));
@@ -679,9 +672,9 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                 // out of `/sys/kernel/security/lsm` and LSM tests exercise
                 // only load/attach, missing runtime regressions.
                 kernel_args.push(" lsm=bpf");
-                // Ubuntu Mainline arm64 packages can make the initramfs large
-                // enough that 1G fails to unpack it, leaving a broken rootfs.
-                qemu.args(["-no-reboot", "-nographic", "-m", "2048M", "-smp", "2"])
+                // Ubuntu Mainline packages can make the initramfs large enough
+                // that 2G fails to unpack it, leaving a broken rootfs.
+                qemu.args(["-no-reboot", "-nographic", "-m", "3072M", "-smp", "2"])
                     .arg("-append")
                     .arg(kernel_args)
                     .arg("-kernel")

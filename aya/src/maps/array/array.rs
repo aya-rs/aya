@@ -23,7 +23,7 @@ use crate::{
 /// use aya::maps::Array;
 ///
 /// let mut array = Array::try_from(bpf.map_mut("ARRAY").unwrap())?;
-/// array.set(1, 42, 0)?;
+/// array.set(1, &42, 0)?;
 /// assert_eq!(array.get(&1, 0)?, 42);
 /// # Ok::<(), aya::EbpfError>(())
 /// ```
@@ -77,10 +77,10 @@ impl<T: BorrowMut<MapData>, V: Pod> Array<T, V> {
     ///
     /// Returns [`MapError::OutOfBounds`] if `index` is out of bounds, [`MapError::SyscallError`]
     /// if `bpf_map_update_elem` fails.
-    pub fn set(&mut self, index: u32, value: impl Borrow<V>, flags: u64) -> Result<(), MapError> {
+    pub fn set(&mut self, index: u32, value: &V, flags: u64) -> Result<(), MapError> {
         let data = self.inner.borrow_mut();
         check_bounds(data, index)?;
-        hash_map::insert(data, &index, value.borrow(), flags)
+        hash_map::insert(data, &index, value, flags)
     }
 }
 

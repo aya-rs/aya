@@ -30,7 +30,7 @@ fn bpf_strncmp() {
         prog.load().unwrap();
 
         prog.attach(
-            "trigger_bpf_strncmp",
+            ["trigger_bpf_strncmp"],
             "/proc/self/exe",
             UProbeScope::AllProcesses,
         )

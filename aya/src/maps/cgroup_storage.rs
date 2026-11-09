@@ -63,7 +63,10 @@ impl CgroupStorageKey {
 /// # Minimum kernel version
 ///
 /// The minimum kernel version required to use this feature is 4.19.
-#[deprecated = "use the `BPF_MAP_TYPE_CGRP_STORAGE` map type, available since Linux 6.2"]
+#[deprecated(
+    since = "0.14.0",
+    note = "use the `BPF_MAP_TYPE_CGRP_STORAGE` map type, available since Linux 6.2"
+)]
 #[doc(alias = "BPF_MAP_TYPE_CGROUP_STORAGE")]
 #[derive(Debug)]
 pub struct CgroupStorage<T, V: Pod> {
@@ -93,18 +96,8 @@ impl<T: BorrowMut<MapData>, V: Pod> CgroupStorage<T, V> {
     ///
     /// Only existing entries can be updated; the kernel returns `ENOENT` for a
     /// cgroup that has no attached program using this map.
-    pub fn insert(
-        &mut self,
-        key: CgroupStorageKey,
-        value: impl Borrow<V>,
-        flags: u64,
-    ) -> Result<(), MapError> {
-        hash_map::insert(
-            self.inner.borrow_mut(),
-            &key.to_kernel(),
-            value.borrow(),
-            flags,
-        )
+    pub fn insert(&mut self, key: CgroupStorageKey, value: &V, flags: u64) -> Result<(), MapError> {
+        hash_map::insert(self.inner.borrow_mut(), &key.to_kernel(), value, flags)
     }
 }
 
@@ -116,7 +109,10 @@ impl<T: BorrowMut<MapData>, V: Pod> CgroupStorage<T, V> {
 /// # Minimum kernel version
 ///
 /// The minimum kernel version required to use this feature is 4.20.
-#[deprecated = "use the `BPF_MAP_TYPE_CGRP_STORAGE` map type, available since Linux 6.2"]
+#[deprecated(
+    since = "0.14.0",
+    note = "use the `BPF_MAP_TYPE_CGRP_STORAGE` map type, available since Linux 6.2"
+)]
 #[doc(alias = "BPF_MAP_TYPE_PERCPU_CGROUP_STORAGE")]
 #[derive(Debug)]
 pub struct PerCpuCgroupStorage<T, V: Pod> {

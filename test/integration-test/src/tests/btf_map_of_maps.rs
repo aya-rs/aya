@@ -1,10 +1,12 @@
 use aya::{
     Ebpf,
-    maps::{Array, ArrayOfMaps, HashOfMaps, MapData},
+    maps::{Array, ArrayOfMaps, HashOfMaps, MapData, RingBuf},
     programs::{UProbe, uprobe::UProbeScope},
 };
-use integration_common::btf_map_of_maps::INNER_MAX_ENTRIES;
+use integration_common::btf_map_of_maps::{INNER_MAX_ENTRIES, RING_VALUE};
 use rstest::rstest;
+
+const RING_BUF_BYTE_SIZE: u32 = 2 * 1024 * 1024;
 
 #[derive(Clone, Copy, Debug)]
 enum MapKind {
@@ -23,7 +25,7 @@ impl MapKind {
             Self::Hash => {
                 let mut outer: HashOfMaps<&mut MapData, u32, Array<MapData, u32>> =
                     ebpf.map_mut("HASH_OF_MAPS").unwrap().try_into().unwrap();
-                outer.insert(key, inner, 0).unwrap();
+                outer.insert(&key, inner, 0).unwrap();
             }
         }
     }
@@ -53,8 +55,9 @@ fn load_and_attach(ebpf: &mut Ebpf, name: &str) {
         .try_into()
         .unwrap();
     prog.load().unwrap();
+    let symbol = format!("trigger_{name}");
     prog.attach(
-        format!("trigger_{name}").as_str(),
+        [symbol.as_str()],
         "/proc/self/exe",
         UProbeScope::AllProcesses,
     )
@@ -94,6 +97,12 @@ extern "C" fn trigger_btf_hash_of_maps_get_value() {
     std::hint::black_box(());
 }
 
+#[unsafe(no_mangle)]
+#[inline(never)]
+extern "C" fn trigger_btf_array_of_ring_bufs() {
+    std::hint::black_box(());
+}
+
 #[rstest]
 #[case::array_of_maps(MapKind::Array, "btf_array_of_maps", 0, 42)]
 #[case::hash_of_maps(MapKind::Hash, "btf_hash_of_maps", 1, 55)]
@@ -107,7 +116,7 @@ fn btf_map_of_maps(
     let mut ebpf = Ebpf::load(crate::BTF_MAP_OF_MAPS).unwrap();
 
     let mut inner: Array<MapData, u32> = Array::create(INNER_MAX_ENTRIES, 0).unwrap();
-    inner.set(0, expected, 0).unwrap();
+    inner.set(0, &expected, 0).unwrap();
 
     kind.insert_inner(&mut ebpf, 0, &inner);
 
@@ -130,10 +139,10 @@ fn btf_map_of_maps_get_value(
     let mut ebpf = Ebpf::load(crate::BTF_MAP_OF_MAPS).unwrap();
 
     let mut inner_1: Array<MapData, u32> = Array::create(INNER_MAX_ENTRIES, 0).unwrap();
-    inner_1.set(0, expected_get, 0).unwrap();
+    inner_1.set(0, &expected_get, 0).unwrap();
 
     let mut inner_2: Array<MapData, u32> = Array::create(INNER_MAX_ENTRIES, 0).unwrap();
-    inner_2.set(0, 0u32, 0).unwrap();
+    inner_2.set(0, &0u32, 0).unwrap();
 
     kind.insert_inner(&mut ebpf, 0, &inner_1);
     kind.insert_inner(&mut ebpf, 1, &inner_2);
@@ -154,19 +163,43 @@ fn btf_hash_of_maps_dynamic() {
     let mut inner_1: Array<MapData, u32> = Array::create(INNER_MAX_ENTRIES, 0).unwrap();
     let mut inner_2: Array<MapData, u32> = Array::create(INNER_MAX_ENTRIES, 0).unwrap();
 
-    inner_1.set(0, 1000u32, 0).unwrap();
-    inner_2.set(0, 2000u32, 0).unwrap();
+    inner_1.set(0, &1000u32, 0).unwrap();
+    inner_2.set(0, &2000u32, 0).unwrap();
 
     {
         let mut outer: HashOfMaps<&mut MapData, u32, Array<MapData, u32>> =
             ebpf.map_mut("HASH_OF_MAPS").unwrap().try_into().unwrap();
-        outer.insert(10u32, &inner_1, 0).unwrap();
-        outer.insert(11u32, &inner_2, 0).unwrap();
+        outer.insert(&10u32, &inner_1, 0).unwrap();
+        outer.insert(&11u32, &inner_2, 0).unwrap();
     }
 
     assert_eq!(inner_1.get(&0, 0).unwrap(), 1000);
     assert_eq!(inner_2.get(&0, 0).unwrap(), 2000);
 
-    inner_1.set(1, 3000u32, 0).unwrap();
+    inner_1.set(1, &3000u32, 0).unwrap();
     assert_eq!(inner_1.get(&1, 0).unwrap(), 3000);
+}
+
+#[test_log::test]
+fn btf_array_of_ring_bufs() {
+    let mut ebpf = Ebpf::load(crate::BTF_MAP_OF_MAPS).unwrap();
+
+    {
+        let ring_buf = RingBuf::create(RING_BUF_BYTE_SIZE, 0).unwrap();
+        let mut outer: ArrayOfMaps<&mut MapData, RingBuf<MapData>> =
+            ebpf.map_mut("RING_BUFS").unwrap().try_into().unwrap();
+        outer.set(0, &ring_buf, 0).unwrap();
+    }
+
+    load_and_attach(&mut ebpf, "btf_array_of_ring_bufs");
+    trigger_btf_array_of_ring_bufs();
+
+    let outer: ArrayOfMaps<&MapData, RingBuf<MapData>> =
+        ebpf.map("RING_BUFS").unwrap().try_into().unwrap();
+    let mut ring_buf = outer.get(&0, 0).unwrap();
+    let item = ring_buf.next().unwrap();
+    assert_eq!(
+        u64::from_ne_bytes(item.as_ref().try_into().unwrap()),
+        RING_VALUE
+    );
 }

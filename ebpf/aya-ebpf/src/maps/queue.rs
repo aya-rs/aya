@@ -1,4 +1,4 @@
-use core::{borrow::Borrow, marker::PhantomData, mem::MaybeUninit, ptr};
+use core::{marker::PhantomData, mem::MaybeUninit, ptr};
 
 use crate::{
     ENOENT,
@@ -21,13 +21,9 @@ impl<T> super::private::Map for Queue<T> {
 impl<T> Queue<T> {
     map_constructors!((), T, BPF_MAP_TYPE_QUEUE, phantom _t);
 
-    pub fn push(&self, value: impl Borrow<T>, flags: u64) -> Result<(), i32> {
+    pub fn push(&self, value: &T, flags: u64) -> Result<(), i32> {
         let ret = unsafe {
-            bpf_map_push_elem(
-                self.def.as_ptr().cast(),
-                ptr::from_ref(value.borrow()).cast(),
-                flags,
-            )
+            bpf_map_push_elem(self.def.as_ptr().cast(), ptr::from_ref(value).cast(), flags)
         };
         (ret == 0).then_some(()).ok_or(ret as i32)
     }

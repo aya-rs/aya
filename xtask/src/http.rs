@@ -6,7 +6,7 @@ use std::{
     fs::{self, File},
     io::{self, Write as _},
     path::{Path, PathBuf},
-    time::Duration,
+    time::{Duration, Instant},
 };
 
 use anyhow::{Context as _, Result, anyhow, bail};
@@ -21,15 +21,15 @@ pub(crate) struct HttpClient {
 impl HttpClient {
     pub(crate) fn new() -> Self {
         const REQUEST_PHASE_TIMEOUT: Duration = Duration::from_secs(30);
-        const REQUEST_GLOBAL_TIMEOUT: Duration = Duration::from_secs(15 * 60);
+        const REQUEST_GLOBAL_TIMEOUT: Duration = Duration::from_mins(15);
 
-        // Fail fast when request phases stall, but allow kernel module
-        // packages enough end-to-end time to download on a cold cache.
+        // Keep request setup and metadata responses short. Downloads retain
+        // the header timeout but disable the body timeout. The global timeout
+        // still bounds the entire request, including reading the body.
         let config = ureq::Agent::config_builder()
             .timeout_resolve(Some(REQUEST_PHASE_TIMEOUT))
             .timeout_connect(Some(REQUEST_PHASE_TIMEOUT))
             .timeout_recv_response(Some(REQUEST_PHASE_TIMEOUT))
-            // This is a body read/progress timeout, not a full download cap.
             .timeout_recv_body(Some(REQUEST_PHASE_TIMEOUT))
             .timeout_global(Some(REQUEST_GLOBAL_TIMEOUT))
             .build();
@@ -39,16 +39,51 @@ impl HttpClient {
     }
 
     pub(crate) fn get_text(&self, url: &str) -> Result<String> {
+        for attempt in 1..3 {
+            let error = match self.get_text_once(url) {
+                Ok(text) => return Ok(text),
+                Err(error) => error,
+            };
+            let Some(cause) = error.downcast_ref::<ureq::Error>() else {
+                return Err(error);
+            };
+            let delay = match cause {
+                ureq::Error::Timeout(_) => Duration::ZERO,
+                ureq::Error::StatusCode(503) => Duration::from_secs(1),
+                _ => return Err(error),
+            };
+            println!("{error:#}; retrying in {delay:?} (attempt {attempt}/3 failed)");
+            std::thread::sleep(delay);
+        }
+        self.get_text_once(url)
+    }
+
+    fn get_text_once(&self, url: &str) -> Result<String> {
+        let start = Instant::now();
         let mut response = self
             .agent
             .get(url)
             .header("User-Agent", USER_AGENT)
             .call()
-            .with_context(|| format!("GET {url} failed"))?;
-        response
-            .body_mut()
-            .read_to_string()
-            .with_context(|| format!("read response body from {url} failed"))
+            .with_context(|| format!("GET {url} failed after {:?}", start.elapsed()))?;
+        println!(
+            "GET {url}: received headers in {:?} ({})",
+            start.elapsed(),
+            response.status()
+        );
+        let start = Instant::now();
+        let text = response.body_mut().read_to_string().with_context(|| {
+            format!(
+                "read response body from {url} failed after {:?}",
+                start.elapsed()
+            )
+        })?;
+        println!(
+            "GET {url}: read {} bytes in {:?}",
+            text.len(),
+            start.elapsed()
+        );
+        Ok(text)
     }
 
     pub(crate) fn download_to_dir(&self, url: &str, output_dir: &Path) -> Result<PathBuf> {
@@ -91,7 +126,15 @@ impl HttpClient {
                 .with_context(|| format!("failed to create {}", parent.display()))?;
         }
 
-        let mut request = self.agent.get(url).header("User-Agent", USER_AGENT);
+        let mut request = self
+            .agent
+            .get(url)
+            .config()
+            // The body timeout is documented as a total duration, not an idle timeout.
+            // Large packages use the global limit instead of the metadata limit.
+            .timeout_recv_body(None)
+            .build()
+            .header("User-Agent", USER_AGENT);
         if dest_path_exists {
             let etag = fs::read_to_string(etag_path).ok();
             if let Some(etag) = etag
@@ -173,11 +216,10 @@ impl HttpClient {
         if let Some(etag) = etag {
             fs::write(etag_path, etag)
                 .with_context(|| format!("failed to write {}", etag_path.display()))?;
-        } else if let Err(error) = fs::remove_file(etag_path) {
-            if error.kind() != io::ErrorKind::NotFound {
-                return Err(error)
-                    .with_context(|| format!("failed to remove {}", etag_path.display()));
-            }
+        } else if let Err(error) = fs::remove_file(etag_path)
+            && error.kind() != io::ErrorKind::NotFound
+        {
+            return Err(error).with_context(|| format!("failed to remove {}", etag_path.display()));
         }
 
         Ok(())
@@ -190,4 +232,192 @@ pub(crate) fn url_file_name(url: &str) -> Result<&str> {
         .next()
         .filter(|file_name| !file_name.is_empty())
         .ok_or_else(|| anyhow!("URL has no filename: {url}"))
+}
+
+#[cfg(test)]
+mod tests {
+    use std::{
+        io::BufRead as _,
+        net::{TcpListener, TcpStream},
+        thread,
+    };
+
+    use rstest::rstest;
+
+    use super::*;
+
+    fn read_request(listener: &TcpListener) -> Result<TcpStream> {
+        let deadline = Instant::now() + Duration::from_secs(5);
+        let (mut stream, _) = loop {
+            match listener.accept() {
+                Ok(connection) => break connection,
+                Err(error) => {
+                    if error.kind() != io::ErrorKind::WouldBlock {
+                        return Err(error.into());
+                    }
+                    if Instant::now() >= deadline {
+                        bail!("timed out waiting for the request");
+                    }
+                    thread::sleep(Duration::from_millis(10));
+                }
+            }
+        };
+        stream.set_nonblocking(false)?;
+        stream.set_read_timeout(Some(Duration::from_secs(5)))?;
+        let mut request = io::BufReader::new(&mut stream);
+        loop {
+            let mut line = String::new();
+            if request.read_line(&mut line)? == 0 {
+                bail!("request ended before its headers");
+            }
+            if line == "\r\n" {
+                break;
+            }
+        }
+        Ok(stream)
+    }
+
+    #[test]
+    #[cfg_attr(miri, ignore = "requires networking")]
+    fn get_text_retries_timeouts() -> Result<()> {
+        for prefix in [
+            b"".as_slice(),
+            b"HTTP/1.1 200 OK\r\nContent-Length: 2\r\nConnection: close\r\n\r\na",
+        ] {
+            for recover in [true, false] {
+                let listener = TcpListener::bind("127.0.0.1:0")?;
+                listener.set_nonblocking(true)?;
+                let url = format!("http://{}/", listener.local_addr()?);
+                let client = HttpClient {
+                    agent: ureq::Agent::config_builder()
+                        .proxy(None)
+                        .timeout_recv_response(Some(Duration::from_millis(250)))
+                        .timeout_recv_body(Some(Duration::from_millis(250)))
+                        .timeout_global(Some(Duration::from_secs(5)))
+                        .build()
+                        .into(),
+                };
+                let client = thread::spawn(move || client.get_text(&url));
+                // Keep stalled connections open until the client finishes so
+                // only its timeouts, not server-side disconnects, trigger retries.
+                let mut stalled = Vec::new();
+                for attempt in 1..=3 {
+                    let mut stream = read_request(&listener)?;
+                    if recover && attempt == 3 {
+                        stream.write_all(
+                            b"HTTP/1.1 200 OK\r\nContent-Length: 2\r\nConnection: close\r\n\r\nok",
+                        )?;
+                    } else {
+                        stream.write_all(prefix)?;
+                        stalled.push(stream);
+                    }
+                }
+                let result = client.join().expect("client panicked");
+                drop(stalled);
+                if recover {
+                    assert_eq!(result?, "ok");
+                } else {
+                    let error = result.expect_err("three stalled requests must fail");
+                    assert!(
+                        matches!(error.downcast_ref(), Some(ureq::Error::Timeout(_))),
+                        "{error:#}"
+                    );
+                }
+                assert_eq!(
+                    listener
+                        .accept()
+                        .expect_err("unexpected fourth request")
+                        .kind(),
+                    io::ErrorKind::WouldBlock
+                );
+            }
+        }
+        Ok(())
+    }
+
+    #[rstest]
+    #[case::not_found(&[404], Err(404))]
+    #[case::retry_succeeds(&[503, 200], Ok("ok"))]
+    #[case::retries_exhausted(&[503, 503, 503], Err(503))]
+    #[cfg_attr(miri, ignore = "requires networking")]
+    fn get_text_http_statuses(
+        #[case] statuses: &[u16],
+        #[case] expected: Result<&str, u16>,
+    ) -> Result<()> {
+        let listener = TcpListener::bind("127.0.0.1:0")?;
+        listener.set_nonblocking(true)?;
+        let url = format!("http://{}/", listener.local_addr()?);
+        let client = thread::spawn(move || {
+            let client = HttpClient {
+                agent: ureq::Agent::config_builder()
+                    .proxy(None)
+                    .timeout_global(Some(Duration::from_secs(1)))
+                    .build()
+                    .into(),
+            };
+            client.get_text(&url)
+        });
+        for status in statuses {
+            let mut stream = read_request(&listener)?;
+            write!(
+                stream,
+                "HTTP/1.1 {status} Test\r\nContent-Length: 2\r\nConnection: close\r\n\r\nok",
+            )?;
+        }
+        let result = client.join().expect("client panicked");
+        match expected {
+            Ok(text) => assert_eq!(result?, text),
+            Err(status) => {
+                let error = result.expect_err("HTTP error must fail");
+                let error = error.downcast::<ureq::Error>()?;
+                let ureq::Error::StatusCode(actual) = error else {
+                    panic!("expected HTTP status {status}, got {error}");
+                };
+                assert_eq!(actual, status);
+            }
+        }
+        assert_eq!(
+            listener
+                .accept()
+                .expect_err("unexpected extra request")
+                .kind(),
+            io::ErrorKind::WouldBlock
+        );
+        Ok(())
+    }
+
+    #[test]
+    #[cfg_attr(miri, ignore = "requires networking")]
+    fn download_outlives_metadata_timeouts() -> Result<()> {
+        let listener = TcpListener::bind("127.0.0.1:0")?;
+        listener.set_nonblocking(true)?;
+        let url = format!("http://{}/kernel.deb", listener.local_addr()?);
+        let server = thread::spawn(move || -> Result<()> {
+            let mut stream = read_request(&listener)?;
+            stream
+                .write_all(b"HTTP/1.1 200 OK\r\nContent-Length: 2\r\nConnection: close\r\n\r\na")?;
+            // Headers arrive promptly, but the body takes longer than the
+            // metadata response limits without exceeding the global timeout.
+            thread::sleep(Duration::from_secs(1));
+            stream.write_all(b"b")?;
+            Ok(())
+        });
+
+        let client = HttpClient {
+            agent: ureq::Agent::config_builder()
+                .proxy(None)
+                .timeout_recv_response(Some(Duration::from_millis(250)))
+                .timeout_recv_body(Some(Duration::from_millis(250)))
+                .timeout_global(Some(Duration::from_secs(15)))
+                .build()
+                .into(),
+        };
+        let output = tempfile::tempdir()?;
+        let result = client.download_to_dir(&url, output.path());
+        let server_result = server.join().expect("server panicked");
+        let path = result?;
+        server_result?;
+        assert_eq!(fs::read(path)?, b"ab");
+        Ok(())
+    }
 }

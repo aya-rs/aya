@@ -1,7 +1,7 @@
 #include <linux/types.h>
 // __wsum is missing from types.h, compare:
-// https://github.com/torvalds/linux/blob/v5.13/include/uapi/linux/types.h
-// https://github.com/libbpf/libbpf/blob/v1.5.0/include/linux/types.h
+// https://github.com/torvalds/linux/blob/62fb9874f/include/uapi/linux/types.h
+// https://github.com/libbpf/libbpf/blob/09b9e8310/include/linux/types.h
 typedef __u32 __bitwise __wsum;
 
 #include <bpf/bpf_helpers.h>

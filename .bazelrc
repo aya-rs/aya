@@ -31,7 +31,8 @@ common:remote --remote_executor=grpcs://remote.buildbuddy.io
 common:remote --remote_cache_compression
 common:remote --remote_download_minimal
 
-# Keep remote backends fed
+# Keep remote backends fed; throttling also waits for remote uploads.
+# https://github.com/bazelbuild/bazel/issues/28734
 common:remote --noexperimental_throttle_remote_action_building
 common:remote --jobs=400
 

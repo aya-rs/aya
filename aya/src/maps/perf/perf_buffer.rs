@@ -2,7 +2,7 @@ use std::{
     convert::Infallible,
     io,
     ops::ControlFlow,
-    os::fd::{AsFd, BorrowedFd},
+    os::fd::{AsFd, AsRawFd, BorrowedFd, RawFd},
     ptr::{self, NonNull},
     slice,
     sync::atomic::{self, Ordering},
@@ -20,13 +20,14 @@ use crate::{
         PerfEventConfig, PerfEventScope, SamplePolicy, SoftwareEvent, WakeupPolicy,
     },
     sys::{PerfEventIoctlRequest, SyscallError, perf_event_ioctl, perf_event_open},
-    util::MMap,
+    util::{MMap, page_size},
 };
 
 /// Perf buffer error.
 #[derive(Error, Debug)]
 pub enum PerfBufferError {
-    /// the page count value passed to [`PerfEventArray::open`](crate::maps::PerfEventArray::open) is invalid.
+    /// The page count passed to
+    /// [`PerfEventArrayBuffer::open`](super::PerfEventArrayBuffer::open) is invalid.
     #[error("invalid page count {page_count}, the value must be a power of two")]
     InvalidPageCount {
         /// the page count
@@ -56,10 +57,6 @@ pub enum PerfBufferError {
         /// the source of this error
         io_error: io::Error,
     },
-
-    /// An IO error occurred.
-    #[error(transparent)]
-    IOError(#[from] io::Error),
 }
 
 /// An event read from a perf event array buffer.
@@ -94,24 +91,33 @@ pub enum PerfEvent<'a> {
     },
 }
 
+/// A circular buffer that receives events emitted with `bpf_perf_event_output()`.
 #[cfg_attr(test, derive(Debug))]
-pub(crate) struct PerfBuffer {
+pub struct PerfEventArrayBuffer {
     mmap: MMap,
     size: usize,
     page_size: usize,
     fd: crate::MockableFd,
 }
 
-impl PerfBuffer {
-    pub(crate) fn open(
-        cpu: u32,
-        page_size: usize,
-        page_count: usize,
-    ) -> Result<Self, PerfBufferError> {
+impl PerfEventArrayBuffer {
+    /// Opens a perf event array buffer for `cpu`.
+    ///
+    /// `page_count` must be a power of two.
+    ///
+    /// The buffer must be inserted into a [`PerfEventArray`](super::PerfEventArray)
+    /// before an eBPF program can write events to it.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`PerfBufferError`] if `page_count` is invalid, or if the perf
+    /// event array buffer cannot be opened, mapped, or enabled.
+    pub fn open(cpu: u32, page_count: usize) -> Result<Self, PerfBufferError> {
         if !page_count.is_power_of_two() {
             return Err(PerfBufferError::InvalidPageCount { page_count });
         }
 
+        let page_size = page_size();
         let fd = perf_event_open(
             PerfEventConfig::Software(SoftwareEvent::BpfOutput),
             PerfEventScope::AllProcessesOneCpu { cpu },
@@ -138,8 +144,11 @@ impl PerfBuffer {
             fd,
         };
 
-        perf_event_ioctl(perf_buf.fd.as_fd(), PerfEventIoctlRequest::Enable)
-            .map_err(|io_error| PerfBufferError::PerfEventEnableError { io_error })?;
+        perf_event_ioctl(
+            perf_buf.fd.as_fd(),
+            PerfEventIoctlRequest::Enable { group: false },
+        )
+        .map_err(|io_error| PerfBufferError::PerfEventEnableError { io_error })?;
 
         Ok(perf_buf)
     }
@@ -151,7 +160,7 @@ impl PerfBuffer {
     /// Read `data_head`, the kernel's producer position. Pairs with the
     /// kernel's `smp_wmb() + WRITE_ONCE()` publish [1].
     ///
-    /// [1]: https://github.com/torvalds/linux/blob/05f7e89a/kernel/events/ring_buffer.c#L113-L114
+    /// [1]: https://github.com/torvalds/linux/blob/05f7e89ab/kernel/events/ring_buffer.c#L113-L114
     fn data_head(&self) -> u64 {
         // SAFETY: `self.buf()` points to the mmap'd `perf_event_mmap_page` for
         // the lifetime of `self`, so the field projection is in-bounds and
@@ -194,11 +203,14 @@ impl PerfBuffer {
         unsafe { self.buf().as_ptr().byte_add(self.page_size) }.cast::<u8>()
     }
 
-    pub(crate) fn readable(&self) -> bool {
+    /// Returns true if the buffer contains events that have not been read.
+    pub fn readable(&self) -> bool {
         self.data_head() != self.data_tail()
     }
 
-    pub(crate) fn try_fold<B, C, F>(&mut self, init: C, mut f: F) -> ControlFlow<B, C>
+    /// Applies `f` to available events as long as it returns
+    /// [`ControlFlow::Continue`], producing a single, final value.
+    pub fn try_fold<B, C, F>(&mut self, init: C, mut f: F) -> ControlFlow<B, C>
     where
         F: FnMut(C, PerfEvent<'_>) -> ControlFlow<B, C>,
     {
@@ -212,13 +224,12 @@ impl PerfBuffer {
         // it pairs with the kernel's `READ_ONCE()` [1] in one SeqCst barrier
         // instead of per event, and remains panic-safe.
         //
-        // [1]: https://github.com/torvalds/linux/blob/05f7e89a/kernel/events/ring_buffer.c#L202
+        // [1]: https://github.com/torvalds/linux/blob/05f7e89ab/kernel/events/ring_buffer.c#L202
         let mut guard = scopeguard::guard(initial_tail, |tail| {
             if tail != initial_tail {
                 atomic::fence(Ordering::SeqCst);
-                // SAFETY: `data_tail_ptr` was derived from a `&mut PerfBuffer`
-                // outliving this scope; userspace is the sole writer of
-                // `data_tail`.
+                // SAFETY: `data_tail_ptr` was derived from a `&mut PerfEventArrayBuffer` outliving
+                // this scope; userspace is the sole writer of `data_tail`.
                 unsafe {
                     ptr::write_volatile(data_tail_ptr.as_ptr(), tail);
                 }
@@ -240,7 +251,7 @@ impl PerfBuffer {
             // `perf_event_header` and the 8-byte header fits before the wrap
             // boundary.
             //
-            // [1]: https://github.com/torvalds/linux/blob/05f7e89a/kernel/events/core.c#L8451
+            // [1]: https://github.com/torvalds/linux/blob/05f7e89ab/kernel/events/core.c#L8451
             let event: perf_event_header = unsafe { ptr::read(base.add(event_start).cast()) };
             *tail = tail.wrapping_add(u64::from(event.size));
 
@@ -284,7 +295,7 @@ impl PerfBuffer {
                     // `{ header, u64 id, u64 lost, sample_id }` [1]; skip past
                     // `id` to read the `lost` count.
                     //
-                    // [1]: https://github.com/torvalds/linux/blob/05f7e89a/include/uapi/linux/perf_event.h#L906-L914
+                    // [1]: https://github.com/torvalds/linux/blob/05f7e89ab/include/uapi/linux/perf_event.h#L906-L914
                     let lost_offset =
                         (event_start + size_of::<perf_event_header>() + size_of::<u64>())
                             % mmap_size;
@@ -294,11 +305,11 @@ impl PerfBuffer {
                     PerfEvent::Lost { count }
                 }
                 event_type => {
-                    // `PerfBuffer::open` configures `SoftwareEvent::BpfOutput`
+                    // `PerfEventArrayBuffer::open` configures `SoftwareEvent::BpfOutput`
                     // with no side-band attr flags [1]; the kernel only emits
                     // SAMPLE and LOST.
                     //
-                    // [1]: https://github.com/torvalds/linux/blob/05f7e89a/kernel/events/core.c#L5182-L5200
+                    // [1]: https://github.com/torvalds/linux/blob/05f7e89ab/kernel/events/core.c#L5182-L5200
                     debug_assert!(false, "unexpected perf record type: {event_type}");
                     continue;
                 }
@@ -313,7 +324,9 @@ impl PerfBuffer {
         ControlFlow::Continue(acc)
     }
 
-    pub(crate) fn fold<C, F>(&mut self, init: C, mut f: F) -> C
+    /// Folds each available event into an accumulator by applying `f`,
+    /// returning the final result.
+    pub fn fold<C, F>(&mut self, init: C, mut f: F) -> C
     where
         F: FnMut(C, PerfEvent<'_>) -> C,
     {
@@ -322,7 +335,8 @@ impl PerfBuffer {
         acc
     }
 
-    pub(crate) fn for_each<F>(&mut self, mut f: F)
+    /// Calls `f` on each available event.
+    pub fn for_each<F>(&mut self, mut f: F)
     where
         F: FnMut(PerfEvent<'_>),
     {
@@ -330,16 +344,24 @@ impl PerfBuffer {
     }
 }
 
-impl AsFd for PerfBuffer {
+impl AsFd for PerfEventArrayBuffer {
     fn as_fd(&self) -> BorrowedFd<'_> {
         self.fd.as_fd()
     }
 }
 
-impl Drop for PerfBuffer {
+impl AsRawFd for PerfEventArrayBuffer {
+    fn as_raw_fd(&self) -> RawFd {
+        self.as_fd().as_raw_fd()
+    }
+}
+
+impl Drop for PerfEventArrayBuffer {
     fn drop(&mut self) {
-        let _unused: io::Result<()> =
-            perf_event_ioctl(self.fd.as_fd(), PerfEventIoctlRequest::Disable);
+        let _unused: io::Result<()> = perf_event_ioctl(
+            self.fd.as_fd(),
+            PerfEventIoctlRequest::Disable { group: false },
+        );
     }
 }
 
@@ -360,19 +382,32 @@ mod tests {
         size: u32,
     }
 
-    const PAGE_SIZE: usize = 4096;
-    #[repr(C)]
-    union MMappedBuf {
-        mmap_page: perf_event_mmap_page,
-        data: [u8; PAGE_SIZE * 2],
+    type MMappedBuf = Box<[u64]>;
+
+    fn mmapped_buf() -> MMappedBuf {
+        let page_size = page_size();
+        assert!(page_size.is_multiple_of(size_of::<u64>()));
+        assert!(
+            align_of::<u64>() >= align_of::<perf_event_mmap_page>(),
+            "u64 alignment is insufficient for perf_event_mmap_page"
+        );
+        vec![0; page_size * 2 / size_of::<u64>()].into_boxed_slice()
+    }
+
+    fn mmap_page(buf: &mut MMappedBuf) -> &mut perf_event_mmap_page {
+        // SAFETY: `buf` is aligned for `perf_event_mmap_page` and contains two
+        // pages, so the first page can hold the metadata.
+        unsafe { &mut *buf.as_mut_ptr().cast() }
     }
 
     fn fake_mmap(buf: &mut MMappedBuf) {
-        let buf: *mut _ = buf;
+        let buf: *mut u8 = buf.as_mut_ptr().cast();
         override_syscall(|call| match call {
             Syscall::PerfEventOpen { .. } => Ok(crate::MockableFd::mock_signed_fd().into()),
             Syscall::PerfEventIoctl { .. } => Ok(0),
-            call @ Syscall::Ebpf { .. } => panic!("unexpected syscall: {call:?}"),
+            call @ (Syscall::Ebpf { .. } | Syscall::PerfEventRead { .. }) => {
+                panic!("unexpected syscall: {call:?}")
+            }
         });
         TEST_MMAP_RET.with(|ret| *ret.borrow_mut() = buf.cast());
     }
@@ -380,26 +415,26 @@ mod tests {
     #[test]
     fn test_invalid_page_count() {
         assert_matches!(
-            PerfBuffer::open(1, PAGE_SIZE, 0),
+            PerfEventArrayBuffer::open(1, 0),
             Err(PerfBufferError::InvalidPageCount { .. })
         );
         assert_matches!(
-            PerfBuffer::open(1, PAGE_SIZE, 3),
+            PerfEventArrayBuffer::open(1, 3),
             Err(PerfBufferError::InvalidPageCount { .. })
         );
         assert_matches!(
-            PerfBuffer::open(1, PAGE_SIZE, 5),
+            PerfEventArrayBuffer::open(1, 5),
             Err(PerfBufferError::InvalidPageCount { .. })
         );
     }
 
     fn write<T: Debug>(mmapped_buf: &mut MMappedBuf, offset: usize, value: T) -> usize {
-        let dst: *mut _ = mmapped_buf;
+        let dst: *mut u8 = mmapped_buf.as_mut_ptr().cast();
         let head = offset + size_of::<T>();
         unsafe {
-            ptr::write_unaligned(dst.byte_add(PAGE_SIZE + offset).cast(), value);
-            mmapped_buf.mmap_page.data_head = head as u64;
+            ptr::write_unaligned(dst.add(page_size() + offset).cast(), value);
         }
+        mmap_page(mmapped_buf).data_head = head as u64;
         head
     }
 
@@ -444,9 +479,7 @@ mod tests {
     #[case::single(&[0xCAFEBABEu32])]
     #[case::consecutive(&[0xCAFEBABEu32, 0xBADCAFEu32])]
     fn test_for_each_samples(#[case] expected: &[u32]) {
-        let mut mmapped_buf = MMappedBuf {
-            data: [0; PAGE_SIZE * 2],
-        };
+        let mut mmapped_buf = mmapped_buf();
 
         let mut offset = 0;
         for &v in expected {
@@ -454,7 +487,7 @@ mod tests {
         }
 
         fake_mmap(&mut mmapped_buf);
-        let mut buf = PerfBuffer::open(1, PAGE_SIZE, 1).unwrap();
+        let mut buf = PerfEventArrayBuffer::open(1, 1).unwrap();
 
         let mut payloads = Vec::new();
         buf.for_each(|event| match event {
@@ -476,9 +509,7 @@ mod tests {
             count: u64,
         }
 
-        let mut mmapped_buf = MMappedBuf {
-            data: [0; PAGE_SIZE * 2],
-        };
+        let mut mmapped_buf = mmapped_buf();
 
         write(
             &mut mmapped_buf,
@@ -495,7 +526,7 @@ mod tests {
         );
 
         fake_mmap(&mut mmapped_buf);
-        let mut buf = PerfBuffer::open(1, PAGE_SIZE, 1).unwrap();
+        let mut buf = PerfEventArrayBuffer::open(1, 1).unwrap();
 
         let mut events = Vec::new();
         buf.for_each(|event| match event {
@@ -511,12 +542,11 @@ mod tests {
     // Wrap fixtures fix `data_head` up afterwards to match the real kernel
     // contract (tail + total_event_size).
     fn fixture_wrap_data(mmapped_buf: &mut MMappedBuf) -> &'static [u8] {
-        let (left, right) = if cfg!(target_endian = "little") {
-            (0xCAFEBABEu32, 0xBAADCAFEu32)
-        } else {
-            (0xBAADCAFEu32, 0xCAFEBABEu32)
+        let (left, right) = cfg_select! {
+            target_endian = "little" => (0xCAFEBABEu32, 0xBAADCAFEu32),
+            target_endian = "big" => (0xBAADCAFEu32, 0xCAFEBABEu32),
         };
-        let offset = PAGE_SIZE - size_of::<TestPerfRecord<u32>>();
+        let offset = page_size() - size_of::<TestPerfRecord<u32>>();
         write(
             mmapped_buf,
             offset,
@@ -533,21 +563,19 @@ mod tests {
             },
         );
         write(mmapped_buf, 0, right);
-        mmapped_buf.mmap_page.data_tail = offset as u64;
-        mmapped_buf.mmap_page.data_head = (offset + size_of::<TestPerfRecord<u64>>()) as u64;
+        mmap_page(mmapped_buf).data_tail = offset as u64;
+        mmap_page(mmapped_buf).data_head = (offset + size_of::<TestPerfRecord<u64>>()) as u64;
         static EXPECTED: [u8; 8] = 0xBAADCAFECAFEBABEu64.to_ne_bytes();
         &EXPECTED
     }
 
     #[test]
     fn test_for_each_wrap() {
-        let mut mmapped_buf = MMappedBuf {
-            data: [0; PAGE_SIZE * 2],
-        };
+        let mut mmapped_buf = mmapped_buf();
         let expected = fixture_wrap_data(&mut mmapped_buf);
 
         fake_mmap(&mut mmapped_buf);
-        let mut buf = PerfBuffer::open(1, PAGE_SIZE, 1).unwrap();
+        let mut buf = PerfEventArrayBuffer::open(1, 1).unwrap();
 
         let mut got: Vec<u8> = Vec::new();
         buf.for_each(|event| match event {

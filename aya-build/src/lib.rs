@@ -42,18 +42,18 @@ fn target_arch_fixup(target_arch: Cow<'_, str>) -> Cow<'_, str> {
 /// prevent their use for the time being.
 ///
 /// [bindeps]: https://doc.rust-lang.org/nightly/cargo/reference/unstable.html?highlight=feature#artifact-dependencies
-#[expect(clippy::print_stdout, reason = "println! is used for cargo:warning")]
+#[expect(clippy::print_stdout, reason = "println! is used for cargo::warning")]
 pub fn build_ebpf<'a>(
     packages: impl IntoIterator<Item = Package<'a>>,
     toolchain: Toolchain<'a>,
 ) -> Result<()> {
     const AYA_BUILD_SKIP: &str = "AYA_BUILD_SKIP";
-    println!("cargo:rerun-if-env-changed={AYA_BUILD_SKIP}");
+    println!("cargo::rerun-if-env-changed={AYA_BUILD_SKIP}");
     if let Some(aya_build_skip) = env::var_os(AYA_BUILD_SKIP)
         && (aya_build_skip.eq("1") || aya_build_skip.eq_ignore_ascii_case("true"))
     {
         println!(
-            "cargo:warning={AYA_BUILD_SKIP}={}; skipping eBPF build",
+            "cargo::warning={AYA_BUILD_SKIP}={}; skipping eBPF build",
             aya_build_skip.display()
         );
         return Ok(());
@@ -95,7 +95,7 @@ pub fn build_ebpf<'a>(
             OsStr::new(toolchain.as_str()),
         ],
         Err(err) => {
-            println!("cargo:warning=which({RUSTUP})={err}; proceeding with current toolchain");
+            println!("cargo::warning=which({RUSTUP})={err}; proceeding with current toolchain");
             &[]
         }
     };
@@ -134,7 +134,7 @@ pub fn build_ebpf<'a>(
         // *library* target or any of its dependencies change. Since we depend on `name`'s *binary*
         // targets, that only gets us half of the way. This stanza ensures cargo will rebuild us on
         // changes to the binaries too, which gets us the rest of the way.
-        println!("cargo:rerun-if-changed={root_dir}");
+        println!("cargo::rerun-if-changed={root_dir}");
 
         let mut cmd = cmd("cargo");
         cmd.args([
@@ -223,7 +223,7 @@ pub fn build_ebpf<'a>(
         let stderr = std::thread::spawn(move || {
             for line in stderr.lines() {
                 let line = line.expect("read line");
-                println!("cargo:warning={line}");
+                println!("cargo::warning={line}");
             }
         });
 
@@ -244,11 +244,11 @@ pub fn build_ebpf<'a>(
                 }
                 Message::CompilerMessage(CompilerMessage { message, .. }) => {
                     for line in message.rendered.unwrap_or_default().split('\n') {
-                        println!("cargo:warning={line}");
+                        println!("cargo::warning={line}");
                     }
                 }
                 Message::TextLine(line) => {
-                    println!("cargo:warning={line}");
+                    println!("cargo::warning={line}");
                 }
                 _ => {}
             }
@@ -298,31 +298,21 @@ impl<'a> Toolchain<'a> {
 }
 
 /// Emit cfg flags that describe the desired BPF target architecture.
-#[expect(clippy::print_stdout, reason = "println! is used for cargo:warning")]
+#[expect(clippy::print_stdout, reason = "println! is used for cargo::warning")]
 pub fn emit_bpf_target_arch_cfg() -> Result<()> {
-    // The presence of this environment variable indicates that `--cfg
-    // bpf_target_arch="..."` was passed to the compiler, so we don't need to
-    // emit it again. Note that we cannot *set* this environment variable - it
-    // is set by cargo.
-    const BPF_TARGET_ARCH: &str = "CARGO_CFG_BPF_TARGET_ARCH";
-    println!("cargo:rerun-if-env-changed={BPF_TARGET_ARCH}");
-
     // Users may directly set this environment variable in situations where
     // using RUSTFLAGS to set `--cfg bpf_target_arch="..."` is not possible or
     // not ergonomic. In contrast to RUSTFLAGS this mechanism reuses the target
     // cache for all values, producing many more invalidations.
     const AYA_BPF_TARGET_ARCH: &str = "AYA_BPF_TARGET_ARCH";
-    println!("cargo:rerun-if-env-changed={AYA_BPF_TARGET_ARCH}");
+    println!("cargo::rerun-if-env-changed={AYA_BPF_TARGET_ARCH}");
 
-    const HOST: &str = "HOST";
-    println!("cargo:rerun-if-env-changed={HOST}");
-
-    if env::var_os(BPF_TARGET_ARCH).is_none() {
-        let host = env::var_os(HOST).ok_or_else(|| anyhow!("{HOST} not set"))?;
-        let host = host
-            .into_string()
-            .map_err(|host| anyhow!("OsString::into_string({HOST}={})", host.display()))?;
-        let host = host.as_str();
+    // The presence of this environment variable indicates that `--cfg
+    // bpf_target_arch="..."` was passed to the compiler, so we don't need to
+    // emit it again. Note that we cannot *set* this environment variable - it
+    // is set by cargo.
+    if env::var_os("CARGO_CFG_BPF_TARGET_ARCH").is_none() {
+        let host;
 
         let bpf_target_arch = if let Some(bpf_target_arch) = env::var_os(AYA_BPF_TARGET_ARCH) {
             bpf_target_arch
@@ -335,13 +325,33 @@ pub fn emit_bpf_target_arch_cfg() -> Result<()> {
                 })?
                 .into()
         } else {
-            target_arch_fixup(
+            const TARGET_ARCH: &str = "CARGO_CFG_TARGET_ARCH";
+            let target_arch =
+                env::var_os(TARGET_ARCH).ok_or_else(|| anyhow!("{TARGET_ARCH} not set"))?;
+            let target_arch = target_arch.into_string().map_err(|target_arch| {
+                anyhow!(
+                    "OsString::into_string({TARGET_ARCH}={})",
+                    target_arch.display()
+                )
+            })?;
+            let target_arch = if target_arch == "bpf" {
+                const HOST: &str = "HOST";
+                host = {
+                    let host = env::var_os(HOST).ok_or_else(|| anyhow!("{HOST} not set"))?;
+                    host.into_string().map_err(|host| {
+                        anyhow!("OsString::into_string({HOST}={})", host.display())
+                    })?
+                };
+                let host = host.as_str();
                 host.split_once('-')
                     .map_or(host, |(arch, _rest)| arch)
-                    .into(),
-            )
+                    .into()
+            } else {
+                target_arch.into()
+            };
+            target_arch_fixup(target_arch)
         };
-        println!("cargo:rustc-cfg=bpf_target_arch=\"{bpf_target_arch}\"");
+        println!("cargo::rustc-cfg=bpf_target_arch=\"{bpf_target_arch}\"");
     }
 
     print!("cargo::rustc-check-cfg=cfg(bpf_target_arch, values(");

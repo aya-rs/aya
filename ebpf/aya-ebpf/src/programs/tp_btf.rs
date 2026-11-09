@@ -33,8 +33,6 @@ impl BtfTracePointContext {
     ///     Ok(0)
     /// }
     /// ```
-    ///
-    /// [1]: https://elixir.bootlin.com/linux/latest/source/include/linux/lsm_hook_defs.h
     pub fn arg<T: Argument>(&self, n: usize) -> T {
         btf_arg(self, n)
     }

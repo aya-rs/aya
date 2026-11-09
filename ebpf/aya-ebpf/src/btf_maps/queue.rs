@@ -1,4 +1,4 @@
-use core::{borrow::Borrow, mem::MaybeUninit, ptr};
+use core::{mem::MaybeUninit, ptr};
 
 use aya_ebpf_bindings::bindings::BPF_F_NO_PREALLOC;
 
@@ -42,7 +42,7 @@ btf_map_def!(
 );
 
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> Queue<T, MAX_ENTRIES, FLAGS> {
-    const _CHECK: () = {
+    const CHECK: () = {
         assert!(size_of::<T>() > 0, "queue value must be non-zero sized.");
         assert!(
             MAX_ENTRIES > 0,
@@ -59,11 +59,9 @@ impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> Queue<T, MAX_ENTRIES, FLAG
     /// `flags` is forwarded to `bpf_map_push_elem`; setting `BPF_EXIST`
     /// evicts the oldest element when the queue is full.
     #[inline(always)]
-    pub fn push(&self, value: impl Borrow<T>, flags: u64) -> Result<(), i32> {
-        let () = Self::_CHECK;
-        let ret = unsafe {
-            bpf_map_push_elem(self.as_ptr(), ptr::from_ref(value.borrow()).cast(), flags)
-        };
+    pub fn push(&self, value: &T, flags: u64) -> Result<(), i32> {
+        let () = Self::CHECK;
+        let ret = unsafe { bpf_map_push_elem(self.as_ptr(), ptr::from_ref(value).cast(), flags) };
         (ret == 0).then_some(()).ok_or(ret as i32)
     }
 
@@ -79,7 +77,7 @@ impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> Queue<T, MAX_ENTRIES, FLAG
     /// [`bpf_map_pop_elem`]: https://docs.ebpf.io/linux/helper-function/bpf_map_pop_elem/
     #[inline(always)]
     pub fn pop(&self) -> Result<Option<T>, i32> {
-        let () = Self::_CHECK;
+        let () = Self::CHECK;
         unsafe {
             let mut value = MaybeUninit::<T>::uninit();
             match bpf_map_pop_elem(self.as_ptr(), value.as_mut_ptr().cast()) as i32 {
@@ -102,7 +100,7 @@ impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> Queue<T, MAX_ENTRIES, FLAG
     /// [`bpf_map_peek_elem`]: https://docs.ebpf.io/linux/helper-function/bpf_map_peek_elem/
     #[inline(always)]
     pub fn peek(&self) -> Result<Option<T>, i32> {
-        let () = Self::_CHECK;
+        let () = Self::CHECK;
         unsafe {
             let mut value = MaybeUninit::<T>::uninit();
             match bpf_map_peek_elem(self.as_ptr(), value.as_mut_ptr().cast()) as i32 {

@@ -1,9 +1,4 @@
 //! Type aliases to C types like `c_int` for use with bindgen
-//!
-//! # MSRV
-//!
-//! This crate is guaranteed to compile on stable Rust 1.30.0 and up. It *might* compile with older
-//! versions but that may change in any new patch release.
 #![no_std]
 #![expect(non_camel_case_types, reason = "C type aliases use libc naming")]
 
@@ -17,22 +12,25 @@ mod ad {
     pub type c_int = i32;
     pub type c_uint = u32;
 
-    #[cfg(any(
-        bpf_target_arch = "aarch64",
-        bpf_target_arch = "arm",
-        bpf_target_arch = "powerpc64",
-        bpf_target_arch = "riscv64",
-        bpf_target_arch = "s390x",
-        bpf_target_arch = "mips",
-    ))]
-    pub type c_char = super::c_uchar;
-
-    #[cfg(any(
-        bpf_target_arch = "loongarch64",
-        bpf_target_arch = "mips64",
-        bpf_target_arch = "x86_64",
-    ))]
-    pub type c_char = super::c_schar;
+    cfg_select! {
+        any(
+            bpf_target_arch = "aarch64",
+            bpf_target_arch = "arm",
+            bpf_target_arch = "powerpc64",
+            bpf_target_arch = "riscv64",
+            bpf_target_arch = "s390x",
+            bpf_target_arch = "mips",
+        ) => {
+            pub type c_char = super::c_uchar;
+        }
+        any(
+            bpf_target_arch = "loongarch64",
+            bpf_target_arch = "mips64",
+            bpf_target_arch = "x86_64",
+        ) => {
+            pub type c_char = super::c_schar;
+        }
+    }
 }
 
 #[cfg(any(
@@ -81,29 +79,25 @@ mod ad {
 }
 
 // NOTE c_{,u}long definitions come from libc v0.2.3
-#[cfg(not(any(windows, target_os = "redox", target_os = "solaris")))]
 mod od {
-    #[cfg(any(target_pointer_width = "16", target_pointer_width = "32"))]
-    pub type c_long = i32;
-    #[cfg(any(target_pointer_width = "16", target_pointer_width = "32"))]
-    pub type c_ulong = u32;
-
-    #[cfg(target_pointer_width = "64")]
-    pub type c_long = i64;
-    #[cfg(target_pointer_width = "64")]
-    pub type c_ulong = u64;
-}
-
-#[cfg(windows)]
-mod od {
-    pub type c_long = i32;
-    pub type c_ulong = u32;
-}
-
-#[cfg(any(target_os = "redox", target_os = "solaris"))]
-mod od {
-    pub type c_long = i64;
-    pub type c_ulong = u64;
+    cfg_select! {
+        windows => {
+            pub type c_long = i32;
+            pub type c_ulong = u32;
+        }
+        any(target_os = "redox", target_os = "solaris") => {
+            pub type c_long = i64;
+            pub type c_ulong = u64;
+        }
+        any(target_pointer_width = "16", target_pointer_width = "32") => {
+            pub type c_long = i32;
+            pub type c_ulong = u32;
+        }
+        target_pointer_width = "64" => {
+            pub type c_long = i64;
+            pub type c_ulong = u64;
+        }
+    }
 }
 
 pub type int8_t = i8;

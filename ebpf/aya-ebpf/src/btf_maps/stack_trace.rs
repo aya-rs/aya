@@ -40,6 +40,7 @@ btf_map_def!(
         const DEPTH: usize = { PERF_MAX_STACK_DEPTH as usize },
     >,
     map_type: BPF_MAP_TYPE_STACK_TRACE,
+    map_trait: crate::programs::tracing::sealed::StackTraceMap,
     max_entries: MAX_ENTRIES,
     map_flags: FLAGS,
     key_type: u32,
@@ -50,9 +51,9 @@ impl<const MAX_ENTRIES: usize, const FLAGS: usize, const DEPTH: usize>
     StackTrace<MAX_ENTRIES, FLAGS, DEPTH>
 {
     // `const _: ()` is forbidden in a generic impl; a named associated
-    // const is lazy without reference, hence `let () = Self::_CHECK` in
+    // const is lazy without reference, hence `let () = Self::CHECK` in
     // the `StackTraceMap::as_ptr` impl below.
-    const _CHECK: () = {
+    const CHECK: () = {
         assert!(DEPTH > 0, "stack trace DEPTH must be greater than zero.");
         assert!(
             MAX_ENTRIES > 0,
@@ -69,7 +70,7 @@ impl<const MAX_ENTRIES: usize, const FLAGS: usize, const DEPTH: usize>
     crate::programs::tracing::sealed::StackTraceMap for StackTrace<MAX_ENTRIES, FLAGS, DEPTH>
 {
     fn as_ptr(&self) -> *mut core::ffi::c_void {
-        let () = Self::_CHECK;
+        let () = Self::CHECK;
         self.as_ptr()
     }
 }

@@ -1487,12 +1487,12 @@ pub unsafe fn bpf_inode_storage_delete(
     fun(map, inode)
 }
 pub unsafe fn bpf_d_path(
-    path: *mut path,
+    path: *const path,
     buf: *mut ::aya_ebpf_cty::c_char,
     sz: __u32,
 ) -> ::aya_ebpf_cty::c_long {
     let fun: unsafe extern "C" fn(
-        path: *mut path,
+        path: *const path,
         buf: *mut ::aya_ebpf_cty::c_char,
         sz: __u32,
     ) -> ::aya_ebpf_cty::c_long = ::core::mem::transmute(147usize);
@@ -1962,14 +1962,14 @@ pub unsafe fn bpf_ima_file_hash(
     fun(file, dst, size)
 }
 pub unsafe fn bpf_kptr_xchg(
-    map_value: *mut ::aya_ebpf_cty::c_void,
+    dst: *mut ::aya_ebpf_cty::c_void,
     ptr: *mut ::aya_ebpf_cty::c_void,
 ) -> *mut ::aya_ebpf_cty::c_void {
     let fun: unsafe extern "C" fn(
-        map_value: *mut ::aya_ebpf_cty::c_void,
+        dst: *mut ::aya_ebpf_cty::c_void,
         ptr: *mut ::aya_ebpf_cty::c_void,
     ) -> *mut ::aya_ebpf_cty::c_void = ::core::mem::transmute(194usize);
-    fun(map_value, ptr)
+    fun(dst, ptr)
 }
 pub unsafe fn bpf_map_lookup_percpu_elem(
     map: *mut ::aya_ebpf_cty::c_void,
@@ -1990,13 +1990,13 @@ pub unsafe fn bpf_skc_to_mptcp_sock(sk: *mut ::aya_ebpf_cty::c_void) -> *mut mpt
 }
 pub unsafe fn bpf_dynptr_from_mem(
     data: *mut ::aya_ebpf_cty::c_void,
-    size: __u32,
+    size: __u64,
     flags: __u64,
     ptr: *mut bpf_dynptr,
 ) -> ::aya_ebpf_cty::c_long {
     let fun: unsafe extern "C" fn(
         data: *mut ::aya_ebpf_cty::c_void,
-        size: __u32,
+        size: __u64,
         flags: __u64,
         ptr: *mut bpf_dynptr,
     ) -> ::aya_ebpf_cty::c_long = ::core::mem::transmute(197usize);
@@ -2028,45 +2028,45 @@ pub unsafe fn bpf_ringbuf_discard_dynptr(ptr: *mut bpf_dynptr, flags: __u64) {
 }
 pub unsafe fn bpf_dynptr_read(
     dst: *mut ::aya_ebpf_cty::c_void,
-    len: __u32,
+    len: __u64,
     src: *const bpf_dynptr,
-    offset: __u32,
+    offset: __u64,
     flags: __u64,
 ) -> ::aya_ebpf_cty::c_long {
     let fun: unsafe extern "C" fn(
         dst: *mut ::aya_ebpf_cty::c_void,
-        len: __u32,
+        len: __u64,
         src: *const bpf_dynptr,
-        offset: __u32,
+        offset: __u64,
         flags: __u64,
     ) -> ::aya_ebpf_cty::c_long = ::core::mem::transmute(201usize);
     fun(dst, len, src, offset, flags)
 }
 pub unsafe fn bpf_dynptr_write(
     dst: *const bpf_dynptr,
-    offset: __u32,
+    offset: __u64,
     src: *mut ::aya_ebpf_cty::c_void,
-    len: __u32,
+    len: __u64,
     flags: __u64,
 ) -> ::aya_ebpf_cty::c_long {
     let fun: unsafe extern "C" fn(
         dst: *const bpf_dynptr,
-        offset: __u32,
+        offset: __u64,
         src: *mut ::aya_ebpf_cty::c_void,
-        len: __u32,
+        len: __u64,
         flags: __u64,
     ) -> ::aya_ebpf_cty::c_long = ::core::mem::transmute(202usize);
     fun(dst, offset, src, len, flags)
 }
 pub unsafe fn bpf_dynptr_data(
     ptr: *const bpf_dynptr,
-    offset: __u32,
-    len: __u32,
+    offset: __u64,
+    len: __u64,
 ) -> *mut ::aya_ebpf_cty::c_void {
     let fun: unsafe extern "C" fn(
         ptr: *const bpf_dynptr,
-        offset: __u32,
-        len: __u32,
+        offset: __u64,
+        len: __u64,
     ) -> *mut ::aya_ebpf_cty::c_void = ::core::mem::transmute(203usize);
     fun(ptr, offset, len)
 }

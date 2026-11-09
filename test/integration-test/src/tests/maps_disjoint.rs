@@ -21,7 +21,7 @@ fn test_maps_disjoint() {
 
     prog.load().unwrap();
     prog.attach(
-        "trigger_ebpf_program_maps_disjoint",
+        ["trigger_ebpf_program_maps_disjoint"],
         "/proc/self/exe",
         UProbeScope::AllProcesses,
     )
@@ -33,8 +33,8 @@ fn test_maps_disjoint() {
     let mut bar: HashMap<_, u32, u8> = HashMap::try_from(bar.unwrap()).unwrap();
     assert!(baz.is_none());
 
-    foo.set(0, 5, 0).unwrap();
-    bar.insert(0, 10, 0).unwrap();
+    foo.set(0, &5, 0).unwrap();
+    bar.insert(&0, &10, 0).unwrap();
 
     trigger_ebpf_program_maps_disjoint();
 

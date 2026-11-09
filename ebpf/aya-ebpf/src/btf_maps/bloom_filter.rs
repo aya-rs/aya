@@ -1,4 +1,4 @@
-use core::{borrow::Borrow, ptr};
+use core::ptr;
 
 use crate::{
     btf_maps::btf_map_def,
@@ -33,8 +33,8 @@ impl<T, const MAX_ENTRIES: usize, const FLAGS: usize, const HASH_FUNCS: usize>
     BloomFilter<T, MAX_ENTRIES, FLAGS, HASH_FUNCS>
 {
     #[inline(always)]
-    pub fn contains(&self, value: impl Borrow<T>) -> Result<(), i32> {
-        let value = ptr::from_ref(value.borrow());
+    pub fn contains(&self, value: &T) -> Result<(), i32> {
+        let value = ptr::from_ref(value);
         match unsafe { bpf_map_peek_elem(self.as_ptr(), value.cast_mut().cast()) } {
             0 => Ok(()),
             ret => Err(ret as i32),
@@ -42,8 +42,8 @@ impl<T, const MAX_ENTRIES: usize, const FLAGS: usize, const HASH_FUNCS: usize>
     }
 
     #[inline(always)]
-    pub fn insert(&self, value: impl Borrow<T>, flags: u64) -> Result<(), i32> {
-        let value = ptr::from_ref(value.borrow());
+    pub fn insert(&self, value: &T, flags: u64) -> Result<(), i32> {
+        let value = ptr::from_ref(value);
         match unsafe { bpf_map_push_elem(self.as_ptr(), value.cast(), flags) } {
             0 => Ok(()),
             ret => Err(ret as i32),

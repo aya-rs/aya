@@ -1,0 +1,86 @@
+name: Update Rust toolchains
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/actions.lock
+      - .github/workflows/nightly-update.yml
+      - .github/workflows/rust-toolchains.yml
+      - scripts/rust_toolchains.py
+
+  push:
+    branches:
+      - main
+
+  schedule:
+    - cron: 00 3 * * *
+
+  workflow_dispatch:
+
+jobs:
+  resolve:
+    permissions:
+      contents: read
+    uses: ./.github/workflows/rust-toolchains.yml
+    with:
+      channels: >-
+        ${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) &&
+        'stable nightly' || 'stable beta nightly' }}
+
+  # Repository-local: regenerate files and publish the update pull request.
+  update:
+    needs: resolve
+    if: >-
+      github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    # Code generation requires the MIPS libc headers available in Ubuntu 24.04.
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      pull-requests: write
+    # Keep one promotion running and only the newest promotion pending.
+    concurrency: nightly-promotion
+    # Only main can enter this environment and use its Crabby credential.
+    environment: nightly-promotion
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - name: Update the pinned Rust toolchains
+        env:
+          TOOLCHAINS: ${{ needs.resolve.outputs.rust-toolchains }}
+        run: python3 -B scripts/rust-toolchain-pins.py update "$TOOLCHAINS"
+
+      # Keep the lockfile synchronized with the native toolchain declarations.
+      - name: Update the Bazel lockfile
+        run: bazel mod deps --lockfile_mode=update
+
+      - uses: $/.github/actions/codegen
+        with:
+          toolchain: ${{ fromJSON(needs.resolve.outputs.rust-toolchains).nightly.rust }}
+
+      - name: Regenerate public API snapshots
+        run: cargo xtask public-api --bless
+
+      - name: Create or update the Rust toolchain pull request
+        id: pull-request
+        uses: peter-evans/create-pull-request@v8
+        with:
+          # GitHub requires approval before GITHUB_TOKEN-created PRs run CI.
+          # Crabby starts required checks automatically so updates auto-merge.
+          # Forks use GITHUB_TOKEN and approve their checks manually.
+          token: ${{ secrets.CRABBY_GITHUB_TOKEN || github.token }}
+          branch: create-pull-request/rust-nightly
+          commit-message: 'build: update Rust ${{ fromJSON(needs.resolve.outputs.rust-toolchains).stable.rust }}, ${{ fromJSON(needs.resolve.outputs.rust-toolchains).nightly.rust }}'
+          title: 'build: update Rust ${{ fromJSON(needs.resolve.outputs.rust-toolchains).stable.rust }}, ${{ fromJSON(needs.resolve.outputs.rust-toolchains).nightly.rust }}'
+          body: Update the Rust stable and nightly pins when needed and regenerate derived files.
+
+      - name: Enable auto-merge
+        # Forks do not receive the Crabby token required for auto-merge.
+        if: >-
+          !github.event.repository.fork &&
+          steps.pull-request.outputs.pull-request-number != ''
+        env:
+          GH_TOKEN: ${{ secrets.CRABBY_GITHUB_TOKEN }}
+          PULL_REQUEST: ${{ steps.pull-request.outputs.pull-request-number }}
+        run: gh pr merge "$PULL_REQUEST" --auto --rebase

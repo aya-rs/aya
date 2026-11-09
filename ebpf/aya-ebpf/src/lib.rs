@@ -9,18 +9,6 @@
     html_favicon_url = "https://aya-rs.dev/assets/images/crabby.svg"
 )]
 #![cfg_attr(
-    generic_const_exprs,
-    expect(
-        incomplete_features,
-        reason = "generic_const_exprs requires incomplete features"
-    ),
-    expect(
-        unstable_features,
-        reason = "generic_const_exprs requires unstable features"
-    ),
-    feature(generic_const_exprs)
-)]
-#![cfg_attr(
     target_arch = "bpf",
     expect(
         unstable_features,
@@ -33,8 +21,6 @@
 
 mod args;
 pub mod bindings;
-#[cfg(generic_const_exprs)]
-mod const_assert;
 pub use args::Argument;
 pub mod btf_maps;
 #[expect(
@@ -110,7 +96,7 @@ mod intrinsics {
 
     #[unsafe(no_mangle)]
     unsafe extern "C" fn memmove(dest: *mut u8, src: *mut u8, n: usize) {
-        let delta = (dest as usize).wrapping_sub(src as usize);
+        let delta = dest.addr().wrapping_sub(src.addr());
         if delta >= n {
             // We can copy forwards because either dest is far enough ahead of src,
             // or src is ahead of dest (and delta overflowed).
@@ -141,7 +127,7 @@ mod intrinsics {
 /// Equivalent to the [`BPF_F_ADJ_ROOM_ENCAP_L2`][uapi-bpf-adj-room-encap-l2] macro
 /// in the Linux user-space API.
 ///
-/// [uapi-bpf-adj-room-encap-l2]: https://github.com/torvalds/linux/blob/v6.17/include/uapi/linux/bpf.h#L6181
+/// [uapi-bpf-adj-room-encap-l2]: https://github.com/torvalds/linux/blob/e5f0a698b/include/uapi/linux/bpf.h#L6181
 #[doc(alias = "BPF_F_ADJ_ROOM_ENCAP_L2")]
 #[inline(always)]
 pub const fn bpf_f_adj_room_encap_l2(len: u64) -> u64 {
@@ -155,25 +141,24 @@ pub fn check_bounds_signed<T: Into<i64>>(value: T, lower: T, upper: T) -> bool {
     let value = value.into();
     let lower = lower.into();
     let upper = upper.into();
-    #[cfg(target_arch = "bpf")]
-    unsafe {
-        let mut in_bounds = 0u64;
-        core::arch::asm!(
-            "if {value} s< {lower} goto +2",
-            "if {value} s> {upper} goto +1",
-            "{i} = 1",
-            i = inout(reg) in_bounds,
-            lower = in(reg) lower,
-            upper = in(reg) upper,
-            value = in(reg) value,
-        );
-        in_bounds == 1
-    }
-    // We only need this for doc tests which are compiled for the host target
-    #[expect(clippy::unreachable, reason = "only used for doc tests")]
-    #[cfg(not(target_arch = "bpf"))]
-    {
-        unreachable!("value={value} lower={lower} upper={upper}");
+    cfg_select! {
+        target_arch = "bpf" => unsafe {
+            let mut in_bounds = 0u64;
+            core::arch::asm!(
+                "if {value} s< {lower} goto +2",
+                "if {value} s> {upper} goto +1",
+                "{i} = 1",
+                i = inout(reg) in_bounds,
+                lower = in(reg) lower,
+                upper = in(reg) upper,
+                value = in(reg) value,
+            );
+            in_bounds == 1
+        },
+        _ => {#[expect(clippy::unreachable, reason = "only used for doc tests")]
+        {
+            unreachable!("value={value} lower={lower} upper={upper}")
+        }}
     }
 }
 

@@ -23,7 +23,12 @@ fn record_stackid(#[case] stacks_map: &str, #[case] result_map: &str, #[case] pr
         return;
     }
 
+    let directory = tempfile::Builder::new()
+        .prefix("stack-trace-pin-")
+        .tempdir_in("/sys/fs/bpf")
+        .unwrap();
     let mut bpf = EbpfLoader::new()
+        .default_map_pin_directory(directory.path())
         .load(crate::STACK_TRACE)
         .expect("load stack_trace program");
 
@@ -37,7 +42,7 @@ fn record_stackid(#[case] stacks_map: &str, #[case] result_map: &str, #[case] pr
         .unwrap_or_else(|err| panic!("load {prog}: {err}"));
     uprobe
         .attach(
-            "trigger_record_stackid",
+            ["trigger_record_stackid"],
             "/proc/self/exe",
             UProbeScope::AllProcesses,
         )

@@ -54,7 +54,7 @@ use crate::{
 /// # Ok::<(), LsmError>(())
 /// ```
 ///
-/// [1]: https://elixir.bootlin.com/linux/latest/source/include/linux/lsm_hook_defs.h
+/// [1]: https://github.com/torvalds/linux/blob/8d3ae5928/include/linux/lsm_hook_defs.h
 #[derive(Debug)]
 #[doc(alias = "BPF_PROG_TYPE_LSM")]
 pub struct LsmCgroup {
@@ -100,7 +100,7 @@ impl LsmCgroup {
             0,
             // LSM cgroup links identify the hook through attach_btf_id at program load time. The
             // link_create union slot is reserved for cgroup anchor metadata instead, see
-            // https://github.com/torvalds/linux/blob/5ee8dbf54602dc340d6235b1d6aa17c0f283f48c/kernel/bpf/cgroup.c#L1506-L1510
+            // https://github.com/torvalds/linux/blob/5ee8dbf54/kernel/bpf/cgroup.c#L1506-L1510
             None,
         )
         .map_err(|io_error| SyscallError {

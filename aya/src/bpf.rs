@@ -1,38 +1,33 @@
 use std::{
     borrow::Cow,
     collections::{HashMap, HashSet},
-    fs, io, iter,
+    fmt, fs, io, iter,
+    num::NonZeroU32,
     os::fd::{AsFd as _, AsRawFd as _},
     path::{Path, PathBuf},
-    sync::{Arc, LazyLock},
+    sync::Arc,
 };
 
 use aya_obj::{
-    EbpfSectionKind, Features, KsymsError, Object, ParseError, ProgramSection,
-    btf::{Btf, BtfError, BtfFeatures, BtfRelocationError},
+    EbpfSectionKind, KsymsError, Object, ParseError, ProgramSection,
+    btf::{Btf, BtfError, BtfRelocationError},
     generated::{BPF_F_SLEEPABLE, BPF_F_XDP_HAS_FRAGS, bpf_map_type},
     relocation::EbpfRelocationError,
 };
-use log::{debug, warn};
+use log::warn;
 use thiserror::Error;
 
 use crate::{
+    kernel_features::{FEATURES, Feature},
     maps::{Map, MapData, MapError},
     programs::{
         BtfTracePoint, CgroupDevice, CgroupSkb, CgroupSock, CgroupSockAddr, CgroupSockopt,
         CgroupSysctl, Extension, FEntry, FExit, FlowDissector, Iter, KProbe, LircMode2, Lsm,
         LsmCgroup, PerfEvent, ProbeKind, Program, ProgramData, ProgramError, RawTracePoint,
         SchedClassifier, SkLookup, SkMsg, SkReuseport, SkSkb, SockOps, SocketFilter, TracePoint,
-        UProbe, Xdp,
+        UProbe, Xdp, uprobe::AttachMode,
     },
-    sys::{
-        bpf_load_btf, is_bpf_cookie_supported, is_bpf_global_data_supported,
-        is_btf_datasec_supported, is_btf_datasec_zero_supported, is_btf_decl_tag_supported,
-        is_btf_enum64_supported, is_btf_float_supported, is_btf_func_global_supported,
-        is_btf_func_supported, is_btf_supported, is_btf_type_tag_supported, is_perf_link_supported,
-        is_probe_read_kernel_supported, is_prog_id_supported, is_prog_name_supported,
-        retry_with_verifier_logs,
-    },
+    sys::{bpf_load_btf, retry_with_verifier_logs},
     util::{bytes_of, bytes_of_slice, nr_cpus, page_size},
 };
 
@@ -40,8 +35,9 @@ use crate::{
 ///
 /// # Safety
 ///
-/// This trait is unsafe because it allows for the conversion of types to and
-/// from byte slices.
+/// Every sequence of initialized bytes of the appropriate size must represent
+/// a valid value of the type. The type must not contain padding or uninitialized
+/// bytes.
 pub unsafe trait Pod: Copy + 'static {}
 
 macro_rules! unsafe_impl_pod {
@@ -58,40 +54,6 @@ unsafe_impl_pod!(i8, u8, i16, u16, i32, u32, i64, u64, u128, i128);
 unsafe impl<T: Pod, const N: usize> Pod for [T; N] {}
 
 pub use aya_obj::maps::{PinningType, bpf_map_def};
-
-pub(crate) static FEATURES: LazyLock<Features> = LazyLock::new(detect_features);
-
-fn detect_features() -> Features {
-    let btf = is_btf_supported().then(|| {
-        BtfFeatures::new(
-            is_btf_func_supported(),
-            is_btf_func_global_supported(),
-            is_btf_datasec_supported(),
-            is_btf_datasec_zero_supported(),
-            is_btf_float_supported(),
-            is_btf_decl_tag_supported(),
-            is_btf_type_tag_supported(),
-            is_btf_enum64_supported(),
-        )
-    });
-    let f = Features::new(
-        is_prog_name_supported(),
-        is_probe_read_kernel_supported(),
-        is_perf_link_supported(),
-        is_bpf_global_data_supported(),
-        is_bpf_cookie_supported(),
-        is_prog_id_supported(bpf_map_type::BPF_MAP_TYPE_CPUMAP),
-        is_prog_id_supported(bpf_map_type::BPF_MAP_TYPE_DEVMAP),
-        btf,
-    );
-    debug!("BPF Feature Detection: {f:#?}");
-    f
-}
-
-/// Returns a reference to the detected BPF features.
-pub fn features() -> &'static Features {
-    &FEATURES
-}
 
 /// Builder style API for advanced loading of eBPF programs.
 ///
@@ -150,8 +112,8 @@ type BtfSourceFn = dyn Fn(&BtfParser) -> Result<Btf, EbpfError>
 
 struct BtfSource(Box<BtfSourceFn>);
 
-impl std::fmt::Debug for BtfSource {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Debug for BtfSource {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("BtfSource").finish_non_exhaustive()
     }
 }
@@ -501,63 +463,69 @@ impl<'a> EbpfLoader<'a> {
         let mut obj = Object::parse(data)?;
         obj.patch_map_data(globals.clone())?;
 
-        let btf_fd = if let Some(features) = &FEATURES.btf() {
-            if let Some(btf) = obj.fixup_and_sanitize_btf(features)? {
-                match load_btf(btf.to_bytes(), *verifier_log_level) {
-                    Ok(btf_fd) => Some(Arc::new(btf_fd)),
-                    // Only report an error here if the BTF is truly needed, otherwise proceed without.
-                    Err(err) => {
-                        for program in obj.programs.values() {
-                            match program.section {
-                                ProgramSection::Extension
-                                | ProgramSection::FEntry { sleepable: _ }
-                                | ProgramSection::FExit { sleepable: _ }
-                                | ProgramSection::Lsm { sleepable: _ }
-                                | ProgramSection::LsmCgroup
-                                | ProgramSection::BtfTracePoint
-                                | ProgramSection::Iter { sleepable: _ } => {
-                                    return Err(EbpfError::BtfError(err));
-                                }
-                                ProgramSection::KRetProbe
-                                | ProgramSection::KProbe
-                                | ProgramSection::UProbe { sleepable: _ }
-                                | ProgramSection::URetProbe { sleepable: _ }
-                                | ProgramSection::TracePoint
-                                | ProgramSection::SocketFilter
-                                | ProgramSection::Xdp {
-                                    frags: _,
-                                    attach_type: _,
-                                }
-                                | ProgramSection::SkMsg
-                                | ProgramSection::SkSkbStream { kind: _ }
-                                | ProgramSection::SockOps
-                                | ProgramSection::SchedClassifier
-                                | ProgramSection::CgroupSkb { attach_type: _ }
-                                | ProgramSection::CgroupSockAddr { attach_type: _ }
-                                | ProgramSection::CgroupSysctl
-                                | ProgramSection::CgroupSockopt { attach_type: _ }
-                                | ProgramSection::LircMode2
-                                | ProgramSection::PerfEvent
-                                | ProgramSection::RawTracePoint
-                                | ProgramSection::SkLookup
-                                | ProgramSection::SkReuseport { attach_type: _ }
-                                | ProgramSection::FlowDissector
-                                | ProgramSection::CgroupSock { attach_type: _ }
-                                | ProgramSection::CgroupDevice => {}
+        let btf_fd = if let Some(btf) = obj.fixup_and_sanitize_btf(|| {
+            FEATURES
+                .btf()
+                .map(|features| move |feature| features.is_supported(feature))
+        })? {
+            match load_btf(btf.to_bytes(), *verifier_log_level) {
+                Ok(btf_fd) => Some(Arc::new(btf_fd)),
+                // Only report an error here if the BTF is truly needed, otherwise proceed without.
+                Err(err) => {
+                    for program in obj.programs.values() {
+                        match program.section {
+                            ProgramSection::Extension
+                            | ProgramSection::FEntry { sleepable: _ }
+                            | ProgramSection::FExit { sleepable: _ }
+                            | ProgramSection::Lsm { sleepable: _ }
+                            | ProgramSection::LsmCgroup
+                            | ProgramSection::BtfTracePoint
+                            | ProgramSection::Iter { sleepable: _ } => {
+                                return Err(EbpfError::BtfError(err));
                             }
+                            ProgramSection::KRetProbe
+                            | ProgramSection::KProbe
+                            | ProgramSection::UProbe {
+                                sleepable: _,
+                                multi: _,
+                            }
+                            | ProgramSection::URetProbe {
+                                sleepable: _,
+                                multi: _,
+                            }
+                            | ProgramSection::TracePoint
+                            | ProgramSection::SocketFilter
+                            | ProgramSection::Xdp {
+                                frags: _,
+                                attach_type: _,
+                            }
+                            | ProgramSection::SkMsg
+                            | ProgramSection::SkSkbStream { kind: _ }
+                            | ProgramSection::SockOps
+                            | ProgramSection::SchedClassifier
+                            | ProgramSection::CgroupSkb { attach_type: _ }
+                            | ProgramSection::CgroupSockAddr { attach_type: _ }
+                            | ProgramSection::CgroupSysctl
+                            | ProgramSection::CgroupSockopt { attach_type: _ }
+                            | ProgramSection::LircMode2
+                            | ProgramSection::PerfEvent
+                            | ProgramSection::RawTracePoint
+                            | ProgramSection::SkLookup
+                            | ProgramSection::SkReuseport { attach_type: _ }
+                            | ProgramSection::FlowDissector
+                            | ProgramSection::CgroupSock { attach_type: _ }
+                            | ProgramSection::CgroupDevice => {}
                         }
-
-                        if obj.has_btf_relocations() {
-                            return Err(EbpfError::BtfError(err));
-                        }
-
-                        warn!("object BTF couldn't be loaded in the kernel: {err}");
-
-                        None
                     }
+
+                    if obj.has_btf_relocations() {
+                        return Err(EbpfError::BtfError(err));
+                    }
+
+                    warn!("object BTF couldn't be loaded in the kernel: {err}");
+
+                    None
                 }
-            } else {
-                None
             }
         } else {
             None
@@ -614,72 +582,77 @@ impl<'a> EbpfLoader<'a> {
 
         // The kernel requires inner_map_fd when creating map-of-maps, so inner
         // maps must be created first. Partition into regular maps and map-of-maps.
-        let mut regular_maps: Vec<(String, aya_obj::Map)> = Vec::new();
-        let mut maps_of_maps: Vec<(String, aya_obj::Map)> = Vec::new();
+        let mut regular_maps: Vec<(String, aya_obj::Map, bpf_map_type)> = Vec::new();
+        let mut maps_of_maps: Vec<(String, aya_obj::Map, bpf_map_type)> = Vec::new();
 
         for (name, map_obj) in obj.maps.drain() {
-            if let (false, EbpfSectionKind::Bss | EbpfSectionKind::Data | EbpfSectionKind::Rodata) =
-                (FEATURES.bpf_global_data(), map_obj.section_kind())
+            if matches!(
+                map_obj.section_kind(),
+                EbpfSectionKind::Bss | EbpfSectionKind::Data | EbpfSectionKind::Rodata
+            ) && !FEATURES.is_supported(Feature::BpfGlobalData)
             {
                 continue;
             }
-            let map_type: bpf_map_type = map_obj.map_type().try_into().map_err(MapError::from)?;
+            let map_type = map_obj.map_type().try_into().map_err(MapError::from)?;
             if is_map_of_maps(map_type) {
-                maps_of_maps.push((name, map_obj));
+                &mut maps_of_maps
             } else {
-                regular_maps.push((name, map_obj));
+                &mut regular_maps
             }
+            .push((name, map_obj, map_type));
         }
 
         let mut maps: HashMap<String, MapData> = HashMap::new();
 
         // Regular maps first, so they're available as inner maps below.
-        for ((name, mut map_obj), is_map_of_maps) in regular_maps
-            .into_iter()
-            .zip(iter::repeat(false))
-            .chain(maps_of_maps.into_iter().zip(iter::repeat(true)))
-        {
+        for (name, mut map_obj, map_type) in regular_maps.into_iter().chain(maps_of_maps) {
             let num_cpus = || {
-                Ok(nr_cpus().map_err(|(path, error)| EbpfError::FileError {
+                nr_cpus().map_err(|(path, error)| EbpfError::FileError {
                     path: PathBuf::from(path),
                     error,
-                })? as u32)
+                })
             };
-            let map_type: bpf_map_type = map_obj.map_type().try_into().map_err(MapError::from)?;
-            if let Some(max_entries_val) = max_entries_override(
+            let max_entries_val = max_entries_override(
                 map_type,
                 max_entries.get(name.as_str()).copied(),
                 || map_obj.max_entries(),
                 num_cpus,
                 || page_size() as u32,
-            )? {
+            )?;
+            if let Some(max_entries_val) = max_entries_val {
                 map_obj.set_max_entries(max_entries_val)
             }
-            if let Some(value_size) = value_size_override(map_type) {
-                map_obj.set_value_size(value_size)
-            }
-
             let btf_fd = btf_fd.as_deref().map(|fd| fd.as_fd());
 
             // Defer inner map creation to avoid a BPF_MAP_CREATE when the outer map is already pinned.
-            let inner_map_obj = if is_map_of_maps {
-                Some(map_obj.inner().ok_or_else(|| {
+            let mut inner_map = if is_map_of_maps(map_type) {
+                let map_obj = map_obj.inner().ok_or_else(|| {
                     EbpfError::MapError(MapError::MissingInnerMapDefinition {
                         outer_name: name.clone(),
                     })
-                })?)
+                })?;
+                let map_type = map_obj.map_type().try_into().map_err(MapError::from)?;
+                Some((map_obj, map_type))
             } else {
                 None
             };
+            for (map_obj, map_type) in
+                iter::once((&mut map_obj, map_type)).chain(inner_map.as_mut().map(|(m, t)| (m, *t)))
+            {
+                if let Some(value_size) = value_size_override(map_type) {
+                    map_obj.set_value_size(value_size);
+                }
+            }
+            let inner_map_obj = inner_map.map(|(m, _)| m);
             let mut map = if let Some(pin_path) = map_pin_path_by_name.get(name.as_str()) {
                 MapData::create_pinned_by_name(pin_path, map_obj, &name, btf_fd, inner_map_obj)?
             } else {
                 match map_obj.pinning() {
                     PinningType::None => {
                         let btf_inner_map;
-                        let inner_map_fd = if let Some(inner) = inner_map_obj {
+                        let inner_map_fd = if let Some(inner_map_obj) = inner_map_obj {
                             btf_inner_map =
-                                MapData::create(inner, &format!("{name}.inner"), btf_fd)?;
+                                MapData::create(inner_map_obj, &format!("{name}.inner"), btf_fd)?;
                             Some(btf_inner_map.fd().as_fd())
                         } else {
                             None
@@ -688,7 +661,7 @@ impl<'a> EbpfLoader<'a> {
                     }
                     PinningType::ByName => {
                         // pin maps in /sys/fs/bpf by default to align with libbpf
-                        // behavior https://github.com/libbpf/libbpf/blob/v1.2.2/src/libbpf.c#L2161.
+                        // behavior https://github.com/libbpf/libbpf/blob/1728e3e4b/src/libbpf.c#L2161.
                         let path = default_map_pin_directory
                             .as_deref()
                             .unwrap_or_else(|| Path::new("/sys/fs/bpf"));
@@ -717,7 +690,7 @@ impl<'a> EbpfLoader<'a> {
         obj.relocate_externs()?;
 
         obj.relocate_calls(&text_sections)?;
-        obj.sanitize_functions(&FEATURES);
+        obj.sanitize_functions(|| FEATURES.is_supported(Feature::BpfProbeReadKernel));
 
         let programs = obj
             .programs
@@ -725,7 +698,9 @@ impl<'a> EbpfLoader<'a> {
             .map(|(name, prog_obj)| {
                 let function_obj = obj.functions[&prog_obj.function_key()].clone();
 
-                let prog_name = FEATURES.bpf_name().then(|| name.clone().into());
+                let prog_name = FEATURES
+                    .is_supported(Feature::BpfName)
+                    .then(|| name.clone().into());
                 let section = prog_obj.section.clone();
                 let obj = (prog_obj, function_obj);
 
@@ -744,7 +719,7 @@ impl<'a> EbpfLoader<'a> {
                             data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
                             kind: ProbeKind::Return,
                         }),
-                        ProgramSection::UProbe { sleepable } => {
+                        ProgramSection::UProbe { sleepable, multi } => {
                             let mut data =
                                 ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level);
                             if *sleepable {
@@ -753,9 +728,14 @@ impl<'a> EbpfLoader<'a> {
                             Program::UProbe(UProbe {
                                 data,
                                 kind: ProbeKind::Entry,
+                                attach_mode: if *multi {
+                                    AttachMode::Multi
+                                } else {
+                                    AttachMode::Single
+                                },
                             })
                         }
-                        ProgramSection::URetProbe { sleepable } => {
+                        ProgramSection::URetProbe { sleepable, multi } => {
                             let mut data =
                                 ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level);
                             if *sleepable {
@@ -764,6 +744,11 @@ impl<'a> EbpfLoader<'a> {
                             Program::UProbe(UProbe {
                                 data,
                                 kind: ProbeKind::Return,
+                                attach_mode: if *multi {
+                                    AttachMode::Multi
+                                } else {
+                                    AttachMode::Single
+                                },
                             })
                         }
                         ProgramSection::TracePoint => Program::TracePoint(TracePoint {
@@ -965,12 +950,15 @@ fn max_entries_override(
     map_type: bpf_map_type,
     user_override: Option<u32>,
     current_value: impl Fn() -> u32,
-    num_cpus: impl Fn() -> Result<u32, EbpfError>,
+    num_cpus: impl FnOnce() -> Result<NonZeroU32, EbpfError>,
     page_size: impl Fn() -> u32,
 ) -> Result<Option<u32>, EbpfError> {
     let max_entries = || user_override.unwrap_or_else(&current_value);
     Ok(match map_type {
-        bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY if max_entries() == 0 => Some(num_cpus()?),
+        bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY if max_entries() == 0 => {
+            let num_cpus = num_cpus()?;
+            Some(num_cpus.get())
+        }
         bpf_map_type::BPF_MAP_TYPE_RINGBUF => Some(adjust_to_page_size(max_entries(), page_size()))
             .filter(|adjusted| *adjusted != max_entries())
             .or(user_override),
@@ -982,9 +970,19 @@ fn max_entries_override(
 /// based on the rules for that map type.
 fn value_size_override(map_type: bpf_map_type) -> Option<u32> {
     match map_type {
-        bpf_map_type::BPF_MAP_TYPE_CPUMAP => Some(if FEATURES.cpumap_prog_id() { 8 } else { 4 }),
+        bpf_map_type::BPF_MAP_TYPE_CPUMAP => {
+            Some(if FEATURES.is_supported(Feature::CpuMapProgId) {
+                8
+            } else {
+                4
+            })
+        }
         bpf_map_type::BPF_MAP_TYPE_DEVMAP | bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH => {
-            Some(if FEATURES.devmap_prog_id() { 8 } else { 4 })
+            Some(if FEATURES.is_supported(Feature::DevMapProgId) {
+                8
+            } else {
+                4
+            })
         }
         bpf_map_type::BPF_MAP_TYPE_RINGBUF => Some(0),
         _ => None,
@@ -994,7 +992,7 @@ fn value_size_override(map_type: bpf_map_type) -> Option<u32> {
 // Adjusts the byte size of a RingBuf map to match a power-of-two multiple of the page size.
 //
 // This mirrors the logic used by libbpf.
-// See https://github.com/libbpf/libbpf/blob/ec6f716eda43/src/libbpf.c#L2461-L2463
+// See https://github.com/libbpf/libbpf/blob/ec6f716ed/src/libbpf.c#L2461-L2463
 const fn adjust_to_page_size(byte_size: u32, page_size: u32) -> u32 {
     // If the byte_size is zero, return zero and let the verifier reject the map
     // when it is loaded. This is the behavior of libbpf.
@@ -1014,12 +1012,15 @@ const fn adjust_to_page_size(byte_size: u32, page_size: u32) -> u32 {
 
 #[cfg(test)]
 mod tests {
-    use aya_obj::generated::bpf_map_type::*;
+    use std::num::NonZeroU32;
+
+    use aya_obj::generated::{bpf_map_type, bpf_map_type::*};
+    use rstest::rstest;
 
     use super::{Btf, BtfSource, EbpfLoader, TargetBtf};
 
     const PAGE_SIZE: u32 = 4096;
-    const NUM_CPUS: u32 = 4;
+    const NUM_CPUS: NonZeroU32 = NonZeroU32::new(4).unwrap();
 
     #[test]
     fn test_adjust_to_page_size() {
@@ -1046,8 +1047,13 @@ mod tests {
             (BPF_MAP_TYPE_RINGBUF, None, PAGE_SIZE, None),
             (BPF_MAP_TYPE_PERF_EVENT_ARRAY, None, 1, None),
             (BPF_MAP_TYPE_PERF_EVENT_ARRAY, Some(42), 1, Some(42)),
-            (BPF_MAP_TYPE_PERF_EVENT_ARRAY, Some(0), 1, Some(NUM_CPUS)),
-            (BPF_MAP_TYPE_PERF_EVENT_ARRAY, None, 0, Some(NUM_CPUS)),
+            (
+                BPF_MAP_TYPE_PERF_EVENT_ARRAY,
+                Some(0),
+                1,
+                Some(NUM_CPUS.get()),
+            ),
+            (BPF_MAP_TYPE_PERF_EVENT_ARRAY, None, 0, Some(NUM_CPUS.get())),
             (BPF_MAP_TYPE_PERF_EVENT_ARRAY, None, 42, None),
             (BPF_MAP_TYPE_ARRAY, None, 1, None),
             (BPF_MAP_TYPE_ARRAY, Some(2), 1, Some(2)),
@@ -1064,6 +1070,24 @@ mod tests {
                 .unwrap()
             );
         }
+    }
+
+    #[rstest]
+    fn test_lru_max_entries_without_cpu_count(
+        #[values(BPF_MAP_TYPE_LRU_HASH, BPF_MAP_TYPE_LRU_PERCPU_HASH)] map_type: bpf_map_type,
+        #[values(None, Some(7))] user_override: Option<u32>,
+    ) {
+        assert_eq!(
+            super::max_entries_override(
+                map_type,
+                user_override,
+                || 5,
+                || panic!("map creation must not require the CPU count"),
+                || PAGE_SIZE,
+            )
+            .unwrap(),
+            user_override,
+        );
     }
 
     #[test]
@@ -1292,7 +1316,7 @@ impl Ebpf {
     ///
     /// let program: &mut UProbe = bpf.program_mut("SSL_read").unwrap().try_into()?;
     /// program.load()?;
-    /// program.attach("SSL_read", "libssl", UProbeScope::AllProcesses)?;
+    /// program.attach(["SSL_read"], "libssl", UProbeScope::AllProcesses)?;
     /// # Ok::<(), aya::EbpfError>(())
     /// ```
     pub fn program_mut(&mut self, name: &str) -> Option<&mut Program> {

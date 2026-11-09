@@ -1,10 +1,10 @@
 #![no_std]
 #![no_main]
-#![expect(unused_crate_dependencies, reason = "used in other bins")]
 
 use core::{
     hint::black_box,
     net::{IpAddr, Ipv4Addr, Ipv6Addr},
+    ptr,
 };
 
 use aya_ebpf::{
@@ -65,6 +65,12 @@ fn test_log(ctx: ProbeContext) {
         ipv6.octets()
     );
 
+    info!(
+        &ctx,
+        "ip as segments: ipv6: {:i}",
+        black_box(ipv6.segments())
+    );
+
     let mac = [4u8, 32u8, 6u8, 9u8, 0u8, 64u8];
     trace!(&ctx, "mac lc: {:mac}, mac uc: {:MAC}", mac, mac);
     let hex = 0x2f;
@@ -82,7 +88,7 @@ fn test_log(ctx: ProbeContext) {
         &ctx,
         "{} {} {} {} {} {} {}", header, tmp, kind, value, size, op, buf
     );
-    let ptr = 0xdeadbeef as *const u8;
+    let ptr = ptr::without_provenance::<u8>(0xdeadbeef);
     debug!(&ctx, "ptr: {:p}", ptr);
 
     // Testing compilation only.

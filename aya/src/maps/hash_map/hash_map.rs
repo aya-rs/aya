@@ -23,9 +23,9 @@ use crate::{
 /// let mut redirect_ports = HashMap::try_from(bpf.map_mut("REDIRECT_PORTS").unwrap())?;
 ///
 /// // redirect port 80 to 8080
-/// redirect_ports.insert(80, 8080, 0);
+/// redirect_ports.insert(&80, &8080, 0);
 /// // redirect port 443 to 8443
-/// redirect_ports.insert(443, 8443, 0);
+/// redirect_ports.insert(&443, &8443, 0);
 /// # Ok::<(), aya::EbpfError>(())
 /// ```
 #[doc(alias = "BPF_MAP_TYPE_HASH")]
@@ -76,13 +76,8 @@ impl<'a, T: Borrow<MapData>, K: Pod, V: Pod> IntoIterator for &'a HashMap<T, K, 
 
 impl<T: BorrowMut<MapData>, K: Pod, V: Pod> HashMap<T, K, V> {
     /// Inserts a key-value pair into the map.
-    pub fn insert(
-        &mut self,
-        key: impl Borrow<K>,
-        value: impl Borrow<V>,
-        flags: u64,
-    ) -> Result<(), MapError> {
-        hash_map::insert(self.inner.borrow_mut(), key.borrow(), value.borrow(), flags)
+    pub fn insert(&mut self, key: &K, value: &V, flags: u64) -> Result<(), MapError> {
+        hash_map::insert(self.inner.borrow_mut(), key, value, flags)
     }
 
     /// Removes a key from the map.
@@ -103,7 +98,7 @@ impl<T: Borrow<MapData>, K: Pod, V: Pod> IterableMap<K, V> for HashMap<T, K, V> 
 
 #[cfg(test)]
 mod tests {
-    use std::io;
+    use std::{io, ptr};
 
     use assert_matches::assert_matches;
     use aya_obj::generated::{bpf_attr, bpf_cmd, bpf_map_type};
@@ -207,7 +202,7 @@ mod tests {
         override_syscall(|_| sys_error(EFAULT));
 
         assert_matches!(
-            hm.insert(1, 42, 0),
+            hm.insert(&1, &42, 0),
             Err(MapError::SyscallError(SyscallError { call: "bpf_map_update_elem", io_error })) if io_error.raw_os_error() == Some(EFAULT)
         );
     }
@@ -225,7 +220,7 @@ mod tests {
             _ => sys_error(EFAULT),
         });
 
-        assert_matches!(hm.insert(1, 42, 0), Ok(()));
+        assert_matches!(hm.insert(&1, &42, 0), Ok(()));
     }
 
     #[test]
@@ -241,7 +236,9 @@ mod tests {
             _ => sys_error(EFAULT),
         });
 
-        assert_matches!(hm.insert(Box::new(1), Box::new(42), 0), Ok(()));
+        let key = Box::new(1);
+        let value = Box::new(42);
+        assert_matches!(hm.insert(&key, &value, 0), Ok(()));
     }
 
     #[test]
@@ -301,10 +298,8 @@ mod tests {
     }
 
     fn bpf_key<T: Copy>(attr: &bpf_attr) -> Option<T> {
-        match unsafe { attr.__bindgen_anon_2.key } as *const T {
-            p if p.is_null() => None,
-            p => Some(unsafe { *p }),
-        }
+        let key = ptr::with_exposed_provenance::<T>(unsafe { attr.__bindgen_anon_2.key } as usize);
+        unsafe { key.as_ref() }.copied()
     }
 
     #[expect(
@@ -312,8 +307,9 @@ mod tests {
         reason = "mock syscall handlers use SysResult"
     )]
     fn set_next_key<T: Copy>(attr: &bpf_attr, next: T) -> SysResult {
-        let key =
-            (unsafe { attr.__bindgen_anon_2.__bindgen_anon_1.next_key } as *const T).cast_mut();
+        let key = ptr::with_exposed_provenance_mut::<T>(unsafe {
+            attr.__bindgen_anon_2.__bindgen_anon_1.next_key
+        } as usize);
         unsafe { *key = next }
         Ok(0)
     }
@@ -323,8 +319,9 @@ mod tests {
         reason = "mock syscall handlers use SysResult"
     )]
     fn set_ret<T: Copy>(attr: &bpf_attr, ret: T) -> SysResult {
-        let value =
-            (unsafe { attr.__bindgen_anon_2.__bindgen_anon_1.value } as *const T).cast_mut();
+        let value = ptr::with_exposed_provenance_mut::<T>(unsafe {
+            attr.__bindgen_anon_2.__bindgen_anon_1.value
+        } as usize);
         unsafe { *value = ret }
         Ok(0)
     }

@@ -353,7 +353,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    For LSM programs the target_btf_id is set at load time not attach time.
    
    Starting from
-   https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=1209339844601ec1766f4ff430673fbcfe42bb51
+   https://github.com/torvalds/linux/commit/120933984
    setting it at attach time results in EINVAL, because it happens to be
    interpreted as bits of the mprog part of the union.
  - <csr-id-c42157f0b566940b849b699109d1c660a0733fd3/> fix attachment failure with long program names
@@ -1874,7 +1874,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
       = help: to override `-D warnings` add `#[allow(renamed_and_removed_lints)]`
    ```
    
-   See https://github.com/rust-lang/rust/commit/9fcf9c141068984ffcbb4cb00c.
+   See https://github.com/rust-lang/rust/commit/9fcf9c141.
  - <csr-id-2257cbeccb18a3f486c9d64b52b33a331c89531e/> add SchedClassifier::attach_to_link
    Similar to Xdp::attach_to_link, can be used to replace/upgrade the
    program attached to a link.

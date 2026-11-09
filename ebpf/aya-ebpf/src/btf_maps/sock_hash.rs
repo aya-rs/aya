@@ -1,7 +1,4 @@
-use core::{
-    borrow::{Borrow, BorrowMut},
-    ptr,
-};
+use core::ptr;
 
 use crate::{
     ENOENT, EbpfContext as _,
@@ -48,8 +45,8 @@ impl<K, const MAX_ENTRIES: usize, const FLAGS: usize> SockHash<K, MAX_ENTRIES, F
     // Enforces kernel constraints (kernel/net/core/sock_map.c sock_hash_alloc):
     // key_size must be > 0 and <= MAX_BPF_STACK (512). `const _: ()` is
     // forbidden in a generic impl, and a named associated const is lazy
-    // without a reference, hence `let () = Self::_CHECK` in every method.
-    const _CHECK: () = {
+    // without a reference, hence `let () = Self::CHECK` in every method.
+    const CHECK: () = {
         assert!(size_of::<K>() > 0, "SockHash key must be non-zero sized.");
         assert!(
             size_of::<K>() <= 512,
@@ -62,18 +59,13 @@ impl<K, const MAX_ENTRIES: usize, const FLAGS: usize> SockHash<K, MAX_ENTRIES, F
     };
 
     /// Inserts the socket from `sk_ops` into the map under `key`.
-    pub fn update(
-        &self,
-        mut key: impl BorrowMut<K>,
-        mut sk_ops: impl BorrowMut<bpf_sock_ops>,
-        flags: u64,
-    ) -> Result<(), i32> {
-        let () = Self::_CHECK;
+    pub fn update(&self, key: &mut K, sk_ops: &mut bpf_sock_ops, flags: u64) -> Result<(), i32> {
+        let () = Self::CHECK;
         let ret = unsafe {
             bpf_sock_hash_update(
-                ptr::from_mut(sk_ops.borrow_mut()),
+                ptr::from_mut(sk_ops),
                 self.as_ptr().cast(),
-                ptr::from_mut(key.borrow_mut()).cast(),
+                ptr::from_mut(key).cast(),
                 flags,
             )
         };
@@ -81,36 +73,26 @@ impl<K, const MAX_ENTRIES: usize, const FLAGS: usize> SockHash<K, MAX_ENTRIES, F
     }
 
     /// Redirects the message in `ctx` to the socket at `key`.
-    pub fn redirect_msg(
-        &self,
-        ctx: impl Borrow<SkMsgContext>,
-        mut key: impl BorrowMut<K>,
-        flags: u64,
-    ) -> c_long {
-        let () = Self::_CHECK;
+    pub fn redirect_msg(&self, ctx: &SkMsgContext, key: &mut K, flags: u64) -> c_long {
+        let () = Self::CHECK;
         unsafe {
             bpf_msg_redirect_hash(
-                ctx.borrow().msg,
+                ctx.msg,
                 self.as_ptr().cast(),
-                ptr::from_mut(key.borrow_mut()).cast(),
+                ptr::from_mut(key).cast(),
                 flags,
             )
         }
     }
 
     /// Redirects the socket buffer in `ctx` to the socket at `key`.
-    pub fn redirect_skb(
-        &self,
-        ctx: impl Borrow<SkBuffContext>,
-        mut key: impl BorrowMut<K>,
-        flags: u64,
-    ) -> c_long {
-        let () = Self::_CHECK;
+    pub fn redirect_skb(&self, ctx: &SkBuffContext, key: &mut K, flags: u64) -> c_long {
+        let () = Self::CHECK;
         unsafe {
             bpf_sk_redirect_hash(
-                ctx.borrow().skb.as_raw_ptr(),
+                ctx.skb.as_raw_ptr(),
                 self.as_ptr().cast(),
-                ptr::from_mut(key.borrow_mut()).cast(),
+                ptr::from_mut(key).cast(),
                 flags,
             )
         }
@@ -121,7 +103,7 @@ impl<K, const MAX_ENTRIES: usize, const FLAGS: usize> SockHash<K, MAX_ENTRIES, F
     /// # Minimum kernel version
     ///
     /// The minimum kernel version required to use this method is
-    /// [5.9](https://github.com/torvalds/linux/commit/e9ddbb7707ff5891616240026062b8c1e29864ca),
+    /// [5.9](https://github.com/torvalds/linux/commit/e9ddbb770),
     /// when `bpf_sk_assign` was extended to `SK_LOOKUP` programs.
     ///
     /// # Errors
@@ -132,13 +114,13 @@ impl<K, const MAX_ENTRIES: usize, const FLAGS: usize> SockHash<K, MAX_ENTRIES, F
     /// [`bpf_sk_assign`]: https://docs.ebpf.io/linux/helper-function/bpf_sk_assign/
     pub fn redirect_sk_lookup(
         &self,
-        ctx: impl Borrow<SkLookupContext>,
-        key: impl Borrow<K>,
+        ctx: &SkLookupContext,
+        key: &K,
         flags: u64,
     ) -> Result<(), i32> {
-        let () = Self::_CHECK;
-        let sk = lookup(self.as_ptr(), key.borrow()).ok_or(-ENOENT)?;
-        let ret = unsafe { bpf_sk_assign(ctx.borrow().as_ptr().cast(), sk.as_ptr(), flags) };
+        let () = Self::CHECK;
+        let sk = lookup(self.as_ptr(), key).ok_or(-ENOENT)?;
+        let ret = unsafe { bpf_sk_assign(ctx.as_ptr().cast(), sk.as_ptr(), flags) };
         let _: c_long = unsafe { bpf_sk_release(sk.as_ptr()) };
         (ret == 0).then_some(()).ok_or(ret as i32)
     }

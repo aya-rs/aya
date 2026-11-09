@@ -1,6 +1,5 @@
 #![no_std]
 #![no_main]
-#![expect(unused_crate_dependencies, reason = "used in other bins")]
 
 use aya_ebpf::{
     helpers::{bpf_probe_read_kernel_str_bytes, bpf_probe_read_user_str_bytes},

@@ -55,7 +55,7 @@ use crate::{
 /// let mut client = TcpStream::connect("127.0.0.1:1234")?;
 /// let mut intercept_egress = SockHash::try_from(bpf.map_mut("INTERCEPT_EGRESS").unwrap())?;
 ///
-/// intercept_egress.insert(1234, client.as_raw_fd(), 0)?;
+/// intercept_egress.insert(&1234, client.as_raw_fd(), 0)?;
 ///
 /// // the write will be intercepted
 /// client.write_all(b"foo")?;
@@ -118,18 +118,8 @@ impl<'a, T: Borrow<MapData>, K: Pod> IntoIterator for &'a SockHash<T, K> {
 
 impl<T: BorrowMut<MapData>, K: Pod> SockHash<T, K> {
     /// Inserts a socket under the given key.
-    pub fn insert<I: AsRawFd>(
-        &mut self,
-        key: impl Borrow<K>,
-        value: I,
-        flags: u64,
-    ) -> Result<(), MapError> {
-        hash_map::insert(
-            self.inner.borrow_mut(),
-            key.borrow(),
-            &value.as_raw_fd(),
-            flags,
-        )
+    pub fn insert<I: AsRawFd>(&mut self, key: &K, value: I, flags: u64) -> Result<(), MapError> {
+        hash_map::insert(self.inner.borrow_mut(), key, &value.as_raw_fd(), flags)
     }
 
     /// Removes a socket from the map.

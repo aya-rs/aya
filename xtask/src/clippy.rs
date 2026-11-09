@@ -13,6 +13,18 @@ pub(crate) struct Options {
 pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
     let Options { args } = opts;
 
+    // Inject the nightly-only provenance lint into crates and doctests without
+    // requiring feature gates in crates that also build on stable.
+    // The injected gate needs unstable_features allowed during this lint pass;
+    // normal builds retain the workspace lint.
+    // https://github.com/rust-lang/rust/issues/130351
+    let clippy_args = [
+        "--deny=warnings",
+        "--allow=unstable_features",
+        "-Zcrate-attr=feature(strict_provenance_lints)",
+        "--warn=implicit_provenance_casts",
+    ];
+
     // `-C panic=abort` because "unwinding panics are not supported without
     // std"; integration-ebpf contains `#[no_std]` binaries.
     //
@@ -31,23 +43,26 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
         "--all-targets",
         "--feature-powerset",
         "--",
-        "--deny",
-        "warnings",
         "-C",
         "panic=abort",
         "-Zpanic_abort_tests",
     ]);
+    cmd.args(clippy_args);
     libbpf_sys_env(workspace_root, &mut cmd);
     exec(&mut cmd)?;
 
-    let base_rustdocflags = "--no-run -Z unstable-options --test-builder clippy-driver";
+    let mut base_rustdocflags =
+        String::from("--no-run -Z unstable-options --test-builder clippy-driver");
+    for arg in clippy_args {
+        base_rustdocflags.push_str(" --doctest-build-arg=");
+        base_rustdocflags.push_str(arg);
+    }
     let mut cmd = Command::new("cargo");
     cmd.args(["+nightly", "hack", "test", "--doc"]);
     cmd.args(&args);
     cmd.args(["--feature-powerset"]);
     libbpf_sys_env(workspace_root, &mut cmd);
-    cmd.env("CLIPPY_ARGS", "--deny=warnings");
-    cmd.env("RUSTDOCFLAGS", base_rustdocflags);
+    cmd.env("RUSTDOCFLAGS", &base_rustdocflags);
     exec(&mut cmd)?;
 
     let ebpf_packages = [
@@ -84,9 +99,9 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
             for package in ebpf_packages {
                 cmd.args(["--package", package]);
             }
-            cmd.args(["--", "--deny", "warnings"]);
+            cmd.arg("--");
+            cmd.args(clippy_args);
             libbpf_sys_env(workspace_root, &mut cmd);
-            cmd.env("CLIPPY_ARGS", "--deny=warnings");
             cmd.env("RUSTFLAGS", &rustflags);
             exec(&mut cmd)?;
         }
@@ -98,7 +113,6 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
             cmd.args(["--package", package]);
         }
         libbpf_sys_env(workspace_root, &mut cmd);
-        cmd.env("CLIPPY_ARGS", "--deny=warnings");
         cmd.env("RUSTFLAGS", &rustflags);
         cmd.env("RUSTDOCFLAGS", format!("{base_rustdocflags} {rustflags}"));
         exec(&mut cmd)?;

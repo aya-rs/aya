@@ -1,0 +1,15 @@
+# Keep dev-only tooling out of packages used by downstream modules.
+load("@aspect_rules_lint//format:defs.bzl", "format_multirun")
+
+format_multirun(
+    name = "format",
+    starlark = "@buildifier_prebuilt//:buildifier",
+    starlark_check_args = [
+        "-mode=check",
+        "-lint=warn",
+    ],
+    starlark_fix_args = [
+        "-mode=fix",
+        "-lint=fix",
+    ],
+)

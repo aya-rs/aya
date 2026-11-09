@@ -17,7 +17,7 @@ use aya::{
     programs::{UProbe, uprobe::UProbeScope},
 };
 use aya_obj::generated::BPF_RINGBUF_HDR_SZ;
-use integration_common::ring_buf::Registers;
+use integration_common::ring_buf::{AlignedEvent, Registers};
 use rand::RngExt as _;
 use rstest::rstest;
 use scopeguard::defer;
@@ -32,8 +32,14 @@ struct RingBufTest {
 const RING_BUF: &str = "RING_BUF";
 const RING_BUF_LEGACY: &str = "RING_BUF_LEGACY";
 const RING_BUF_MISMATCH: &str = "RING_BUF_MISMATCH";
+const RING_BUF_ALIGNED: &str = "RING_BUF_ALIGNED";
 
-const ALL_RING_BUFS: &[&str] = &[RING_BUF, RING_BUF_LEGACY, RING_BUF_MISMATCH];
+const ALL_RING_BUFS: &[&str] = &[
+    RING_BUF,
+    RING_BUF_LEGACY,
+    RING_BUF_MISMATCH,
+    RING_BUF_ALIGNED,
+];
 
 #[derive(Clone, Copy)]
 struct RingBufVariant {
@@ -92,7 +98,7 @@ impl RingBufTest {
         let prog: &mut UProbe = bpf.program_mut(variant.prog).unwrap().try_into().unwrap();
         prog.load().unwrap();
         prog.attach(
-            "ring_buf_trigger_ebpf_program",
+            ["ring_buf_trigger_ebpf_program"],
             "/proc/self/exe",
             UProbeScope::AllProcesses,
         )
@@ -205,8 +211,12 @@ fn ring_buf_mismatch_size<T>(
     let mut ring_buf = RingBuf::try_from(ring_buf).unwrap();
     let prog: &mut UProbe = bpf.program_mut(prog).unwrap().try_into().unwrap();
     prog.load().unwrap();
-    prog.attach(trigger_symbol, "/proc/self/exe", UProbeScope::AllProcesses)
-        .unwrap();
+    prog.attach(
+        [trigger_symbol],
+        "/proc/self/exe",
+        UProbeScope::AllProcesses,
+    )
+    .unwrap();
 
     trigger(value.into());
     {
@@ -250,6 +260,33 @@ fn ring_buf_mismatch_large() {
     );
 }
 
+#[rstest]
+#[case(RING_BUF_ALIGNED, "ring_buf_output_aligned")]
+#[case(RING_BUF_LEGACY, "ring_buf_output_aligned_legacy")]
+fn ring_buf_output_alignment(#[case] map: &'static str, #[case] prog: &'static str) {
+    let RingBufTest {
+        mut ring_buf,
+        mut bpf,
+        regs: _,
+    } = RingBufTest::new(RingBufVariant {
+        map,
+        regs: "REGISTERS",
+        prog,
+    });
+    let value = AlignedEvent([1, 2, 3, 4]);
+    let mut source = Array::try_from(bpf.map_mut("ALIGNED_SOURCE").unwrap()).unwrap();
+    source.set(0, &value, 0).unwrap();
+
+    ring_buf_trigger_ebpf_program(0);
+    {
+        let item = ring_buf.next().unwrap();
+        let AlignedEvent(value) = value;
+        let expected = value.map(u64::to_ne_bytes);
+        assert_eq!(item.as_ref(), expected.as_flattened());
+    }
+    assert_matches!(ring_buf.next(), None);
+}
+
 // This test differs from the other async test in that it's possible for the producer
 // to fill the ring_buf. We just ensure that the number of events we see is sane given
 // what the producer sees, and that the logic does not hang. This exercises interleaving
@@ -267,7 +304,9 @@ async fn ring_buf_async_with_drops() {
             data,
         ) = WithData::new(RING_BUF_MAX_ENTRIES * 8, variant);
 
-        let mut async_fd = AsyncFd::with_interest(ring_buf, Interest::READABLE).unwrap();
+        // SAFETY: The RingBuf owns its map FD, and consuming records does not close or replace it.
+        let mut async_fd =
+            unsafe { AsyncFd::register_with_interest(ring_buf, Interest::READABLE) }.unwrap();
 
         // Spawn the writer which internally will spawn many parallel writers.
         // Construct an AsyncFd from the RingBuf in order to receive readiness notifications.
@@ -384,7 +423,9 @@ async fn ring_buf_async_no_drop() {
         };
 
         // Construct an AsyncFd from the RingBuf in order to receive readiness notifications.
-        let mut async_fd = AsyncFd::with_interest(ring_buf, Interest::READABLE).unwrap();
+        // SAFETY: The RingBuf owns its map FD, and consuming records does not close or replace it.
+        let mut async_fd =
+            unsafe { AsyncFd::register_with_interest(ring_buf, Interest::READABLE) }.unwrap();
         // Note that unlike in the synchronous case where all of the entries are written before any of
         // them are read, in this case we expect all of the entries to make their way to userspace
         // because entries are being consumed as they are produced.
@@ -470,7 +511,9 @@ async fn ring_buf_asyncfd_events() {
             bpf: _bpf,
         } = RingBufTest::new(variant);
 
-        let mut async_fd = AsyncFd::with_interest(ring_buf, Interest::READABLE).unwrap();
+        // SAFETY: The RingBuf owns its map FD, and consuming records does not close or replace it.
+        let mut async_fd =
+            unsafe { AsyncFd::register_with_interest(ring_buf, Interest::READABLE) }.unwrap();
         let mut total_events = 0;
         let writer = WriterThread::spawn();
         while total_events < WriterThread::NUM_MESSAGES {

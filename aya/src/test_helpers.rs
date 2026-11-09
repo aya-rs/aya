@@ -2,6 +2,7 @@
 
 use std::{
     borrow::Cow,
+    cell::Cell,
     fs,
     io::{self, BufRead as _, BufReader, Write as _},
     marker::PhantomData,
@@ -13,7 +14,32 @@ use std::{
 
 use libc::if_nametoindex;
 
-use crate::{netlink_set_link_up, sys::NetlinkError};
+use crate::sys::{NetlinkError, netlink_set_link_up};
+
+thread_local! {
+    pub(crate) static FORCE_TRACEFS: Cell<bool> = const { Cell::new(false) };
+    pub(crate) static FORCE_NETLINK_XDP: Cell<bool> = const { Cell::new(false) };
+}
+
+/// Forces per-point kprobe and uprobe attachments to use tracefs while running `f`.
+///
+/// Attachments must be made synchronously on the calling thread.
+pub fn with_tracefs_probes<T>(f: impl FnOnce() -> T) -> T {
+    let _restore = scopeguard::guard(FORCE_TRACEFS.replace(true), |was_forced| {
+        FORCE_TRACEFS.set(was_forced);
+    });
+    f()
+}
+
+/// Forces XDP attachments to use netlink while running `f`.
+///
+/// Attachments must be made synchronously on the calling thread.
+pub fn with_netlink_xdp<T>(f: impl FnOnce() -> T) -> T {
+    let _restore = scopeguard::guard(FORCE_NETLINK_XDP.replace(true), |was_forced| {
+        FORCE_NETLINK_XDP.set(was_forced);
+    });
+    f()
+}
 
 /// The cgroup-relative name of the file to which a PID is written to assign
 /// that process to the cgroup.

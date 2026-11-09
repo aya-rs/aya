@@ -1,7 +1,7 @@
 //! A panic handler for eBPF rust targets.
 //!
 //! Panics are not supported in the eBPF rust targets however since crates for
-//! the eBPF targets are no_std they must provide a panic handler. This crate
+//! the eBPF targets are `no_std` they must provide a panic handler. This crate
 //! provides a panic handler that loops forever. Such a function, if called,
 //! will cause the program to be rejected by the eBPF verifier with an error
 //! message similar to:
@@ -28,6 +28,6 @@
 
 #[cfg(not(test))]
 #[panic_handler]
-fn panic(_info: &core::panic::PanicInfo) -> ! {
+const fn panic(_info: &core::panic::PanicInfo<'_>) -> ! {
     loop {}
 }

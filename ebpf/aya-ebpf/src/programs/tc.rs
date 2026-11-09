@@ -52,6 +52,30 @@ impl TcContext {
         self.skb.set_mark(mark);
     }
 
+    /// Sets `__sk_buff::tc_classid`.
+    ///
+    /// The kernel [stores this field as 16 bits][store], so writes are
+    /// truncated to the minor id.
+    ///
+    /// Class routing and pre-population require a netlink `cls_bpf` filter.
+    /// Attach with `aya::programs::tc::SchedClassifier::attach` and
+    /// `TcAttach::Netlink`, setting `NlOptions::classid` to the intended class.
+    ///
+    /// In direct-action mode this provides the minor 16 bits of the
+    /// resulting class id; [the major 16 bits come from the `classid`
+    /// configured on the attached filter][major].
+    ///
+    /// Before the program runs, [`cls_bpf`][cls_bpf] pre-populates this
+    /// field with that same `classid`.
+    ///
+    /// [store]: https://github.com/torvalds/linux/blob/e5f0a698b/net/core/filter.c#L9768-L9781
+    /// [major]: https://github.com/torvalds/linux/blob/e5f0a698b/net/sched/cls_bpf.c#L110-L118
+    /// [cls_bpf]: https://github.com/torvalds/linux/blob/e5f0a698b/net/sched/cls_bpf.c#L90-L105
+    #[inline]
+    pub fn set_tc_classid(&self, classid: u16) {
+        self.skb.set_tc_classid(classid);
+    }
+
     #[inline]
     pub fn cb(&self) -> &[u32] {
         self.skb.cb()
@@ -155,6 +179,16 @@ impl TcContext {
     #[inline]
     pub fn adjust_room(&self, len_diff: i32, mode: u32, flags: u64) -> Result<(), c_long> {
         self.skb.adjust_room(len_diff, mode, flags)
+    }
+
+    #[inline]
+    pub fn change_head(&self, len: u32, flags: u64) -> Result<(), c_long> {
+        self.skb.change_head(len, flags)
+    }
+
+    #[inline]
+    pub fn change_tail(&self, len: u32, flags: u64) -> Result<(), c_long> {
+        self.skb.change_tail(len, flags)
     }
 
     #[inline]

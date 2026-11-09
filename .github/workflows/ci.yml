@@ -9,6 +9,8 @@ on:
     - cron: 00 4 * * *
 
 env:
+  # This key is intentionally public so fork pull requests can use BuildBuddy.
+  BUILDBUDDY_API_KEY: 5CeVmFS0jDnutd00x9Xl
   CARGO_TERM_COLOR: always
 
 concurrency:
@@ -18,6 +20,23 @@ concurrency:
 permissions: {}
 
 jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      rust-toolchains: ${{ steps.toolchains.outputs.rust-toolchains }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Read the committed Rust toolchains
+        id: toolchains
+        run: |
+          set -euo pipefail
+
+          toolchains=$(python3 -B scripts/rust-toolchain-pins.py current)
+          printf 'rust-toolchains=%s\n' "$toolchains" >> "$GITHUB_OUTPUT"
+
   bazel:
     name: bazel (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
@@ -33,41 +52,91 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      - name: Check Starlark
+        run: bazel run //bazel/format:format.check
+
       - name: Test
         run: |
           set -euo pipefail
-          bazel_args=(
-            --config=remote
-            # This key is intentionally public so fork pull requests can use BuildBuddy.
-            --remote_header=x-buildbuddy-api-key=5CeVmFS0jDnutd00x9Xl
-          )
+          # The default JVM heap is under 2 GB on 7 GB macOS runners.
+          bazel --host_jvm_args=-Xmx4g test //... \
+            --config=remote \
+            --remote_header=x-buildbuddy-api-key="$BUILDBUDDY_API_KEY"
 
-          bazel test //... "${bazel_args[@]}"
+  codegen:
+    needs: prepare
+    # Ubuntu 26.04 no longer provides the required MIPS libc headers.
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - uses: $/.github/actions/codegen
+        with:
+          toolchain: ${{ fromJSON(needs.prepare.outputs.rust-toolchains).nightly }}
+      - name: Check generated files
+        id: generated
+        run: |
+          changes=$(git status --porcelain --untracked-files=all)
+          if [[ -n "$changes" ]]; then
+            printf '%s\n' "$changes"
+            git add --all
+            git diff --cached --binary HEAD > "$RUNNER_TEMP/generated.patch"
+
+            {
+              printf 'Generated files are out of date. Download and apply the patch:\n\n'
+              printf '    gh run download %s --repo %s --name generated-files\n' \
+                "$GITHUB_RUN_ID" "$GITHUB_REPOSITORY"
+              printf '    git apply generated.patch\n'
+              printf '    rm generated.patch\n'
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+      - name: Upload generated files
+        if: failure() && steps.generated.outcome == 'failure'
+        uses: actions/upload-artifact@v7
+        with:
+          name: generated-files
+          path: ${{ runner.temp }}/generated.patch
+          overwrite: true
 
   lint:
+    needs: prepare
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v7
 
-      - uses: dtolnay/rust-toolchain@nightly
+      - uses: $/.github/actions/setup-rust
         with:
+          toolchain: ${{ fromJSON(needs.prepare.outputs.rust-toolchains).nightly }}
           components: clippy,miri,rustfmt,rust-src
 
       # Cache usage approaches GitHub's default 10 GB repository allowance.
-      # PR-scoped entries can only help reruns of one PR, but repeatedly evict
-      # main caches that every PR can restore. Keep PRs restore-only.
+      # Only save default-branch entries, which every branch and PR can
+      # restore, so branch- and PR-scoped entries do not evict shared caches.
       - uses: Swatinem/rust-cache@v2
         with:
-          save-if: ${{ github.event_name != 'pull_request' }}
+          save-if: >-
+            ${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
 
       - uses: taiki-e/install-action@v2
         with:
           tool: cargo-hack,taplo-cli,typos-cli
 
+      # Clippy denies compiler warnings; fetch checks Cargo's manifest warnings.
+      - name: Check Cargo manifest warnings
+        env:
+          CARGO_BUILD_WARNINGS: deny
+        run: cargo +nightly fetch --locked
+
       - run: git ls-files -- '*.c' '*.h' | xargs clang-format --dry-run --Werror
 
-      - uses: DavidAnson/markdownlint-cli2-action@v24
+      - uses: DavidAnson/markdownlint-cli2-action@v25
 
       - run: taplo fmt --check
 
@@ -84,27 +153,7 @@ jobs:
 
       - run: cargo xtask clippy
 
-      # On the `aya-rs/aya` repository, regenerate the public API on a schedule.
-      #
-      # On all other events and repositories assert the public API is up to date.
       - run: cargo xtask public-api
-        if: ${{ !(github.event_name == 'schedule' && github.repository == 'aya-rs/aya') }}
-      - run: cargo xtask public-api --bless
-        if: ${{ (github.event_name == 'schedule' && github.repository == 'aya-rs/aya') }}
-      - uses: peter-evans/create-pull-request@v8
-        if: ${{ (github.event_name == 'schedule' && github.repository == 'aya-rs/aya') }}
-        with:
-          # GitHub actions aren't allowed to trigger other actions to prevent
-          # abuse; the canonical workaround is to use a sufficiently authorized
-          # token.
-          #
-          # See https://github.com/peter-evans/create-pull-request/blob/main/docs/concepts-guidelines.md#workarounds-to-trigger-further-workflow-runs.
-          token: ${{ secrets.CRABBY_GITHUB_TOKEN }}
-          branch: create-pull-request/public-api
-          commit-message: 'public-api: regenerate'
-          title: 'public-api: regenerate'
-          body: |
-            **Automated changes**
 
       - name: Run miri
         run: |
@@ -118,6 +167,7 @@ jobs:
             --workspace
 
   build-test-aya:
+    needs: prepare
     strategy:
       fail-fast: false
       matrix:
@@ -133,18 +183,22 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: $/.github/actions/setup-rust
         with:
+          toolchain: ${{ fromJSON(needs.prepare.outputs.rust-toolchains).stable }}
           targets: ${{ matrix.arch }}
 
       # Cache usage approaches GitHub's default 10 GB repository allowance.
-      # PR-scoped entries can only help reruns of one PR, but repeatedly evict
-      # main caches that every PR can restore. Keep PRs restore-only.
+      # Only save default-branch entries, which every branch and PR can
+      # restore, so branch- and PR-scoped entries do not evict shared caches.
       - uses: Swatinem/rust-cache@v2
         with:
-          save-if: ${{ github.event_name != 'pull_request' }}
+          save-if: >-
+            ${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
 
-      - uses: taiki-e/install-action@cargo-hack
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-hack
 
       # This is magic, it sets `$CARGO_BUILD_TARGET`.
       - uses: taiki-e/setup-cross-toolchain-action@v1
@@ -201,29 +255,33 @@ jobs:
             --feature-powerset
 
   build-test-aya-ebpf:
+    needs: prepare
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v7
 
-      - uses: dtolnay/rust-toolchain@nightly
+      - uses: $/.github/actions/setup-rust
         with:
+          toolchain: ${{ fromJSON(needs.prepare.outputs.rust-toolchains).nightly }}
           components: rust-src
 
       # Installed *after* nightly so it is the default.
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: $/.github/actions/setup-rust
+        with:
+          toolchain: ${{ fromJSON(needs.prepare.outputs.rust-toolchains).stable }}
 
       # Cache usage approaches GitHub's default 10 GB repository allowance.
-      # PR-scoped entries can only help reruns of one PR, but repeatedly evict
-      # main caches that every PR can restore. Keep PRs restore-only.
+      # Only save default-branch entries, which every branch and PR can
+      # restore, so branch- and PR-scoped entries do not evict shared caches.
       - uses: Swatinem/rust-cache@v2
         with:
-          save-if: ${{ github.event_name != 'pull_request' }}
+          save-if: >-
+            ${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
 
       - uses: taiki-e/install-action@v2
         with:
-          tool: cargo-binstall,cargo-hack
-      - run: cargo binstall --force bpf-linker
+          tool: bpf-linker,cargo-hack
 
       - name: Build & test for all BPF architectures
         env:
@@ -277,6 +335,7 @@ jobs:
           fi
 
   run-integration-test:
+    needs: prepare
     strategy:
       fail-fast: false
       matrix:
@@ -358,26 +417,28 @@ jobs:
           find /usr/local/bin -type l -exec sh -c 'readlink -f "$1" \
           | grep -q ^/Library/Frameworks/Python.framework/Versions/' _ {} \; -exec rm -v {} \;
 
-      - uses: dtolnay/rust-toolchain@nightly
+      - uses: $/.github/actions/setup-rust
         with:
+          toolchain: ${{ fromJSON(needs.prepare.outputs.rust-toolchains).nightly }}
           components: rust-src
 
       # Installed *after* nightly so it is the default.
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: $/.github/actions/setup-rust
         with:
+          toolchain: ${{ fromJSON(needs.prepare.outputs.rust-toolchains).stable }}
           targets: aarch64-unknown-linux-musl,x86_64-unknown-linux-musl
 
       # Cache usage approaches GitHub's default 10 GB repository allowance.
-      # PR-scoped entries can only help reruns of one PR, but repeatedly evict
-      # main caches that every PR can restore. Keep PRs restore-only.
+      # Only save default-branch entries, which every branch and PR can
+      # restore, so branch- and PR-scoped entries do not evict shared caches.
       - uses: Swatinem/rust-cache@v2
         with:
-          save-if: ${{ github.event_name != 'pull_request' }}
+          save-if: >-
+            ${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
 
       - uses: taiki-e/install-action@v2
         with:
-          tool: cargo-binstall,cargo-hack
-      - run: cargo binstall --force bpf-linker
+          tool: bpf-linker,cargo-hack
 
       - name: Restore VM integration test cache
         id: vm-cache
@@ -387,7 +448,15 @@ jobs:
         uses: actions/cache/restore@v6
         with:
           path: test/.tmp
-          key: ${{ runner.arch }}-${{ runner.os }}-integration-test-vm-cache-v2-${{ matrix.vm-kernels }}
+          # xtask does not resolve the exact package versions until after this
+          # step, so they cannot be included in the restore key. Restore by the
+          # stable matrix prefix instead. The trailing `-` delimits the matrix
+          # value, preventing overlap between prefixes such as `6.1` and `6.12`.
+          #
+          # When several keys match a prefix, GitHub selects the most recently
+          # created cache:
+          # https://docs.github.com/en/actions/reference/workflows-and-actions/dependency-caching#cache-key-matching
+          key: ${{ runner.arch }}-${{ runner.os }}-integration-test-vm-cache-v3-${{ matrix.vm-kernels }}-
 
       - name: Cleanup stale kernels and modules
         run: rm -rf test/.tmp/boot test/.tmp/lib
@@ -404,30 +473,42 @@ jobs:
           cargo xtask integration-test vm --cache-dir test/.tmp \
             --kernel-arch ${{ matrix.vm-kernels }}
 
-      - name: Save VM integration test cache
-        # By default, caches expire after seven days without access.
-        # An exact hit refreshes that period, so the immutable entry need not
-        # be uploaded again.
-        # The native arm64 `local` job produces no VM cache artifacts to save.
+      - name: Compute VM integration test cache key
+        id: vm-cache-key
         if: >-
           matrix.vm-kernels != 'local' &&
-          steps.vm-cache.outputs.cache-hit != 'true' &&
-          github.event_name != 'pull_request'
+          github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        run: |
+          set -euo pipefail
+          printf 'key=%s%s\n' \
+            "${{ steps.vm-cache.outputs.cache-primary-key }}" \
+            "${{ hashFiles('test/.tmp/**') }}" \
+            >> "$GITHUB_OUTPUT"
+
+      - name: Save VM integration test cache
+        # The local job skips both restore and key computation, so the empty
+        # outputs compare equal and this step is skipped. Only default-branch VM
+        # jobs produce a non-empty computed key; save when it differs from the
+        # restored key. actions/cache/save ignores empty keys from other jobs.
+        if: steps.vm-cache.outputs.cache-matched-key != steps.vm-cache-key.outputs.key
         uses: actions/cache/save@v6
         with:
           path: test/.tmp
-          key: ${{ runner.arch }}-${{ runner.os }}-integration-test-vm-cache-v2-${{ matrix.vm-kernels }}
+          key: ${{ steps.vm-cache-key.outputs.key }}
 
   check:
     if: always()
     needs:
+      - prepare
       - bazel
+      - codegen
       - lint
       - build-test-aya
       - build-test-aya-ebpf
       - run-integration-test
     runs-on: ubuntu-latest
     steps:
-      - uses: re-actors/alls-green@release/v1
-        with:
-          jobs: ${{ toJSON(needs) }}
+      - name: Verify all required jobs succeeded
+        env:
+          RESULTS: ${{ toJSON(needs.*.result) }}
+        run: jq --exit-status 'length > 0 and all(.[]; . == "success")' <<< "$RESULTS"

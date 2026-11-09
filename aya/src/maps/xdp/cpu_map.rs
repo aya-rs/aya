@@ -10,7 +10,8 @@ use aya_obj::generated::bpf_cpumap_val;
 
 use super::XdpMapError;
 use crate::{
-    FEATURES, Pod,
+    Pod,
+    kernel_features::{FEATURES, Feature},
     maps::{IterableMap, MapData, MapError, check_bounds, check_kv_size},
     programs::ProgramFd,
     sys::{SyscallError, bpf_map_lookup_elem, bpf_map_update_elem},
@@ -31,7 +32,7 @@ use crate::{
 /// use aya::maps::xdp::CpuMap;
 /// use aya::util::nr_cpus;
 ///
-/// let nr_cpus = nr_cpus().unwrap() as u32;
+/// let nr_cpus = nr_cpus().unwrap().get();
 /// let mut bpf = aya::EbpfLoader::new()
 ///     .map_max_entries("CPUS", nr_cpus)
 ///     .load(elf_bytes)
@@ -58,7 +59,7 @@ impl<T: Borrow<MapData>> CpuMap<T> {
     pub(crate) fn new(map: T) -> Result<Self, MapError> {
         let data = map.borrow();
 
-        if FEATURES.cpumap_prog_id() {
+        if FEATURES.is_supported(Feature::CpuMapProgId) {
             check_kv_size::<u32, bpf_cpumap_val>(data)?;
         } else {
             check_kv_size::<u32, u32>(data)?;
@@ -85,12 +86,12 @@ impl<T: Borrow<MapData>> CpuMap<T> {
         check_bounds(data, cpu_index)?;
         let fd = data.fd().as_fd();
 
-        let value = if FEATURES.cpumap_prog_id() {
+        let value = if FEATURES.is_supported(Feature::CpuMapProgId) {
             bpf_map_lookup_elem::<_, bpf_cpumap_val>(fd, &cpu_index, flags).map(|value| {
                 value.map(|value| CpuMapValue {
                     queue_size: value.qsize,
                     // SAFETY: map writes use fd, map reads use id.
-                    // https://github.com/torvalds/linux/blob/2dde18cd1d8fac735875f2e4987f11817cc0bc2c/include/uapi/linux/bpf.h#L6241
+                    // https://github.com/torvalds/linux/blob/2dde18cd1/include/uapi/linux/bpf.h#L6241
                     prog_id: NonZeroU32::new(unsafe { value.bpf_prog.id }),
                 })
             })
@@ -147,14 +148,12 @@ impl<T: BorrowMut<MapData>> CpuMap<T> {
         check_bounds(data, cpu_index)?;
         let fd = data.fd().as_fd();
 
-        let res = if FEATURES.cpumap_prog_id() {
+        let res = if FEATURES.is_supported(Feature::CpuMapProgId) {
             let mut value = unsafe { std::mem::zeroed::<bpf_cpumap_val>() };
             value.qsize = queue_size;
             // Default is valid as the kernel will only consider fd > 0:
-            // https://github.com/torvalds/linux/blob/2dde18cd1d8fac735875f2e4987f11817cc0bc2c/kernel/bpf/cpumap.c#L466
-            value.bpf_prog.fd = program
-                .map(|prog| prog.as_fd().as_raw_fd())
-                .unwrap_or_default();
+            // https://github.com/torvalds/linux/blob/2dde18cd1/kernel/bpf/cpumap.c#L466
+            value.bpf_prog.fd = program.map_or_default(|prog| prog.as_fd().as_raw_fd());
             bpf_map_update_elem(fd, Some(&cpu_index), &value, flags)
         } else {
             if program.is_some() {

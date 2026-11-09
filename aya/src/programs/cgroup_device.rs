@@ -25,7 +25,7 @@ use crate::{
 ///
 /// # Minimum kernel version
 ///
-/// The minimum kernel version required to use this feature is [4.15](https://github.com/torvalds/linux/commit/ebc614f687369f9df99828572b1d85a7c2de3d92).
+/// The minimum kernel version required to use this feature is [4.15](https://github.com/torvalds/linux/commit/ebc614f68).
 ///
 /// # Examples
 ///
@@ -145,6 +145,7 @@ enum CgroupDeviceLinkInner {
 
 impl Link for CgroupDeviceLinkInner {
     type Id = CgroupDeviceLinkIdInner;
+    type Error = ProgramError;
 
     fn id(&self) -> Self::Id {
         match self {
@@ -153,9 +154,9 @@ impl Link for CgroupDeviceLinkInner {
         }
     }
 
-    fn detach(self) -> Result<(), ProgramError> {
+    fn detach(self) -> Result<(), Self::Error> {
         match self {
-            Self::Fd(fd) => fd.detach(),
+            Self::Fd(fd) => fd.detach().map_err(Into::into),
             Self::ProgAttach(p) => p.detach(),
         }
     }

@@ -2,7 +2,7 @@
 
 #![deny(missing_docs)]
 
-use core::{borrow::Borrow, ptr::NonNull};
+use core::ptr::NonNull;
 
 use aya_ebpf_bindings::bindings::{BPF_F_NO_COMMON_LRU, BPF_F_NO_PREALLOC};
 
@@ -34,7 +34,7 @@ macro_rules! define_btf_hash_map {
         );
 
         impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> $name<K, V, MAX_ENTRIES, FLAGS> {
-            const _CHECK: () = {
+            const CHECK: () = {
                 assert!(
                     size_of::<K>() > 0,
                     concat!(stringify!($name), " key must be non-zero sized."),
@@ -59,10 +59,10 @@ macro_rules! define_btf_hash_map {
 
             $(#[$get_attr])+
             #[inline(always)]
-            pub unsafe fn get(&self, key: impl Borrow<K>) -> Option<&V> {
-                let () = Self::_CHECK;
+            pub unsafe fn get(&self, key: &K) -> Option<&V> {
+                let () = Self::CHECK;
                 // SAFETY: The caller upholds the aliasing invariants documented above.
-                unsafe { self.lookup(key.borrow()).map(|p| p.as_ref()) }
+                unsafe { self.lookup(key).map(|p| p.as_ref()) }
             }
 
             /// Returns a `*const V` for the value associated with `key`.
@@ -71,9 +71,9 @@ macro_rules! define_btf_hash_map {
             /// caller's responsibility to decide whether dereferencing the
             /// pointer is safe.
             #[inline(always)]
-            pub fn get_ptr(&self, key: impl Borrow<K>) -> Option<*const V> {
-                let () = Self::_CHECK;
-                unsafe { self.lookup(key.borrow()).map(|p| p.as_ptr().cast_const()) }
+            pub fn get_ptr(&self, key: &K) -> Option<*const V> {
+                let () = Self::CHECK;
+                unsafe { self.lookup(key).map(|p| p.as_ptr().cast_const()) }
             }
 
             /// Returns a `*mut V` for the value associated with `key`.
@@ -81,9 +81,9 @@ macro_rules! define_btf_hash_map {
             /// The same aliasing caveat as [`Self::get`] applies, and the
             /// caller must additionally avoid concurrent writes.
             #[inline(always)]
-            pub fn get_ptr_mut(&self, key: impl Borrow<K>) -> Option<*mut V> {
-                let () = Self::_CHECK;
-                unsafe { self.lookup(key.borrow()).map(NonNull::as_ptr) }
+            pub fn get_ptr_mut(&self, key: &K) -> Option<*mut V> {
+                let () = Self::CHECK;
+                unsafe { self.lookup(key).map(NonNull::as_ptr) }
             }
 
             #[inline(always)]
@@ -98,19 +98,19 @@ macro_rules! define_btf_hash_map {
             #[inline(always)]
             pub fn insert(
                 &self,
-                key: impl Borrow<K>,
-                value: impl Borrow<V>,
+                key: &K,
+                value: &V,
                 flags: u64,
             ) -> Result<(), i32> {
-                let () = Self::_CHECK;
-                insert(self.as_ptr(), key.borrow(), value.borrow(), flags)
+                let () = Self::CHECK;
+                insert(self.as_ptr(), key, value, flags)
             }
 
             /// Removes the entry for `key`.
             #[inline(always)]
-            pub fn remove(&self, key: impl Borrow<K>) -> Result<(), i32> {
-                let () = Self::_CHECK;
-                remove(self.as_ptr(), key.borrow())
+            pub fn remove(&self, key: &K) -> Result<(), i32> {
+                let () = Self::CHECK;
+                remove(self.as_ptr(), key)
             }
         }
     };

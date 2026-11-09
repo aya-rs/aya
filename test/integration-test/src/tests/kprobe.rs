@@ -1,10 +1,26 @@
-use std::{sync::mpsc::sync_channel, thread};
+use std::{fs::File, io::Read as _};
 
 use aya::{
-    EbpfLoader,
+    Ebpf, EbpfLoader,
     maps::{Array, MapData},
-    programs::KProbe,
+    programs::{KProbe, links::Link as _},
 };
+
+#[test_log::test]
+fn tracefs_cleanup() {
+    let mut bpf = Ebpf::load(crate::TEST).unwrap();
+    let program: &mut KProbe = bpf.program_mut("test_kprobe").unwrap().try_into().unwrap();
+    program.load().unwrap();
+    super::check_tracefs_cleanup(
+        "kprobe",
+        1,
+        || {
+            let id = program.attach("try_to_wake_up", 0).unwrap();
+            program.take_link(id).unwrap()
+        },
+        |link| link.detach().unwrap(),
+    );
+}
 
 #[test_log::test]
 fn kprobe_triggers() {
@@ -22,18 +38,12 @@ fn kprobe_triggers() {
         .try_into()
         .unwrap();
     prog.load().unwrap();
-    prog.attach("try_to_wake_up", 0).unwrap();
+    prog.attach("vfs_read", 0).unwrap();
 
+    let mut file = File::open("/dev/null").unwrap();
     let hits_before = read_hits(&hits);
 
-    let (tx, rx) = sync_channel::<()>(0);
-    let worker = thread::spawn(move || {
-        rx.recv().unwrap();
-    });
-
-    tx.send(()).unwrap();
-
-    worker.join().unwrap();
+    assert_eq!(file.read(&mut [0]).unwrap(), 0);
 
     let hits_after = read_hits(&hits);
     assert!(

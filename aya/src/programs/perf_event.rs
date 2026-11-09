@@ -1,6 +1,9 @@
-//! Perf event programs.
+//! Perf event programs and groups.
 
-use std::os::fd::AsFd as _;
+use std::{
+    io, iter,
+    os::fd::{AsFd as _, BorrowedFd},
+};
 
 use aya_obj::generated::{
     HW_BREAKPOINT_LEN_1, HW_BREAKPOINT_LEN_2, HW_BREAKPOINT_LEN_4, HW_BREAKPOINT_LEN_8,
@@ -8,15 +11,20 @@ use aya_obj::generated::{
     bpf_prog_type::BPF_PROG_TYPE_PERF_EVENT, perf_hw_cache_id, perf_hw_cache_op_id,
     perf_hw_cache_op_result_id, perf_hw_id, perf_sw_ids, perf_type_id,
 };
+use thiserror::Error;
 
 use crate::{
+    MockableFd,
     programs::{
         ProgramData, ProgramError, ProgramType, impl_try_from_fdlink, impl_try_into_fdlink,
         links::define_link_wrapper,
         load_program_without_attach_type,
         perf_attach::{PerfLinkIdInner, PerfLinkInner, perf_attach},
     },
-    sys::{SyscallError, perf_event_open},
+    sys::{
+        PerfEventIoctlRequest, SyscallError, perf_event_ioctl, perf_event_open,
+        perf_event_open_group_member, perf_event_read,
+    },
 };
 
 /// The type of perf event and their respective configuration.
@@ -381,6 +389,213 @@ pub enum PerfEventScope {
         /// cpu id
         cpu: u32,
     },
+}
+
+/// An error returned when opening a [`PerfEventGroup`].
+#[derive(Debug, Error)]
+#[error("failed to open perf event at index {event_index}: {io_error}")]
+pub struct PerfEventGroupOpenError {
+    /// The index of the event that failed to open. Zero identifies the group
+    /// leader, and subsequent indices identify members in iteration order.
+    pub event_index: usize,
+    /// The error returned by `perf_event_open`.
+    #[source]
+    pub io_error: io::Error,
+}
+
+/// A simultaneous reading from a [`PerfEventGroup`].
+///
+/// `enabled_nanos` and `running_nanos` can differ when the kernel multiplexes
+/// the group. If `running_nanos` is nonzero, each counter can be normalized as
+/// `u128::from(value) * u128::from(enabled_nanos) / u128::from(running_nanos)`.
+/// A zero `running_nanos` means that the group was never scheduled.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct PerfEventGroupRead<'a> {
+    /// Counter values in the same order as the configurations passed to
+    /// [`PerfEventGroup::open`].
+    pub values: &'a [u64],
+    /// Duration in nanoseconds for which the group was enabled.
+    pub enabled_nanos: u64,
+    /// Duration in nanoseconds for which the group was running.
+    pub running_nanos: u64,
+}
+
+/// A group of perf events scheduled together by the kernel.
+///
+/// The kernel attempts to schedule every event in a group simultaneously.
+/// This is useful when values will be compared, such as instructions per
+/// cycle, because every counter covers the same execution intervals. The
+/// group is disabled when it is opened and when it is dropped.
+///
+/// # Example
+///
+/// ```no_run
+/// use aya::programs::perf_event::{
+///     HardwareEvent, PerfEventConfig, PerfEventGroup, PerfEventScope,
+/// };
+///
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// let mut group = PerfEventGroup::open(
+///     PerfEventConfig::Hardware(HardwareEvent::CpuCycles),
+///     [PerfEventConfig::Hardware(HardwareEvent::Instructions)],
+///     PerfEventScope::CallingProcess { cpu: None },
+/// )?;
+///
+/// group.reset()?;
+/// group.enable()?;
+/// // Run the workload being measured.
+/// group.disable()?;
+///
+/// let read = group.read()?;
+/// println!("cycles: {}, instructions: {}", read.values[0], read.values[1]);
+/// # Ok(())
+/// # }
+/// ```
+#[derive(Debug)]
+pub struct PerfEventGroup {
+    leader: MockableFd,
+    members: Box<[MockableFd]>,
+    read_buffer: Box<[u64]>,
+}
+
+impl Drop for PerfEventGroup {
+    fn drop(&mut self) {
+        let _unused: Result<(), io::Error> = self.disable();
+    }
+}
+
+impl PerfEventGroup {
+    /// Opens a perf event group for `scope`.
+    ///
+    /// `leader` becomes the group leader. The remaining configurations are
+    /// added as siblings in iteration order.
+    ///
+    /// The group is opened disabled. Call [`PerfEventGroup::enable`] to start
+    /// counting.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`PerfEventGroupOpenError`] if `perf_event_open` fails. The
+    /// error identifies which event failed to open.
+    pub fn open(
+        leader: PerfEventConfig,
+        members: impl IntoIterator<Item = PerfEventConfig>,
+        scope: PerfEventScope,
+    ) -> Result<Self, PerfEventGroupOpenError> {
+        let leader = perf_event_open_group_member(leader, scope, None).map_err(|io_error| {
+            PerfEventGroupOpenError {
+                event_index: 0,
+                io_error,
+            }
+        })?;
+        let members = members
+            .into_iter()
+            .enumerate()
+            .map(|(index, config)| {
+                perf_event_open_group_member(config, scope, Some(leader.as_fd())).map_err(
+                    |io_error| PerfEventGroupOpenError {
+                        event_index: index + 1,
+                        io_error,
+                    },
+                )
+            })
+            .collect::<Result<Vec<_>, _>>()?
+            .into_boxed_slice();
+
+        let read_buffer = vec![0; members.len() + 4].into_boxed_slice();
+        Ok(Self {
+            leader,
+            members,
+            read_buffer,
+        })
+    }
+
+    /// Returns the file descriptors for the leader followed by every group
+    /// member in the order supplied to [`PerfEventGroup::open`].
+    ///
+    /// These descriptors can be inserted into a
+    /// [`PerfEventArray`](crate::maps::PerfEventArray) with
+    /// [`PerfEventArray::set`](crate::maps::PerfEventArray::set).
+    pub fn events(&self) -> impl Iterator<Item = BorrowedFd<'_>> {
+        iter::once(self.leader.as_fd()).chain(self.members.iter().map(|event| event.as_fd()))
+    }
+
+    /// Enables every event in the group.
+    ///
+    /// # Errors
+    ///
+    /// Returns the error from the `PERF_EVENT_IOC_ENABLE` ioctl.
+    pub fn enable(&self) -> io::Result<()> {
+        perf_event_ioctl(
+            self.leader.as_fd(),
+            PerfEventIoctlRequest::Enable { group: true },
+        )
+    }
+
+    /// Disables every event in the group.
+    ///
+    /// Disabling preserves the accumulated counter values.
+    ///
+    /// # Errors
+    ///
+    /// Returns the error from the `PERF_EVENT_IOC_DISABLE` ioctl.
+    pub fn disable(&self) -> io::Result<()> {
+        perf_event_ioctl(
+            self.leader.as_fd(),
+            PerfEventIoctlRequest::Disable { group: true },
+        )
+    }
+
+    /// Resets every counter value in the group to zero.
+    ///
+    /// This does not reset [`PerfEventGroupRead::enabled_nanos`] or
+    /// [`PerfEventGroupRead::running_nanos`].
+    ///
+    /// # Errors
+    ///
+    /// Returns the error from the `PERF_EVENT_IOC_RESET` ioctl.
+    pub fn reset(&self) -> io::Result<()> {
+        perf_event_ioctl(
+            self.leader.as_fd(),
+            PerfEventIoctlRequest::Reset { group: true },
+        )
+    }
+
+    /// Reads every counter in the group.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if `read` fails or the kernel returns an unexpected
+    /// number of counters.
+    pub fn read(&mut self) -> io::Result<PerfEventGroupRead<'_>> {
+        perf_event_read(self.leader.as_fd(), &mut self.read_buffer)?;
+
+        let ([event_count, enabled_nanos, running_nanos], values) = self
+            .read_buffer
+            .split_first_chunk::<3>()
+            .expect("read buffer always contains a complete header by construction");
+        let event_count = usize::try_from(*event_count).map_err(|error| {
+            io::Error::new(
+                io::ErrorKind::InvalidData,
+                format!("perf event group returned an invalid event count: {error}"),
+            )
+        })?;
+        if event_count != values.len() {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidData,
+                format!(
+                    "perf event group returned {event_count} counters, expected {}",
+                    values.len()
+                ),
+            ));
+        }
+
+        Ok(PerfEventGroupRead {
+            values,
+            enabled_nanos: *enabled_nanos,
+            running_nanos: *running_nanos,
+        })
+    }
 }
 
 /// A program that can be attached at a perf event.

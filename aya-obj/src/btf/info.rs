@@ -1,5 +1,5 @@
 use bytes::BufMut as _;
-use object::Endianness;
+use object::{Endian as _, Endianness};
 
 use crate::{
     generated::{bpf_func_info, bpf_line_info},
@@ -43,21 +43,17 @@ impl FuncSecInfo {
         let func_info = func_info_data
             .chunks(rec_size)
             .map(|data| {
-                let read_u32 = if endianness == Endianness::Little {
-                    u32::from_le_bytes
-                } else {
-                    u32::from_be_bytes
-                };
-
-                let mut offset = 0;
-
                 // ELF instruction offsets are in bytes
                 // Kernel instruction offsets are in instructions units
                 // We can convert by dividing the length in bytes by INS_SIZE
-                let insn_off =
-                    read_u32(data[offset..offset + 4].try_into().unwrap()) / INS_SIZE as u32;
-                offset += 4;
-                let type_id = read_u32(data[offset..offset + 4].try_into().unwrap());
+                let (insn_off, data) = data.split_first_chunk().unwrap();
+                let insn_off = endianness.read_u32(*insn_off) / INS_SIZE as u32;
+
+                let (type_id, data) = data.split_first_chunk().unwrap();
+                let type_id = endianness.read_u32(*type_id);
+
+                #[expect(clippy::no_effect_underscore_binding, reason = "symmetry above")]
+                let _data = data;
 
                 bpf_func_info { insn_off, type_id }
             })
@@ -139,25 +135,23 @@ impl LineSecInfo {
         let line_info = func_info_data
             .chunks(rec_size)
             .map(|data| {
-                let read_u32 = if endianness == Endianness::Little {
-                    u32::from_le_bytes
-                } else {
-                    u32::from_be_bytes
-                };
-
-                let mut offset = 0;
-
                 // ELF instruction offsets are in bytes
                 // Kernel instruction offsets are in instructions units
                 // We can convert by dividing the length in bytes by INS_SIZE
-                let insn_off =
-                    read_u32(data[offset..offset + 4].try_into().unwrap()) / INS_SIZE as u32;
-                offset += 4;
-                let file_name_off = read_u32(data[offset..offset + 4].try_into().unwrap());
-                offset += 4;
-                let line_off = read_u32(data[offset..offset + 4].try_into().unwrap());
-                offset += 4;
-                let line_col = read_u32(data[offset..offset + 4].try_into().unwrap());
+                let (insn_off, data) = data.split_first_chunk().unwrap();
+                let insn_off = endianness.read_u32(*insn_off) / INS_SIZE as u32;
+
+                let (file_name_off, data) = data.split_first_chunk().unwrap();
+                let file_name_off = endianness.read_u32(*file_name_off);
+
+                let (line_off, data) = data.split_first_chunk().unwrap();
+                let line_off = endianness.read_u32(*line_off);
+
+                let (line_col, data) = data.split_first_chunk().unwrap();
+                let line_col = endianness.read_u32(*line_col);
+
+                #[expect(clippy::no_effect_underscore_binding, reason = "symmetry above")]
+                let _data = data;
 
                 bpf_line_info {
                     insn_off,

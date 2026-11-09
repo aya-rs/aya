@@ -2,12 +2,12 @@
 use std::{
     collections::BTreeMap,
     error::Error,
-    ffi::{CStr, CString},
+    ffi::CStr,
     fmt::Display,
     fs::{self, File},
     io::{self, BufRead, BufReader},
     mem,
-    num::ParseIntError,
+    num::{NonZeroU32, NonZeroUsize, ParseIntError},
     os::fd::{AsFd as _, BorrowedFd},
     path::Path,
     ptr, slice,
@@ -27,7 +27,8 @@ use crate::{
 };
 
 /// Represents a kernel version, in major.minor.release version.
-// Adapted from https://docs.rs/procfs/latest/procfs/sys/kernel/struct.Version.html.
+// Adapted from procfs 0.15.1:
+// https://github.com/eminence/procfs/blob/16ccc15aa/src/sys/kernel/mod.rs#L17-L70
 #[derive(Debug, Copy, Clone, Eq, PartialEq, PartialOrd)]
 pub struct KernelVersion {
     pub(crate) major: u8,
@@ -100,18 +101,18 @@ impl KernelVersion {
         // backports were done to cap the patch version
         let max_patch = match (major, minor) {
             // On 4.4 + 4.9, any patch 257 or above was hardcoded to 255.
-            // See: https://github.com/torvalds/linux/commit/a15813a +
-            // https://github.com/torvalds/linux/commit/42efb098
+            // See: https://github.com/torvalds/linux/commit/a15813a88 +
+            // https://github.com/torvalds/linux/commit/42efb098c
             (4, 4 | 9) => 257,
             // On 4.14, any patch 252 or above was hardcoded to 255.
-            // See: https://github.com/torvalds/linux/commit/e131e0e
+            // See: https://github.com/torvalds/linux/commit/e131e0e88
             (4, 14) => 252,
             // On 4.19, any patch 222 or above was hardcoded to 255.
-            // See: https://github.com/torvalds/linux/commit/a256aac
+            // See: https://github.com/torvalds/linux/commit/a256aac5b
             (4, 19) => 222,
             // For other kernels (i.e., newer LTS kernels as other
             // ones won't reach 255+ patches) clamp it to 255. See:
-            // https://github.com/torvalds/linux/commit/9b82f13e
+            // https://github.com/torvalds/linux/commit/9b82f13e7
             _ => 255,
         };
 
@@ -125,7 +126,7 @@ impl KernelVersion {
     }
 
     // These (get_ubuntu_kernel_version, parse_ubuntu_kernel_version, read_ubuntu_kernel_version_file)
-    // are ported from https://github.com/torvalds/linux/blob/3f01e9f/tools/lib/bpf/libbpf_probes.c#L21-L101.
+    // are ported from https://github.com/torvalds/linux/blob/3f01e9fed/tools/lib/bpf/libbpf_probes.c#L21-L101.
     fn get_ubuntu_kernel_version() -> Result<Option<Self>, CurrentKernelVersionError> {
         let content = Self::read_ubuntu_kernel_version_file()?;
         content
@@ -224,28 +225,35 @@ pub fn online_cpus() -> Result<Vec<u32>, (&'static str, io::Error)> {
     read_cpu_ranges(ONLINE_CPUS)
 }
 
-/// Get the number of possible cpus.
+/// Returns the number of possible CPUs.
 ///
 /// See `/sys/devices/system/cpu/possible`.
-pub fn nr_cpus() -> Result<usize, (&'static str, io::Error)> {
+pub fn nr_cpus() -> Result<NonZeroU32, (&'static str, io::Error)> {
     const POSSIBLE_CPUS: &str = "/sys/devices/system/cpu/possible";
 
     thread_local! {
         // TODO(https://github.com/rust-lang/rust/issues/109737): Use
         // `std::cell::OnceCell` when `get_or_try_init` is stabilized.
-        static CACHE: once_cell::unsync::OnceCell<usize> = const { once_cell::unsync::OnceCell::new() };
+        static CACHE: once_cell::unsync::OnceCell<NonZeroU32> = const { once_cell::unsync::OnceCell::new() };
     }
     CACHE.with(|cell| {
         // TODO(https://github.com/rust-lang/rust/issues/109737): Replace `once_cell` with
         // `std::cell::OnceCell`.
         cell.get_or_try_init(|| {
             // error: unsupported operation: `open` not available when isolation is enabled
-            if cfg!(miri) {
+            let cpus = if cfg!(miri) {
                 parse_cpu_ranges("0-3").map_err(|error| (POSSIBLE_CPUS, error))
             } else {
                 read_cpu_ranges(POSSIBLE_CPUS)
-            }
-            .map(|cpus| cpus.len())
+            }?;
+            NonZeroUsize::try_from(cpus.len())
+                .and_then(NonZeroU32::try_from)
+                .map_err(|err| {
+                    (
+                        POSSIBLE_CPUS,
+                        io::Error::new(io::ErrorKind::InvalidData, err),
+                    )
+                })
         })
         .copied()
     })
@@ -275,6 +283,9 @@ fn parse_cpu_ranges(data: &str) -> Result<Vec<u32>, io::Error> {
                     end?
                 }
             };
+            if start > end {
+                return Err(range);
+            }
             Ok(start..=end)
         })
         .try_fold(Vec::new(), |mut cpus, range| {
@@ -358,11 +369,9 @@ pub fn syscall_prefix() -> Result<&'static str, io::Error> {
     Err(io::ErrorKind::NotFound.into())
 }
 
-pub(crate) fn ifindex_from_ifname(if_name: &str) -> Result<u32, io::Error> {
-    let c_str_if_name = CString::new(if_name)?;
-    let c_if_name = c_str_if_name.as_ptr();
+pub(crate) fn ifindex_from_ifname(if_name: &CStr) -> Result<u32, io::Error> {
     // Safety: libc wrapper
-    let if_index = unsafe { if_nametoindex(c_if_name) };
+    let if_index = unsafe { if_nametoindex(if_name.as_ptr()) };
     if if_index == 0 {
         return Err(io::Error::last_os_error());
     }
@@ -516,6 +525,7 @@ impl Drop for MMap {
 #[cfg(test)]
 mod tests {
     use assert_matches::assert_matches;
+    use rstest::rstest;
 
     use super::*;
 
@@ -537,26 +547,24 @@ mod tests {
         });
     }
 
-    #[test]
-    fn test_parse_online_cpus() {
-        assert_eq!(parse_cpu_ranges("0").unwrap(), vec![0]);
-        assert_eq!(parse_cpu_ranges("0,1").unwrap(), vec![0, 1]);
-        assert_eq!(parse_cpu_ranges("0,1,2").unwrap(), vec![0, 1, 2]);
+    #[rstest]
+    #[case::single("0", &[0])]
+    #[case::pair("0,1", &[0, 1])]
+    #[case::list("0,1,2", &[0, 1, 2])]
+    #[case::range("0-7", &[0, 1, 2, 3, 4, 5, 6, 7])]
+    #[case::adjacent_ranges("0-3,4-7", &[0, 1, 2, 3, 4, 5, 6, 7])]
+    #[case::range_and_list("0-5,6,7", &[0, 1, 2, 3, 4, 5, 6, 7])]
+    #[case::sparse("0,2-3", &[0, 2, 3])]
+    fn test_parse_cpu_ranges(#[case] data: &str, #[case] expected: &[u32]) {
+        assert_eq!(parse_cpu_ranges(data).unwrap(), expected);
+    }
+
+    #[rstest]
+    fn test_parse_invalid_cpu_ranges(#[values("", "0-1,2-", "foo", "3-1", "0,3-1")] data: &str) {
         assert_eq!(
-            parse_cpu_ranges("0-7").unwrap(),
-            (0..=7).collect::<Vec<_>>()
+            parse_cpu_ranges(data).unwrap_err().kind(),
+            io::ErrorKind::InvalidData
         );
-        assert_eq!(
-            parse_cpu_ranges("0-3,4-7").unwrap(),
-            (0..=7).collect::<Vec<_>>()
-        );
-        assert_eq!(
-            parse_cpu_ranges("0-5,6,7").unwrap(),
-            (0..=7).collect::<Vec<_>>()
-        );
-        assert_matches!(parse_cpu_ranges(""), Err(_));
-        assert_matches!(parse_cpu_ranges("0-1,2-"), Err(_));
-        assert_matches!(parse_cpu_ranges("foo"), Err(_));
     }
 
     #[test]

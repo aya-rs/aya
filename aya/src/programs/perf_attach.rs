@@ -1,5 +1,6 @@
 //! Perf attach links.
 use std::{
+    convert::Infallible,
     io,
     os::fd::{AsFd as _, AsRawFd as _, BorrowedFd, RawFd},
 };
@@ -7,11 +8,11 @@ use std::{
 use aya_obj::generated::bpf_attach_type::BPF_PERF_EVENT;
 
 use crate::{
-    FEATURES,
+    kernel_features::{FEATURES, Feature},
     programs::{FdLink, Link, ProgramError, id_as_key, probe::ProbeEvent},
     sys::{
         BpfLinkCreateArgs, LinkTarget, PerfEventIoctlRequest, SyscallError, bpf_link_create,
-        is_bpf_cookie_supported, perf_event_ioctl,
+        perf_event_ioctl,
     },
 };
 
@@ -29,6 +30,7 @@ pub(crate) enum PerfLinkInner {
 
 impl Link for PerfLinkInner {
     type Id = PerfLinkIdInner;
+    type Error = Infallible;
 
     fn id(&self) -> Self::Id {
         match self {
@@ -37,7 +39,7 @@ impl Link for PerfLinkInner {
         }
     }
 
-    fn detach(self) -> Result<(), ProgramError> {
+    fn detach(self) -> Result<(), Self::Error> {
         match self {
             Self::Fd(link) => link.detach(),
             Self::PerfLink(link) => link.detach(),
@@ -56,25 +58,32 @@ pub struct PerfLinkId(RawFd);
 /// [`PerfEvent`]: crate::programs::PerfEvent
 #[derive(Debug)]
 pub(crate) struct PerfLink {
+    // Fields drop in declaration order. Close the perf fd before deleting the tracefs event.
+    // A disabled perf event still holds a reference to the tracefs event:
+    // https://github.com/torvalds/linux/blob/830b3c68c/kernel/trace/trace_event_perf.c#L237-L244
+    // Event removal returns EBUSY while perf_refcount is nonzero:
+    // https://github.com/torvalds/linux/blob/830b3c68c/kernel/trace/trace_events.c#L2865-L2873
     perf_fd: crate::MockableFd,
     event: Option<ProbeEvent>,
 }
 
 impl Link for PerfLink {
     type Id = PerfLinkId;
+    type Error = Infallible;
 
     fn id(&self) -> Self::Id {
         PerfLinkId(self.perf_fd.as_raw_fd())
     }
 
-    fn detach(self) -> Result<(), ProgramError> {
-        let Self { perf_fd, event } = self;
-        let _unused: io::Result<()> =
-            perf_event_ioctl(perf_fd.as_fd(), PerfEventIoctlRequest::Disable);
-        if let Some(event) = event {
-            let _unused: Result<(), ProgramError> = event.detach();
-        }
-
+    fn detach(self) -> Result<(), Self::Error> {
+        let Self {
+            perf_fd,
+            event: _event,
+        } = &self;
+        let _unused: io::Result<()> = perf_event_ioctl(
+            perf_fd.as_fd(),
+            PerfEventIoctlRequest::Disable { group: false },
+        );
         Ok(())
     }
 }
@@ -86,56 +95,64 @@ pub(crate) fn perf_attach(
     perf_fd: crate::MockableFd,
     cookie: Option<u64>,
 ) -> Result<PerfLinkInner, ProgramError> {
-    if cookie.is_some() && (!is_bpf_cookie_supported() || !FEATURES.bpf_perf_link()) {
+    if FEATURES.is_supported(Feature::BpfPerfLink) {
+        attach_bpf_link(prog_fd, perf_fd, cookie).map(PerfLinkInner::Fd)
+    } else {
+        if cookie.is_some() {
+            return Err(ProgramError::AttachCookieNotSupported);
+        }
+        attach_perf_event(prog_fd, perf_fd, None).map(PerfLinkInner::PerfLink)
+    }
+}
+
+pub(crate) fn attach_bpf_link(
+    prog_fd: BorrowedFd<'_>,
+    perf_fd: crate::MockableFd,
+    cookie: Option<u64>,
+) -> Result<FdLink, ProgramError> {
+    if cookie.is_some() && !FEATURES.is_supported(Feature::BpfCookie) {
         return Err(ProgramError::AttachCookieNotSupported);
     }
-    if FEATURES.bpf_perf_link() {
-        let link_fd = bpf_link_create(
-            prog_fd,
-            LinkTarget::Fd(perf_fd.as_fd()),
-            BPF_PERF_EVENT,
-            0,
-            cookie.map(|bpf_cookie| BpfLinkCreateArgs::PerfEvent { bpf_cookie }),
-        )
-        .map_err(|io_error| SyscallError {
-            call: "bpf_link_create",
-            io_error,
-        })?;
-        Ok(PerfLinkInner::Fd(FdLink::new(link_fd)))
-    } else {
-        perf_attach_either(prog_fd, perf_fd, None)
-    }
+    let link_fd = bpf_link_create(
+        prog_fd,
+        LinkTarget::Fd(perf_fd.as_fd()),
+        BPF_PERF_EVENT,
+        0,
+        cookie.map(|bpf_cookie| BpfLinkCreateArgs::PerfEvent { bpf_cookie }),
+    )
+    .map_err(|io_error| SyscallError {
+        call: "bpf_link_create",
+        io_error,
+    })?;
+    Ok(FdLink::new(link_fd))
 }
 
-pub(crate) fn perf_attach_debugfs(
+pub(crate) fn attach_perf_event(
     prog_fd: BorrowedFd<'_>,
     perf_fd: crate::MockableFd,
-    event: ProbeEvent,
-) -> Result<PerfLinkInner, ProgramError> {
-    perf_attach_either(prog_fd, perf_fd, Some(event))
-}
-
-fn perf_attach_either(
-    prog_fd: BorrowedFd<'_>,
-    perf_fd: crate::MockableFd,
-    mut event: Option<ProbeEvent>,
-) -> Result<PerfLinkInner, ProgramError> {
+    event: Option<ProbeEvent>,
+) -> Result<PerfLink, ProgramError> {
+    // Own both resources in field drop order before either ioctl can fail. Otherwise,
+    // the parameters drop in reverse order, deleting the event while its fd is open.
+    let link = PerfLink { perf_fd, event };
+    let PerfLink {
+        perf_fd,
+        event: _event,
+    } = &link;
     perf_event_ioctl(perf_fd.as_fd(), PerfEventIoctlRequest::SetBpf(prog_fd)).map_err(
         |io_error| SyscallError {
             call: "PERF_EVENT_IOC_SET_BPF",
             io_error,
         },
     )?;
-    perf_event_ioctl(perf_fd.as_fd(), PerfEventIoctlRequest::Enable).map_err(|io_error| {
-        SyscallError {
-            call: "PERF_EVENT_IOC_ENABLE",
-            io_error,
-        }
+    perf_event_ioctl(
+        perf_fd.as_fd(),
+        PerfEventIoctlRequest::Enable { group: false },
+    )
+    .map_err(|io_error| SyscallError {
+        call: "PERF_EVENT_IOC_ENABLE",
+        io_error,
     })?;
 
-    if let Some(event) = event.as_mut() {
-        event.disarm();
-    }
-
-    Ok(PerfLinkInner::PerfLink(PerfLink { perf_fd, event }))
+    Ok(link)
 }

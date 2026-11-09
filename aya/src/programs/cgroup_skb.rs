@@ -148,6 +148,7 @@ enum CgroupSkbLinkInner {
 
 impl Link for CgroupSkbLinkInner {
     type Id = CgroupSkbLinkIdInner;
+    type Error = ProgramError;
 
     fn id(&self) -> Self::Id {
         match self {
@@ -156,9 +157,9 @@ impl Link for CgroupSkbLinkInner {
         }
     }
 
-    fn detach(self) -> Result<(), ProgramError> {
+    fn detach(self) -> Result<(), Self::Error> {
         match self {
-            Self::Fd(fd) => fd.detach(),
+            Self::Fd(fd) => fd.detach().map_err(Into::into),
             Self::ProgAttach(p) => p.detach(),
         }
     }

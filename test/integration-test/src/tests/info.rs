@@ -69,7 +69,7 @@ fn test_loaded_programs() {
     // Ensure we can perform basic operations on the re-created program.
     let res = p
         .attach(
-            "uprobe_function",
+            ["uprobe_function"],
             "/proc/self/exe",
             UProbeScope::AllProcesses,
         )
@@ -248,9 +248,9 @@ fn list_loaded_maps() {
             // BPF_MAP_GET_NEXT_ID returns an ID without holding a reference, so the map can be
             // removed before BPF_MAP_GET_FD_BY_ID. The kernel selftests and bpftool both skip the
             // resulting ENOENT:
-            // https://github.com/torvalds/linux/blob/b15dc417/kernel/bpf/syscall.c#L3184-L3207
-            // https://github.com/torvalds/linux/blob/b95f03f0/tools/testing/selftests/bpf/prog_tests/bpf_obj_id.c#L205-L218
-            // https://github.com/libbpf/bpftool/blob/5730b384/src/map.c#L703-L719
+            // https://github.com/torvalds/linux/blob/b15dc4170/kernel/bpf/syscall.c#L3184-L3207
+            // https://github.com/torvalds/linux/blob/b95f03f04/tools/testing/selftests/bpf/prog_tests/bpf_obj_id.c#L205-L218
+            // https://github.com/libbpf/bpftool/blob/5730b384d/src/map.c#L703-L719
             Err(MapError::SyscallError(err))
                 if err.call == "bpf_map_get_fd_by_id"
                     && err.io_error.raw_os_error() == Some(ENOENT) =>
@@ -260,15 +260,15 @@ fn list_loaded_maps() {
             Err(err) => panic!("{err:?}"),
         })
         .collect();
-    if let Ok(info) = &prog.info() {
-        if let Some(map_ids) = info.map_ids().unwrap() {
-            assert_eq!(2, map_ids.len());
-            for id in map_ids {
-                assert!(
-                    maps.iter().any(|m| m.id() == id),
-                    "expected `loaded_maps()` to have `map_ids` from program",
-                );
-            }
+    if let Ok(info) = &prog.info()
+        && let Some(map_ids) = info.map_ids().unwrap()
+    {
+        assert_eq!(2, map_ids.len());
+        for id in map_ids {
+            assert!(
+                maps.iter().any(|m| m.id() == id),
+                "expected `loaded_maps()` to have `map_ids` from program",
+            );
         }
     }
 

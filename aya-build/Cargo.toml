@@ -1,7 +1,7 @@
 [package]
 description = "Build-time support for aya projects"
 name = "aya-build"
-version = "0.2.0"
+version = "0.2.1"
 
 authors.workspace = true
 edition.workspace = true

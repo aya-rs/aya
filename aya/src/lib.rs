@@ -38,12 +38,9 @@
 )]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![deny(missing_docs)]
-#![cfg_attr(
-    all(test, not(feature = "test-helpers")),
-    expect(unused_crate_dependencies, reason = "used in doctests")
-)]
 
 mod bpf;
+mod kernel_features;
 pub mod maps;
 pub mod pin;
 pub mod programs;
@@ -61,8 +58,6 @@ pub use programs::{
     RawTracePointRunOptions, RawTracePointTestRunResult, TestRun, TestRunAttrs, TestRunOptions,
     TestRunResult,
 };
-#[doc(hidden)]
-pub use sys::netlink_set_link_up;
 
 // See https://github.com/rust-lang/rust/pull/124210; this structure exists to avoid crashing the
 // process when we try to close a fake file descriptor.
@@ -85,37 +80,32 @@ impl MockableFd {
         1337
     }
 
-    #[cfg(not(test))]
     const fn from_fd(fd: OwnedFd) -> Self {
-        Self { fd }
-    }
-
-    #[cfg(test)]
-    const fn from_fd(fd: OwnedFd) -> Self {
+        #[cfg(test)]
         let fd = Some(fd);
         Self { fd }
     }
 
-    #[cfg(not(test))]
     const fn inner(&self) -> &OwnedFd {
         let Self { fd } = self;
+        #[cfg(test)]
+        let fd = fd.as_ref().unwrap();
         fd
     }
 
-    #[cfg(test)]
-    const fn inner(&self) -> &OwnedFd {
-        let Self { fd } = self;
-        fd.as_ref().unwrap()
-    }
-
-    #[cfg(not(test))]
-    fn into_inner(self) -> OwnedFd {
-        self.fd
-    }
-
-    #[cfg(test)]
-    fn into_inner(mut self) -> OwnedFd {
-        self.fd.take().unwrap()
+    cfg_select! {
+        test => {
+            fn into_inner(mut self) -> OwnedFd {
+                let Self { fd } = &mut self;
+                fd.take().unwrap()
+            }
+        }
+        _ => {
+            fn into_inner(self) -> OwnedFd {
+                let Self { fd } = self;
+                fd
+            }
+        }
     }
 
     fn try_clone(&self) -> std::io::Result<Self> {
