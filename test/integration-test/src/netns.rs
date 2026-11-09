@@ -46,7 +46,7 @@ where
 /// Disables IPv6 on `iface` in the current network namespace.
 ///
 /// The XDP programs under test redirect *every* packet that arrives on the
-/// interface into an AF_XDP socket, so IPv6 link-local chatter (duplicate
+/// interface into an `AF_XDP` socket, so IPv6 link-local chatter (duplicate
 /// address detection and MLD reports the kernel emits when the link comes up)
 /// would be counted alongside the test's UDP packets and break the exact
 /// `rx.available()` assertions. Call this before bringing the link up so no such
