@@ -496,10 +496,10 @@ pub(crate) fn get_link_mac(if_index: i32) -> io::Result<[u8; 6]> {
             continue;
         }
         let attrs = parse_attrs(&msg.data[size_of::<ifinfomsg>()..]);
-        if let Some(data) = attrs.get(&IFLA_ADDRESS) {
-            if let Ok(mac) = <[u8; 6]>::try_from(*data) {
-                return Ok(mac);
-            }
+        if let Some(data) = attrs.get(&IFLA_ADDRESS)
+            && let Ok(mac) = <[u8; 6]>::try_from(*data)
+        {
+            return Ok(mac);
         }
     }
 

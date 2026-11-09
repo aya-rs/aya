@@ -60,7 +60,7 @@ pub(crate) struct PeerNsGuard {
 impl PeerNsGuard {
     const IFACE: &CStr = c"veth0";
     const PEER_IFACE: &CStr = c"veth1";
-    pub(crate) const IFACE_NAME: &str = "veth0";
+    pub(crate) const IFACE_NAME: &CStr = c"veth0";
     pub(crate) const IFACE_IP: Ipv4Addr = Ipv4Addr::new(10, 0, 0, 1);
     pub(crate) const PEER_IP: Ipv4Addr = Ipv4Addr::new(10, 0, 0, 2);
 
