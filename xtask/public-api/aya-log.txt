@@ -17,6 +17,7 @@ impl core::fmt::Display for aya_log::Error
 pub fn aya_log::Error::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Forget for aya_log::Error
 impl core::marker::Freeze for aya_log::Error
+impl core::marker::Move for aya_log::Error
 impl core::marker::Send for aya_log::Error
 impl core::marker::Sync for aya_log::Error
 impl core::marker::Unpin for aya_log::Error
@@ -28,6 +29,7 @@ impl<T> aya_log::Formatter<T> for aya_log::DefaultFormatter where T: alloc::stri
 pub fn aya_log::DefaultFormatter::format(T) -> alloc::string::String
 impl core::marker::Forget for aya_log::DefaultFormatter
 impl core::marker::Freeze for aya_log::DefaultFormatter
+impl core::marker::Move for aya_log::DefaultFormatter
 impl core::marker::Send for aya_log::DefaultFormatter
 impl core::marker::Sync for aya_log::DefaultFormatter
 impl core::marker::Unpin for aya_log::DefaultFormatter
@@ -48,6 +50,7 @@ impl<T> std::os::fd::raw::AsRawFd for aya_log::EbpfLogger<T>
 pub fn aya_log::EbpfLogger<T>::as_raw_fd(&self) -> std::os::fd::raw::RawFd
 impl<T> core::marker::Forget for aya_log::EbpfLogger<T>
 impl<T> core::marker::Freeze for aya_log::EbpfLogger<T> where T: core::marker::Freeze
+impl<T> core::marker::Move for aya_log::EbpfLogger<T>
 impl<T> core::marker::Send for aya_log::EbpfLogger<T> where T: core::marker::Send
 impl<T> core::marker::Sync for aya_log::EbpfLogger<T> where T: core::marker::Sync
 impl<T> core::marker::Unpin for aya_log::EbpfLogger<T> where T: core::marker::Unpin
@@ -59,6 +62,7 @@ impl<T> aya_log::Formatter<T> for aya_log::Ipv4Formatter where T: core::convert:
 pub fn aya_log::Ipv4Formatter::format(T) -> alloc::string::String
 impl core::marker::Forget for aya_log::Ipv4Formatter
 impl core::marker::Freeze for aya_log::Ipv4Formatter
+impl core::marker::Move for aya_log::Ipv4Formatter
 impl core::marker::Send for aya_log::Ipv4Formatter
 impl core::marker::Sync for aya_log::Ipv4Formatter
 impl core::marker::Unpin for aya_log::Ipv4Formatter
@@ -70,6 +74,7 @@ impl<T> aya_log::Formatter<T> for aya_log::Ipv6Formatter where T: core::convert:
 pub fn aya_log::Ipv6Formatter::format(T) -> alloc::string::String
 impl core::marker::Forget for aya_log::Ipv6Formatter
 impl core::marker::Freeze for aya_log::Ipv6Formatter
+impl core::marker::Move for aya_log::Ipv6Formatter
 impl core::marker::Send for aya_log::Ipv6Formatter
 impl core::marker::Sync for aya_log::Ipv6Formatter
 impl core::marker::Unpin for aya_log::Ipv6Formatter
@@ -81,6 +86,7 @@ impl aya_log::Formatter<&[u8]> for aya_log::LowerHexBytesFormatter
 pub fn aya_log::LowerHexBytesFormatter::format(&[u8]) -> alloc::string::String
 impl core::marker::Forget for aya_log::LowerHexBytesFormatter
 impl core::marker::Freeze for aya_log::LowerHexBytesFormatter
+impl core::marker::Move for aya_log::LowerHexBytesFormatter
 impl core::marker::Send for aya_log::LowerHexBytesFormatter
 impl core::marker::Sync for aya_log::LowerHexBytesFormatter
 impl core::marker::Unpin for aya_log::LowerHexBytesFormatter
@@ -92,6 +98,7 @@ impl<T> aya_log::Formatter<T> for aya_log::LowerHexFormatter where T: core::fmt:
 pub fn aya_log::LowerHexFormatter::format(T) -> alloc::string::String
 impl core::marker::Forget for aya_log::LowerHexFormatter
 impl core::marker::Freeze for aya_log::LowerHexFormatter
+impl core::marker::Move for aya_log::LowerHexFormatter
 impl core::marker::Send for aya_log::LowerHexFormatter
 impl core::marker::Sync for aya_log::LowerHexFormatter
 impl core::marker::Unpin for aya_log::LowerHexFormatter
@@ -103,6 +110,7 @@ impl aya_log::Formatter<[u8; 6]> for aya_log::LowerMacFormatter
 pub fn aya_log::LowerMacFormatter::format([u8; 6]) -> alloc::string::String
 impl core::marker::Forget for aya_log::LowerMacFormatter
 impl core::marker::Freeze for aya_log::LowerMacFormatter
+impl core::marker::Move for aya_log::LowerMacFormatter
 impl core::marker::Send for aya_log::LowerMacFormatter
 impl core::marker::Sync for aya_log::LowerMacFormatter
 impl core::marker::Unpin for aya_log::LowerMacFormatter
@@ -116,6 +124,7 @@ impl<T> aya_log::Formatter<*mut T> for aya_log::PointerFormatter
 pub fn aya_log::PointerFormatter::format(*mut T) -> alloc::string::String
 impl core::marker::Forget for aya_log::PointerFormatter
 impl core::marker::Freeze for aya_log::PointerFormatter
+impl core::marker::Move for aya_log::PointerFormatter
 impl core::marker::Send for aya_log::PointerFormatter
 impl core::marker::Sync for aya_log::PointerFormatter
 impl core::marker::Unpin for aya_log::PointerFormatter
@@ -127,6 +136,7 @@ impl aya_log::Formatter<&[u8]> for aya_log::UpperHexBytesFormatter
 pub fn aya_log::UpperHexBytesFormatter::format(&[u8]) -> alloc::string::String
 impl core::marker::Forget for aya_log::UpperHexBytesFormatter
 impl core::marker::Freeze for aya_log::UpperHexBytesFormatter
+impl core::marker::Move for aya_log::UpperHexBytesFormatter
 impl core::marker::Send for aya_log::UpperHexBytesFormatter
 impl core::marker::Sync for aya_log::UpperHexBytesFormatter
 impl core::marker::Unpin for aya_log::UpperHexBytesFormatter
@@ -138,6 +148,7 @@ impl<T> aya_log::Formatter<T> for aya_log::UpperHexFormatter where T: core::fmt:
 pub fn aya_log::UpperHexFormatter::format(T) -> alloc::string::String
 impl core::marker::Forget for aya_log::UpperHexFormatter
 impl core::marker::Freeze for aya_log::UpperHexFormatter
+impl core::marker::Move for aya_log::UpperHexFormatter
 impl core::marker::Send for aya_log::UpperHexFormatter
 impl core::marker::Sync for aya_log::UpperHexFormatter
 impl core::marker::Unpin for aya_log::UpperHexFormatter
@@ -149,6 +160,7 @@ impl aya_log::Formatter<[u8; 6]> for aya_log::UpperMacFormatter
 pub fn aya_log::UpperMacFormatter::format([u8; 6]) -> alloc::string::String
 impl core::marker::Forget for aya_log::UpperMacFormatter
 impl core::marker::Freeze for aya_log::UpperMacFormatter
+impl core::marker::Move for aya_log::UpperMacFormatter
 impl core::marker::Send for aya_log::UpperMacFormatter
 impl core::marker::Sync for aya_log::UpperMacFormatter
 impl core::marker::Unpin for aya_log::UpperMacFormatter

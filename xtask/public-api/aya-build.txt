@@ -7,6 +7,7 @@ impl<'a> core::default::Default for aya_build::Toolchain<'a>
 pub fn aya_build::Toolchain<'a>::default() -> Self
 impl<'a> core::marker::Forget for aya_build::Toolchain<'a>
 impl<'a> core::marker::Freeze for aya_build::Toolchain<'a>
+impl<'a> core::marker::Move for aya_build::Toolchain<'a>
 impl<'a> core::marker::Send for aya_build::Toolchain<'a>
 impl<'a> core::marker::Sync for aya_build::Toolchain<'a>
 impl<'a> core::marker::Unpin for aya_build::Toolchain<'a>
@@ -22,6 +23,7 @@ impl<'a> core::default::Default for aya_build::Package<'a>
 pub fn aya_build::Package<'a>::default() -> Self
 impl<'a> core::marker::Forget for aya_build::Package<'a>
 impl<'a> core::marker::Freeze for aya_build::Package<'a>
+impl<'a> core::marker::Move for aya_build::Package<'a>
 impl<'a> core::marker::Send for aya_build::Package<'a>
 impl<'a> core::marker::Sync for aya_build::Package<'a>
 impl<'a> core::marker::Unpin for aya_build::Package<'a>
