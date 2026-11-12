@@ -1,0 +1,18 @@
+name: Select Bazel checksum
+description: Select the pinned Bazel checksum for the runner
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        case "$RUNNER_OS/$RUNNER_ARCH" in
+          Linux/X64) sha256=3fdff352a996a99e298c9104e616dba6df8bf58a0fd5fc67f32926a2fc0a0358 ;;
+          Linux/ARM64) sha256=ff9a3da0da438b3a95042e3cb7d9a386e72924f0c9fdeac371dedd60e433865f ;;
+          macOS/ARM64) sha256=df923179d7b8bd47eb3aaf14fe8b9834391ac0c081e94ac09d6169c182412c0d ;;
+          *)
+            echo "::error::Unsupported Bazel host: $RUNNER_OS/$RUNNER_ARCH" >&2
+            exit 1
+            ;;
+        esac
+        printf 'BAZELISK_VERIFY_SHA256=%s\n' "$sha256" >> "$GITHUB_ENV"
