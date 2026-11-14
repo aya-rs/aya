@@ -10,7 +10,7 @@
      - 📖 Read the Aya Code of Conduct: https://github.com/aya-rs/aya/blob/main/CODE_OF_CONDUCT.md
      - 👷‍♀️ Create small PRs. In most cases this will be possible.
      - ✅ Provide tests for your changes.
-     - 📝 Use descriptive commit messages: https://cbea.ms/git-commit/
+     - 📝 Follow the commit message guidelines: https://github.com/aya-rs/aya/blob/main/CONTRIBUTING.md#commit-message-guidelines
      - 📗 Update any related documentation.
 
 -->
@@ -27,7 +27,7 @@
       If your changes address an issue, link it with the *Fixes* tag so
       the issue gets closed when the PR is merged, for example:
 
-      Fixes: #1234
+      Fixes #1234.
 
       If you are only referencing an issue without fully addressing it, feel
       free to link it anywhere in the summary.
