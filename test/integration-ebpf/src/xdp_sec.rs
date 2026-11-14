@@ -1,7 +1,12 @@
 #![no_std]
 #![no_main]
 
-use aya_ebpf::{bindings::xdp_action::XDP_PASS, macros::xdp, programs::XdpContext};
+use aya_ebpf::{
+    bindings::xdp_action::XDP_PASS,
+    macros::{map, xdp},
+    maps::Array,
+    programs::XdpContext,
+};
 #[cfg(not(test))]
 extern crate ebpf_panic;
 
@@ -14,7 +19,19 @@ macro_rules! probe {
     };
 }
 
-probe!(xdp_plain, ());
+#[map]
+static SEEN: Array<u32> = Array::with_max_entries(1, 0);
+
+#[xdp]
+fn xdp_plain(_ctx: XdpContext) -> u32 {
+    if let Some(seen) = SEEN.get_ptr_mut(0) {
+        unsafe {
+            *seen = 1;
+        }
+    }
+    XDP_PASS
+}
+
 probe!(xdp_frags, (frags));
 probe!(xdp_cpumap, (map = "cpumap"));
 probe!(xdp_devmap, (map = "devmap"));

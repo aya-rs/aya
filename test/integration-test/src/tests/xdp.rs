@@ -4,35 +4,31 @@ use assert_matches::assert_matches;
 use aya::{
     Ebpf,
     maps::{Array, CpuMap, DevMap, DevMapHash, XskMap},
-    programs::{ProgramError, Xdp, XdpError, XdpMode, xdp::XdpLinkId},
-    sys::is_devmap_prog_id_supported,
+    programs::{
+        Link as _, ProgramError, Xdp, XdpError, XdpMode,
+        links::{FdLink, LinkError},
+        loaded_links,
+        xdp::XdpLinkId,
+    },
+    sys::{SyscallError, is_devmap_prog_id_supported},
     test_helpers::{NetNsGuard, with_netlink_xdp},
     util::KernelVersion,
 };
-use aya_obj::generated::XDP_FLAGS_SKB_MODE;
-use libbpf_rs::libbpf_sys::bpf_xdp_query_id;
 use object::{Object as _, ObjectSection as _, ObjectSymbol as _, SymbolSection};
 use rstest::rstest;
 use xdpilone::{BufIdx, IfInfo, Socket, SocketConfig, Umem, UmemConfig};
 
-#[test_log::test]
-fn netlink_attach_to_link_replaces_program() {
-    if KernelVersion::current().unwrap() < KernelVersion::new(5, 7, 0) {
-        eprintln!("skipping test - atomic netlink XDP replacement requires Linux 5.7");
-        return;
-    }
+#[rstest]
+#[case::automatic(false)]
+#[case::netlink(true)]
+#[test_attr(test_log::test)]
+fn adopt_link_failure_returns_link(#[case] force_netlink: bool) {
+    let kernel_version = KernelVersion::current().unwrap();
     let _netns = NetNsGuard::new().unwrap();
     let if_index = unsafe { libc::if_nametoindex(c"lo".as_ptr()) };
     assert_ne!(if_index, 0);
-    let attached_program = || {
-        let mut id = 0;
-        // SAFETY: The output pointer is writable. Query the SKB attachment on this interface.
-        let result =
-            unsafe { bpf_xdp_query_id(if_index as i32, XDP_FLAGS_SKB_MODE as i32, &raw mut id) };
-        assert_eq!(result, 0);
-        id
-    };
     let mut old_bpf = Ebpf::load(crate::XDP_SEC).unwrap();
+    let mut old_seen: Array<_, u32> = old_bpf.take_map("SEEN").unwrap().try_into().unwrap();
     let old: &mut Xdp = old_bpf
         .program_mut("xdp_plain")
         .unwrap()
@@ -40,11 +36,80 @@ fn netlink_attach_to_link_replaces_program() {
         .unwrap();
     old.load().unwrap();
     let old_program_id = old.info().unwrap().id();
-    let id = with_netlink_xdp(|| old.attach(if_index, XdpMode::Skb)).unwrap();
-    let old_link = old.take_link(id).unwrap();
-    assert_eq!(attached_program(), old_program_id);
+    let id = if force_netlink {
+        with_netlink_xdp(|| old.attach(if_index, XdpMode::Skb))
+    } else {
+        old.attach(if_index, XdpMode::Skb)
+    }
+    .unwrap();
+    let link = old.take_link(id).unwrap();
+    // XDP attachment through BPF_LINK_CREATE was introduced in Linux 5.9:
+    // https://github.com/torvalds/linux/commit/aa8d3a716
+    // Only convert an expected FD link: converting a netlink link consumes and detaches it.
+    let (link, kernel_id) = if !force_netlink && kernel_version >= KernelVersion::new(5, 9, 0) {
+        let link = FdLink::try_from(link).unwrap();
+        let kernel_id = link.info().unwrap().id();
+        (link.try_into().unwrap(), Some(kernel_id))
+    } else {
+        (link, None)
+    };
+    let original_id = link.id();
 
     let mut new_bpf = Ebpf::load(crate::XDP_SEC).unwrap();
+    let mut new_seen: Array<_, u32> = new_bpf.take_map("SEEN").unwrap().try_into().unwrap();
+    let socket = UdpSocket::bind("127.0.0.1:0").unwrap();
+    let addr = socket.local_addr().unwrap();
+    socket
+        .set_read_timeout(Some(Duration::from_secs(5)))
+        .unwrap();
+    let mut assert_traffic = |old_expected: bool, new_expected: bool| {
+        old_seen.set(0, &0, 0).unwrap();
+        new_seen.set(0, &0, 0).unwrap();
+        const PAYLOAD: &[u8] = b"hello xdp";
+        assert_eq!(socket.send_to(PAYLOAD, addr).unwrap(), PAYLOAD.len());
+        let mut buf = [0; PAYLOAD.len() + 1];
+        // Receive completes after the ingress XDP hook has processed the packet.
+        let len = socket.recv(&mut buf).unwrap();
+        assert_eq!(&buf[..len], PAYLOAD);
+        // Each object has its own map. Record execution without counting packets.
+        assert_eq!(old_seen.get(&0, 0).unwrap(), u32::from(old_expected));
+        assert_eq!(new_seen.get(&0, 0).unwrap(), u32::from(new_expected));
+    };
+    assert_traffic(true, false);
+    let new: &mut Xdp = new_bpf
+        .program_mut("xdp_plain")
+        .unwrap()
+        .try_into()
+        .unwrap();
+    let (error, mut link) = new.adopt_link(link).unwrap_err();
+    assert_matches!(error, ProgramError::NotLoaded);
+    assert_eq!(link.id(), original_id);
+    assert_traffic(true, false);
+
+    if let Some(kernel_id) = kernel_id {
+        let incompatible: &mut Xdp = new_bpf
+            .program_mut("xdp_devmap")
+            .unwrap()
+            .try_into()
+            .unwrap();
+        incompatible.load().unwrap();
+        let (error, returned) = incompatible.adopt_link(link).unwrap_err();
+        assert_matches!(error, ProgramError::SyscallError(SyscallError {
+            call: "bpf_link_update",
+            io_error,
+        }) => {
+            assert_eq!(io_error.raw_os_error(), Some(libc::EINVAL));
+        });
+        let returned = FdLink::try_from(returned).unwrap();
+        let info = returned.info().unwrap();
+        assert_eq!(info.id(), kernel_id);
+        assert_eq!(info.program_id(), old_program_id);
+
+        link = returned.try_into().unwrap();
+        assert_eq!(link.id(), original_id);
+        assert_traffic(true, false);
+    }
+
     let new: &mut Xdp = new_bpf
         .program_mut("xdp_plain")
         .unwrap()
@@ -52,12 +117,62 @@ fn netlink_attach_to_link_replaces_program() {
         .unwrap();
     new.load().unwrap();
     let new_program_id = new.info().unwrap().id();
-    assert_ne!(old_program_id, new_program_id);
-    let id = new.attach_to_link(old_link).unwrap();
+    assert_ne!(new_program_id, old_program_id);
+    // Netlink atomic replacement requires Linux 5.7; older kernels must reject it
+    // and return the original link. FD links are supported from Linux 5.9.
+    // https://github.com/torvalds/linux/commit/92234c8f1
+    let id = match new.adopt_link(link) {
+        Ok(id) => {
+            assert!(kernel_version >= KernelVersion::new(5, 7, 0));
+            id
+        }
+        Err((error, link)) => {
+            assert!(kernel_version < KernelVersion::new(5, 7, 0), "{error:?}");
+            assert_matches!(error, ProgramError::XdpError(XdpError::NetlinkError(error)) => {
+                assert_eq!(error.raw_os_error(), Some(libc::EINVAL));
+            });
+            assert_eq!(link.id(), original_id);
+            assert_traffic(true, false);
+            link.detach().unwrap();
+            assert_traffic(false, false);
+            return;
+        }
+    };
     drop(old_bpf);
-    assert_eq!(attached_program(), new_program_id);
+    assert_traffic(false, true);
+    let link = new.take_link(id).unwrap();
+    let link = if let Some(kernel_id) = kernel_id {
+        let link = FdLink::try_from(link).unwrap();
+        let info = link.info().unwrap();
+        assert_eq!(info.id(), kernel_id);
+        assert_eq!(info.program_id(), new_program_id);
+        link.try_into().unwrap()
+    } else {
+        link
+    };
+    let id = new.adopt_link(link).unwrap();
+    assert_traffic(false, true);
     new.detach(id).unwrap();
-    assert_eq!(attached_program(), 0);
+    assert_traffic(false, false);
+    if let Some(kernel_id) = kernel_id {
+        // loaded_links() also enumerates links owned by other tests. A parallel test
+        // may drop its link after its ID is found, causing the subsequent fd lookup
+        // to fail with ENOENT. Only ignore this race; other errors must fail the test.
+        let detached_link = loaded_links()
+            .filter_map(|result| match result {
+                Ok(info) => Some(info),
+                Err(LinkError::SyscallError(SyscallError {
+                    call: "bpf_link_get_fd_by_id",
+                    io_error,
+                })) if io_error.raw_os_error() == Some(libc::ENOENT) => None,
+                Err(err) => panic!("{err:?}"),
+            })
+            .find(|link| link.id() == kernel_id);
+        assert!(
+            detached_link.is_none(),
+            "link {kernel_id} still exists after detach"
+        );
+    }
 }
 
 #[rstest]
