@@ -2632,17 +2632,37 @@ pub enum nlmsgerr_attrs {
     NLMSGERR_ATTR_MISS_NEST = 6,
     __NLMSGERR_ATTR_MAX = 7,
 }
-pub const IFLA_XDP_UNSPEC: _bindgen_ty_95 = 0;
-pub const IFLA_XDP_FD: _bindgen_ty_95 = 1;
-pub const IFLA_XDP_ATTACHED: _bindgen_ty_95 = 2;
-pub const IFLA_XDP_FLAGS: _bindgen_ty_95 = 3;
-pub const IFLA_XDP_PROG_ID: _bindgen_ty_95 = 4;
-pub const IFLA_XDP_DRV_PROG_ID: _bindgen_ty_95 = 5;
-pub const IFLA_XDP_SKB_PROG_ID: _bindgen_ty_95 = 6;
-pub const IFLA_XDP_HW_PROG_ID: _bindgen_ty_95 = 7;
-pub const IFLA_XDP_EXPECTED_FD: _bindgen_ty_95 = 8;
-pub const __IFLA_XDP_MAX: _bindgen_ty_95 = 9;
-pub type _bindgen_ty_95 = ::core::ffi::c_uint;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ifaddrmsg {
+    pub ifa_family: __u8,
+    pub ifa_prefixlen: __u8,
+    pub ifa_flags: __u8,
+    pub ifa_scope: __u8,
+    pub ifa_index: __u32,
+}
+pub const IFLA_XDP_UNSPEC: _bindgen_ty_96 = 0;
+pub const IFLA_XDP_FD: _bindgen_ty_96 = 1;
+pub const IFLA_XDP_ATTACHED: _bindgen_ty_96 = 2;
+pub const IFLA_XDP_FLAGS: _bindgen_ty_96 = 3;
+pub const IFLA_XDP_PROG_ID: _bindgen_ty_96 = 4;
+pub const IFLA_XDP_DRV_PROG_ID: _bindgen_ty_96 = 5;
+pub const IFLA_XDP_SKB_PROG_ID: _bindgen_ty_96 = 6;
+pub const IFLA_XDP_HW_PROG_ID: _bindgen_ty_96 = 7;
+pub const IFLA_XDP_EXPECTED_FD: _bindgen_ty_96 = 8;
+pub const __IFLA_XDP_MAX: _bindgen_ty_96 = 9;
+pub type _bindgen_ty_96 = ::core::ffi::c_uint;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ndmsg {
+    pub ndm_family: __u8,
+    pub ndm_pad1: __u8,
+    pub ndm_pad2: __u16,
+    pub ndm_ifindex: __s32,
+    pub ndm_state: __u16,
+    pub ndm_flags: __u8,
+    pub ndm_type: __u8,
+}
 impl nf_inet_hooks {
     pub const NF_INET_INGRESS: nf_inet_hooks = nf_inet_hooks::NF_INET_NUMHOOKS;
 }
@@ -2656,16 +2676,16 @@ pub enum nf_inet_hooks {
     NF_INET_POST_ROUTING = 4,
     NF_INET_NUMHOOKS = 5,
 }
-pub const NFPROTO_UNSPEC: _bindgen_ty_103 = 0;
-pub const NFPROTO_INET: _bindgen_ty_103 = 1;
-pub const NFPROTO_IPV4: _bindgen_ty_103 = 2;
-pub const NFPROTO_ARP: _bindgen_ty_103 = 3;
-pub const NFPROTO_NETDEV: _bindgen_ty_103 = 5;
-pub const NFPROTO_BRIDGE: _bindgen_ty_103 = 7;
-pub const NFPROTO_IPV6: _bindgen_ty_103 = 10;
-pub const NFPROTO_DECNET: _bindgen_ty_103 = 12;
-pub const NFPROTO_NUMPROTO: _bindgen_ty_103 = 13;
-pub type _bindgen_ty_103 = ::core::ffi::c_uint;
+pub const NFPROTO_UNSPEC: _bindgen_ty_109 = 0;
+pub const NFPROTO_INET: _bindgen_ty_109 = 1;
+pub const NFPROTO_IPV4: _bindgen_ty_109 = 2;
+pub const NFPROTO_ARP: _bindgen_ty_109 = 3;
+pub const NFPROTO_NETDEV: _bindgen_ty_109 = 5;
+pub const NFPROTO_BRIDGE: _bindgen_ty_109 = 7;
+pub const NFPROTO_IPV6: _bindgen_ty_109 = 10;
+pub const NFPROTO_DECNET: _bindgen_ty_109 = 12;
+pub const NFPROTO_NUMPROTO: _bindgen_ty_109 = 13;
+pub type _bindgen_ty_109 = ::core::ffi::c_uint;
 #[repr(u32)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub enum perf_type_id {
@@ -4990,20 +5010,20 @@ pub enum perf_event_type {
     PERF_RECORD_CALLCHAIN_DEFERRED = 22,
     PERF_RECORD_MAX = 23,
 }
-pub const TCA_BPF_UNSPEC: _bindgen_ty_164 = 0;
-pub const TCA_BPF_ACT: _bindgen_ty_164 = 1;
-pub const TCA_BPF_POLICE: _bindgen_ty_164 = 2;
-pub const TCA_BPF_CLASSID: _bindgen_ty_164 = 3;
-pub const TCA_BPF_OPS_LEN: _bindgen_ty_164 = 4;
-pub const TCA_BPF_OPS: _bindgen_ty_164 = 5;
-pub const TCA_BPF_FD: _bindgen_ty_164 = 6;
-pub const TCA_BPF_NAME: _bindgen_ty_164 = 7;
-pub const TCA_BPF_FLAGS: _bindgen_ty_164 = 8;
-pub const TCA_BPF_FLAGS_GEN: _bindgen_ty_164 = 9;
-pub const TCA_BPF_TAG: _bindgen_ty_164 = 10;
-pub const TCA_BPF_ID: _bindgen_ty_164 = 11;
-pub const __TCA_BPF_MAX: _bindgen_ty_164 = 12;
-pub type _bindgen_ty_164 = ::core::ffi::c_uint;
+pub const TCA_BPF_UNSPEC: _bindgen_ty_170 = 0;
+pub const TCA_BPF_ACT: _bindgen_ty_170 = 1;
+pub const TCA_BPF_POLICE: _bindgen_ty_170 = 2;
+pub const TCA_BPF_CLASSID: _bindgen_ty_170 = 3;
+pub const TCA_BPF_OPS_LEN: _bindgen_ty_170 = 4;
+pub const TCA_BPF_OPS: _bindgen_ty_170 = 5;
+pub const TCA_BPF_FD: _bindgen_ty_170 = 6;
+pub const TCA_BPF_NAME: _bindgen_ty_170 = 7;
+pub const TCA_BPF_FLAGS: _bindgen_ty_170 = 8;
+pub const TCA_BPF_FLAGS_GEN: _bindgen_ty_170 = 9;
+pub const TCA_BPF_TAG: _bindgen_ty_170 = 10;
+pub const TCA_BPF_ID: _bindgen_ty_170 = 11;
+pub const __TCA_BPF_MAX: _bindgen_ty_170 = 12;
+pub type _bindgen_ty_170 = ::core::ffi::c_uint;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ifinfomsg {
@@ -5044,3 +5064,13 @@ pub const TCA_DUMP_FLAGS: _bindgen_ty_192 = 15;
 pub const TCA_EXT_WARN_MSG: _bindgen_ty_192 = 16;
 pub const __TCA_MAX: _bindgen_ty_192 = 17;
 pub type _bindgen_ty_192 = ::core::ffi::c_uint;
+pub const VETH_INFO_UNSPEC: _bindgen_ty_195 = _bindgen_ty_195::VETH_INFO_UNSPEC;
+pub const VETH_INFO_PEER: _bindgen_ty_195 = _bindgen_ty_195::VETH_INFO_PEER;
+pub const __VETH_INFO_MAX: _bindgen_ty_195 = _bindgen_ty_195::__VETH_INFO_MAX;
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub enum _bindgen_ty_195 {
+    VETH_INFO_UNSPEC = 0,
+    VETH_INFO_PEER = 1,
+    __VETH_INFO_MAX = 2,
+}
