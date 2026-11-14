@@ -10,11 +10,14 @@ bazel_dep(name = "bazel_skylib", version = "1.9.0")
 
 bazel_dep(name = "buildifier_prebuilt", version = "8.5.1.3", dev_dependency = True)
 
+# libbpf's internal BTF declarations include libelf.h.
+bazel_dep(name = "elfutils", version = "0.195")
+
 # The archive_override below supplies the exact unpublished linux.bzl revision.
 bazel_dep(name = "linux.bzl", version = "0.0.0")
 
-# libbpf supplies headers and libraries for the C BPF integration-test objects.
-bazel_dep(name = "libbpf", version = "1.7.0")
+# libbpf supplies generator headers and C BPF integration-test libraries.
+bazel_dep(name = "libbpf", version = "1.7.0.bcr.2")
 
 # The LLVM toolchain compiles C BPF objects and the integration VM kernels.
 bazel_dep(name = "llvm", version = "0.8.9")
@@ -32,6 +35,15 @@ bazel_dep(name = "with_cfg.bzl", version = "0.14.6")
 # These hermetic targets are used instead of build scripts below.
 bazel_dep(name = "xz", version = "5.4.5.bcr.8")
 bazel_dep(name = "zstd", version = "1.5.7.bcr.1")
+
+# Source bindings use libclang from the same declared LLVM source/toolchain.
+llvm = use_extension("@llvm//extensions:llvm.bzl", "llvm")
+use_repo(llvm, "llvm-project")
+
+# The binding generator needs all nine target ABIs, including the architectures
+# not exposed by LLVM's compiler-toolchain header extension.
+codegen_headers = use_extension("//bazel:codegen_repositories.bzl", "codegen_headers")
+use_repo(codegen_headers, "codegen_headers")
 
 # //test/integration-test:bpf_out_dir uses copy_to_directory.
 bazel_lib_toolchains = use_extension("@bazel_lib//lib:extensions.bzl", "toolchains")

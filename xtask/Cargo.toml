@@ -17,6 +17,7 @@ workspace = true
 anyhow = { workspace = true, features = ["std"] }
 ar = { workspace = true }
 aya-tool = { path = "../aya-tool", version = "0.1.0", default-features = false }
+bindgen = { workspace = true, default-features = true }
 cargo_metadata = { workspace = true }
 clap = { workspace = true, features = ["derive"] }
 dialoguer = { workspace = true }

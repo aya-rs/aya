@@ -6,6 +6,7 @@
   * [Ask for Help](#ask-for-help)
   * [Pull Request Lifecycle](#pull-request-lifecycle)
   * [Pull Request Checklist](#pull-request-checklist)
+  * [Regenerating source bindings](#regenerating-source-bindings)
   * [Workflow Dependencies](#workflow-dependencies)
   * [Source References](#source-references)
   * [Documentation Style](#documentation-style)
@@ -150,6 +151,11 @@ accept and merge it. Theses requirements are described in the
 
 It is recommended that you run the integration tests locally before submitting
 your Pull Request. Please see [Aya Integration Tests] for more information.
+
+## Regenerating source bindings
+
+Run `bazel run //xtask:codegen` to update the checked-in bindings.
+Run `bazel test //xtask:codegen_tests` to check them without making changes.
 
 ## Workflow Dependencies
 
