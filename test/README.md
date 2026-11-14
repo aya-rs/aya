@@ -36,10 +36,15 @@ Tests should follow these guidelines:
 
 - Rust eBPF code should live in `integration-ebpf/${NAME}.rs` and included in
   `integration-ebpf/Cargo.toml` and `integration-test/src/lib.rs` using
-  `include_bytes_aligned!`.
+  `include_bytes_aligned!`. Programs that need different `rustc` flags (such
+  as `integration-ebpf-jumptable`, built for CPU v4 with jump tables) live in
+  their own crate, since flags apply to every binary of a crate.
 - C eBPF code should live in `integration-test/bpf/${NAME}.bpf.c`. It should be
   added to the list of files in `integration-test/build.rs` and the list of
   constants in `integration-test/src/lib.rs` using `include_bytes_aligned!`.
+  Each entry carries the extra clang flags the source needs (also in
+  `BUILD.bazel`); if the host clang rejects them an empty object is produced,
+  so the test must skip itself when its bytes are empty.
 - Tests should be added to `integration-test/tests`.
 - You may add a new module, or use an existing one.
 - Test functions should not return `anyhow::Result<()>` since this produces

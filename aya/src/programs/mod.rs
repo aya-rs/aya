@@ -77,8 +77,8 @@ use std::{
     borrow::Cow,
     convert::Infallible,
     ffi::{CStr, CString, NulError},
-    io,
-    os::fd::{AsFd, BorrowedFd},
+    io, mem,
+    os::fd::{AsFd, AsRawFd as _, BorrowedFd},
     path::{Path, PathBuf},
     sync::Arc,
 };
@@ -86,7 +86,10 @@ use std::{
 use aya_obj::{
     VerifierLog,
     btf::BtfError,
-    generated::{BPF_F_TEST_XDP_LIVE_FRAMES, bpf_attach_type, bpf_prog_info, bpf_prog_type},
+    generated::{
+        BPF_F_TEST_XDP_LIVE_FRAMES, BPF_PSEUDO_MAP_VALUE, bpf_attach_type, bpf_insn_array_value,
+        bpf_map_type, bpf_prog_info, bpf_prog_type,
+    },
     programs::XdpAttachType,
 };
 use info::impl_info;
@@ -130,7 +133,7 @@ pub use crate::programs::{
 };
 use crate::{
     VerifierLogLevel,
-    maps::MapError,
+    maps::{MapData, MapError},
     pin::PinError,
     programs::{
         links::{
@@ -143,9 +146,10 @@ use crate::{
     },
     sys::{
         EbpfLoadProgramAttrs, NetlinkError, ProgQueryTarget, SyscallError, bpf_btf_get_fd_by_id,
-        bpf_get_object, bpf_link_get_fd_by_id, bpf_load_program, bpf_pin_object,
-        bpf_prog_get_fd_by_id, bpf_prog_query, bpf_prog_test_run, bpf_prog_test_run_raw_tp,
-        bpf_prog_test_run_tracing, iter_link_ids, retry_with_verifier_logs,
+        bpf_get_object, bpf_link_get_fd_by_id, bpf_load_program, bpf_map_freeze,
+        bpf_map_update_elem_ptr, bpf_pin_object, bpf_prog_get_fd_by_id, bpf_prog_query,
+        bpf_prog_test_run, bpf_prog_test_run_raw_tp, bpf_prog_test_run_tracing, iter_link_ids,
+        retry_with_verifier_logs,
     },
     util::{KernelVersion, ifindex_from_ifname},
 };
@@ -334,8 +338,8 @@ impl AsFd for ProgramFd {
 pub struct ProgramId(u32);
 
 impl ProgramId {
-    /// Create a new program id.  
-    ///  
+    /// Create a new program id.
+    ///
     /// # Safety
     ///
     /// This method is unsafe since it doesn't check that the given `id` is a
@@ -790,9 +794,32 @@ fn load_program<T: Link>(
             line_info,
             func_info_rec_size,
             line_info_rec_size,
+            jump_tables,
             ..
         },
     ) = obj;
+
+    // Indirect jumps (`gotox`) index into `BPF_MAP_TYPE_INSN_ARRAY` maps holding their targets.
+    // As libbpf does, create one frozen map per table right before loading; once the program is
+    // loaded the kernel holds its own references to the maps, so ours can go away afterwards.
+    let mut instructions = Cow::Borrowed(instructions.as_slice());
+    // Keeps the map fds patched into `instructions` open until the program is loaded.
+    let mut jump_table_maps = Vec::with_capacity(jump_tables.len());
+    for aya_obj::JumpTable {
+        insn_indices,
+        targets,
+    } in jump_tables
+    {
+        let map = create_jump_table_map(targets)?;
+        let fd = map.fd().as_fd().as_raw_fd();
+        let instructions = instructions.to_mut();
+        for insn_index in insn_indices {
+            instructions[*insn_index].set_src_reg(BPF_PSEUDO_MAP_VALUE as u8);
+            instructions[*insn_index].imm = fd;
+            instructions[*insn_index + 1].imm = 0;
+        }
+        jump_table_maps.push(map);
+    }
 
     let target_kernel_version =
         kernel_version.unwrap_or_else(|| KernelVersion::current().map_or(0, KernelVersion::code));
@@ -811,7 +838,7 @@ fn load_program<T: Link>(
     let attr = EbpfLoadProgramAttrs {
         name: prog_name,
         ty: prog_type,
-        insns: instructions,
+        insns: &instructions,
         license,
         kernel_version: target_kernel_version,
         expected_attach_type,
@@ -829,6 +856,8 @@ fn load_program<T: Link>(
     let (ret, verifier_log) = retry_with_verifier_logs(10, |logger| {
         bpf_load_program(&attr, logger, *verifier_log_level)
     });
+    // Once loaded, the program holds its own references to the jump table maps.
+    drop(jump_table_maps);
 
     match ret {
         Ok(prog_fd) => {
@@ -840,6 +869,36 @@ fn load_program<T: Link>(
             verifier_log,
         }),
     }
+}
+
+/// Creates and freezes the `BPF_MAP_TYPE_INSN_ARRAY` map backing a jump table, as libbpf's
+/// `create_jt_map` does.
+fn create_jump_table_map(targets: &[u32]) -> Result<MapData, ProgramError> {
+    let obj = aya_obj::Map::new_from_params(
+        bpf_map_type::BPF_MAP_TYPE_INSN_ARRAY as u32,
+        size_of::<u32>() as u32,
+        size_of::<bpf_insn_array_value>() as u32,
+        targets.len() as u32,
+        0,
+    );
+    let map = MapData::create(obj, ".jumptables", None)?;
+    let fd = map.fd().as_fd();
+    for (index, target) in (0u32..).zip(targets) {
+        // SAFETY: `bpf_insn_array_value` is plain old data; the kernel only reads `orig_off`.
+        let mut value: bpf_insn_array_value = unsafe { mem::zeroed() };
+        value.orig_off = *target;
+        bpf_map_update_elem_ptr(fd, &raw const index, &raw mut value, 0).map_err(|io_error| {
+            SyscallError {
+                call: "bpf_map_update_elem",
+                io_error,
+            }
+        })?;
+    }
+    bpf_map_freeze(fd).map_err(|io_error| SyscallError {
+        call: "bpf_map_freeze",
+        io_error,
+    })?;
+    Ok(map)
 }
 
 pub(crate) fn query(
