@@ -323,6 +323,7 @@ impl ProducerData {
         })
     }
 
+    #[inline]
     fn next<'a>(&'a mut self, consumer: &'a mut ConsumerPos) -> Option<RingBufItem<'a>> {
         let Self {
             mmap,
@@ -366,6 +367,7 @@ impl ProducerData {
             Data(&'a [u8]),
         }
 
+        #[inline]
         fn data_available(
             producer: &MMap,
             producer_cache: &mut usize,
@@ -401,6 +403,7 @@ impl ProducerData {
             *consumer != *producer_cache
         }
 
+        #[inline]
         fn read_item<'data>(data: &'data [u8], mask: u32, pos: &ConsumerPos) -> Item<'data> {
             let ConsumerPos { pos, .. } = pos;
             let offset = pos & usize::try_from(mask).unwrap();
