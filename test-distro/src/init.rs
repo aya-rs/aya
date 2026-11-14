@@ -142,16 +142,27 @@ fn run() -> anyhow::Result<()> {
 
     // By contract we run everything in /bin and assume they're rust test binaries.
     //
-    // If the user requested command line arguments, they're named init.arg={}.
-
-    // Read kernel parameters from /proc/cmdline. They're space separated on a single line.
+    // For example, this /proc/cmdline:
+    // console=ttyS0 init.arg=--test-threads=1 init.env=RUST_LOG=trace init.env=LABEL=a=b
+    // yields args ["--test-threads=1"] and envs [("RUST_LOG", "trace"), ("LABEL", "a=b")].
     let cmdline = std::fs::read_to_string("/proc/cmdline")
         .with_context(|| "read_to_string(/proc/cmdline) failed")?;
-    let args = cmdline.split_whitespace().filter_map(|parameter| {
+    // Only ASCII whitespace separates boot parameters. Unlike split_whitespace(), this
+    // preserves Unicode whitespace (e.g. U+00A0) in values accepted by Bazel's guest_env.
+    let args = cmdline.split_ascii_whitespace().filter_map(|parameter| {
         parameter
             .strip_prefix("init.arg=")
             .map(std::ffi::OsStr::new)
     });
+    let envs = cmdline
+        .split_ascii_whitespace()
+        .filter_map(|parameter| parameter.strip_prefix("init.env="))
+        .map(|entry| {
+            entry
+                .split_once('=')
+                .with_context(|| format!("expected init.env=NAME=VALUE, got init.env={entry}"))
+        })
+        .collect::<anyhow::Result<Vec<_>>>()?;
 
     // Iterate files in /bin.
     let read_dir = std::fs::read_dir("/bin").context("read_dir(/bin) failed")?;
@@ -167,7 +178,8 @@ fn run() -> anyhow::Result<()> {
             let mut cmd = std::process::Command::new(&path);
             cmd.args(args.clone())
                 .env("RUST_BACKTRACE", "1")
-                .env("RUST_LOG", "debug");
+                .env("RUST_LOG", "debug")
+                .envs(envs.iter().copied());
 
             println!("running {cmd:?}");
 
