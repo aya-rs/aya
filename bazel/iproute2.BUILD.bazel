@@ -1,0 +1,8 @@
+load("@rules_cc//cc:defs.bzl", "cc_library")
+
+cc_library(
+    name = "iproute2",
+    hdrs = ["include/bpf_elf.h"],
+    strip_include_prefix = "include",
+    visibility = ["//visibility:public"],
+)
