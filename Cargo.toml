@@ -86,7 +86,7 @@ log = { version = "0.4", default-features = false }
 network-types = { version = "0.2.0", default-features = false }
 nix = { version = "0.31.1", default-features = false }
 num_enum = { version = "0.7", default-features = false }
-object = { version = "0.40", default-features = false }
+object = { version = "0.41", default-features = false }
 once_cell = { version = "1.20.1", default-features = false }
 proc-macro2 = { version = "1", default-features = false }
 procfs = { version = "0.18.0", default-features = false }
