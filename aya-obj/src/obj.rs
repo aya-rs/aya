@@ -439,8 +439,10 @@ impl Object {
                     address: symbol.address(),
                     size: symbol.size(),
                     is_definition: symbol.is_definition(),
-                    kind: symbol.kind(),
+                    // Undefined symbols are external references; defined globals are not.
+                    is_external: symbol.is_undefined(),
                     is_weak: symbol.is_weak(),
+                    kind: symbol.kind(),
                 };
                 bpf_obj.symbol_table.insert(symbol.index().0, sym);
                 if let Some(section_idx) = symbol.section().index() {
@@ -556,7 +558,7 @@ impl Object {
     }
 
     fn parse_btf(&mut self, section: &Section<'_>) -> Result<(), BtfError> {
-        self.btf = Some(Btf::parse(section.data, self.endianness)?);
+        self.btf = Some(Btf::parse_bpf_object(section.data, self.endianness)?);
 
         Ok(())
     }
@@ -1518,6 +1520,7 @@ mod tests {
                 size,
                 is_definition: false,
                 kind: SymbolKind::Text,
+                is_external: false,
                 is_weak: false,
             },
         );
@@ -1696,6 +1699,70 @@ mod tests {
 
     fn fake_obj() -> Object {
         Object::new(Endianness::Little, CString::new("GPL").unwrap(), None)
+    }
+
+    #[rstest]
+    fn test_kconfig_prepares_datasec_metadata(#[values(0, 4, 8)] original_size: u32) {
+        use crate::btf::{DataSec, Int, IntEncoding, Var, VarLinkage};
+
+        let mut obj = fake_obj();
+        let mut btf = Btf::new();
+        let int = btf.add_type(BtfType::Int(Int::new(0, 4, IntEncoding::None, 0)));
+        let name = btf.add_string("CONFIG_TEST");
+        let var = btf.add_type(BtfType::Var(Var::new(name, int, VarLinkage::Extern)));
+        let name = btf.add_string(".kconfig");
+        let section = btf.add_type(BtfType::DataSec(DataSec::new(
+            name,
+            vec![DataSecEntry {
+                btf_type: var,
+                offset: 16,
+                size: 8,
+            }],
+            original_size,
+        )));
+        obj.btf = Some(btf);
+        obj.symbol_table.insert(
+            1,
+            Symbol {
+                index: 1,
+                section_index: None,
+                name: Some("CONFIG_TEST".to_owned()),
+                address: 0,
+                size: 0,
+                is_definition: false,
+                is_external: true,
+                is_weak: false,
+                kind: SymbolKind::Unknown,
+            },
+        );
+        obj.prepare_kconfig_section(&HashMap::from([(
+            "CONFIG_TEST".to_owned(),
+            vec![1, 0, 0, 0, 0, 0, 0, 0],
+        )]))
+        .unwrap();
+        let map_size = obj.maps[".kconfig"].value_size();
+        assert_eq!(map_size, 4);
+
+        // rebuilding the section must replace its original size, including any padding
+        let btf = obj.btf.as_ref().unwrap();
+        assert_matches!(btf.type_by_id(section).unwrap(), BtfType::DataSec(datasec) => {
+            assert_eq!(datasec.size, map_size);
+            assert_eq!(datasec.entries[0].offset, 0);
+            assert_eq!(datasec.entries[0].size, map_size);
+        });
+        assert_matches!(btf.type_by_id(var).unwrap(), BtfType::Var(var) => {
+            assert_eq!(var.linkage, VarLinkage::Global);
+        });
+
+        // prepared BTF no longer needs ELF symbol offsets during sanitization
+        obj.symbol_offset_by_name.clear();
+        let btf = obj
+            .fixup_and_sanitize_btf(|| Some(|_: BtfFeature| true))
+            .unwrap()
+            .unwrap();
+        assert_matches!(btf.type_by_id(section).unwrap(), BtfType::DataSec(datasec) => {
+            assert_eq!(datasec.size, map_size);
+        });
     }
 
     #[test]
@@ -2733,8 +2800,9 @@ mod tests {
                 address: 0,
                 size: 3,
                 is_definition: true,
-                kind: SymbolKind::Data,
+                is_external: false,
                 is_weak: false,
+                kind: SymbolKind::Data,
             },
         );
 
