@@ -594,6 +594,43 @@ impl Program {
             Self::Iter(p) => p.info(),
         }
     }
+
+    /// Returns the ELF section name of this program, if loaded from an object file.
+    ///
+    /// Returns `None` if the program was not loaded from an object file (e.g. pinned programs).
+    pub fn section_name(&self) -> Option<&str> {
+        match self {
+            Self::KProbe(p) => p.section_name(),
+            Self::UProbe(p) => p.section_name(),
+            Self::TracePoint(p) => p.section_name(),
+            Self::SocketFilter(p) => p.section_name(),
+            Self::ReusePortSocketFilter(p) => p.section_name(),
+            Self::Xdp(p) => p.section_name(),
+            Self::SkMsg(p) => p.section_name(),
+            Self::SkSkb(p) => p.section_name(),
+            Self::SockOps(p) => p.section_name(),
+            Self::SchedClassifier(p) => p.section_name(),
+            Self::CgroupSkb(p) => p.section_name(),
+            Self::CgroupSysctl(p) => p.section_name(),
+            Self::CgroupSockopt(p) => p.section_name(),
+            Self::LircMode2(p) => p.section_name(),
+            Self::PerfEvent(p) => p.section_name(),
+            Self::RawTracePoint(p) => p.section_name(),
+            Self::Lsm(p) => p.section_name(),
+            Self::LsmCgroup(p) => p.section_name(),
+            Self::BtfTracePoint(p) => p.section_name(),
+            Self::FEntry(p) => p.section_name(),
+            Self::FExit(p) => p.section_name(),
+            Self::FlowDissector(p) => p.section_name(),
+            Self::Extension(p) => p.section_name(),
+            Self::CgroupSockAddr(p) => p.section_name(),
+            Self::SkLookup(p) => p.section_name(),
+            Self::SkReuseport(p) => p.section_name(),
+            Self::CgroupSock(p) => p.section_name(),
+            Self::CgroupDevice(p) => p.section_name(),
+            Self::Iter(p) => p.section_name(),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -682,6 +719,12 @@ impl<T: Link> ProgramData<T> {
 impl<T: Link> ProgramData<T> {
     fn fd(&self) -> Result<&ProgramFd, ProgramError> {
         self.fd.as_ref().ok_or(ProgramError::NotLoaded)
+    }
+
+    pub(crate) fn section_name(&self) -> Option<&str> {
+        self.obj
+            .as_ref()
+            .map(|(prog, _)| prog.section_name.as_str())
     }
 }
 
@@ -954,6 +997,53 @@ macro_rules! impl_fd {
 }
 
 impl_fd!(
+    KProbe,
+    UProbe,
+    TracePoint,
+    SocketFilter,
+    ReusePortSocketFilter,
+    Xdp,
+    SkMsg,
+    SkSkb,
+    SchedClassifier,
+    CgroupSkb,
+    CgroupSysctl,
+    CgroupSockopt,
+    LircMode2,
+    PerfEvent,
+    Lsm,
+    LsmCgroup,
+    RawTracePoint,
+    BtfTracePoint,
+    FEntry,
+    FExit,
+    FlowDissector,
+    Extension,
+    CgroupSockAddr,
+    SkLookup,
+    SkReuseport,
+    SockOps,
+    CgroupSock,
+    CgroupDevice,
+    Iter,
+);
+
+macro_rules! impl_program_section_name {
+    ($($struct_name:ident),+ $(,)?) => {
+        $(
+            impl $struct_name {
+                /// Returns the ELF section name of this program, if loaded from an object file.
+                ///
+                /// Returns `None` if the program was not loaded from an object file (e.g. pinned programs).
+                pub fn section_name(&self) -> Option<&str> {
+                    self.data.section_name()
+                }
+            }
+        )+
+    }
+}
+
+impl_program_section_name!(
     KProbe,
     UProbe,
     TracePoint,
@@ -1736,5 +1826,72 @@ mod tests {
             interface.if_index_for_program(),
             Err(ProgramError::UnknownInterface { name: actual }) => assert_eq!(actual, name)
         );
+    }
+
+    #[test]
+    fn test_program_section_name() {
+        use aya_obj::{
+            ProgramSection,
+            obj::{Function, Program as ObjProgram},
+        };
+
+        use super::{KProbe, Links, ProbeKind, Program, ProgramData, VerifierLogLevel};
+
+        let obj_prog = ObjProgram {
+            license: CString::new("GPL").unwrap(),
+            kernel_version: None,
+            section: ProgramSection::KProbe,
+            section_name: "kprobe/sys_clone".to_string(),
+            section_index: 1,
+            address: 0,
+        };
+        let func = Function {
+            address: 0,
+            name: "test_probe".to_string(),
+            section_index: object::SectionIndex(1),
+            section_offset: 0,
+            instructions: Vec::new(),
+            func_info: Default::default(),
+            line_info: Default::default(),
+            func_info_rec_size: 0,
+            line_info_rec_size: 0,
+        };
+
+        let data = ProgramData::new(
+            Some(Cow::Borrowed("test_probe")),
+            (obj_prog, func),
+            None,
+            VerifierLogLevel::default(),
+        );
+        let kprobe = KProbe {
+            data,
+            kind: ProbeKind::Entry,
+        };
+
+        assert_eq!(kprobe.section_name(), Some("kprobe/sys_clone"));
+
+        let prog = Program::KProbe(kprobe);
+        assert_eq!(prog.section_name(), Some("kprobe/sys_clone"));
+
+        let pinned_data = ProgramData {
+            name: Some(Cow::Borrowed("pinned_probe")),
+            obj: None,
+            fd: None,
+            links: Links::new(),
+            attach_btf_obj_fd: None,
+            attach_btf_id: None,
+            attach_prog_fd: None,
+            btf_fd: None,
+            verifier_log_level: Default::default(),
+            path: None,
+            flags: 0,
+        };
+        let pinned_kprobe = KProbe {
+            data: pinned_data,
+            kind: ProbeKind::Entry,
+        };
+        assert_eq!(pinned_kprobe.section_name(), None);
+        let pinned_prog = Program::KProbe(pinned_kprobe);
+        assert_eq!(pinned_prog.section_name(), None);
     }
 }
