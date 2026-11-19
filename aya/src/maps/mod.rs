@@ -1355,6 +1355,7 @@ mod test_utils {
             section_index: 0,
             section_kind: EbpfSectionKind::Maps,
             data: Vec::new(),
+            btf_value_type_id: None,
             symbol_index: None,
         })
     }
@@ -1375,6 +1376,7 @@ mod test_utils {
             section_index: 0,
             section_kind: EbpfSectionKind::Maps,
             data: Vec::new(),
+            btf_value_type_id: None,
             symbol_index: None,
         })
     }
@@ -1729,6 +1731,82 @@ mod tests {
                 fd,
             }) => assert_eq!(fd.as_fd().as_raw_fd(), crate::MockableFd::mock_signed_fd())
         );
+    }
+
+    fn new_data_obj_map(btf_value_type_id: Option<u32>) -> aya_obj::Map {
+        aya_obj::Map::Legacy(aya_obj::maps::LegacyMap {
+            def: aya_obj::maps::bpf_map_def {
+                map_type: bpf_map_type::BPF_MAP_TYPE_ARRAY as u32,
+                key_size: 4,
+                value_size: 8,
+                max_entries: 1,
+                ..Default::default()
+            },
+            inner_def: None,
+            section_index: 0,
+            section_kind: EbpfSectionKind::Data,
+            symbol_index: None,
+            data: vec![0; 8],
+            btf_value_type_id,
+        })
+    }
+
+    #[test]
+    fn test_create_data_map_passes_btf() {
+        override_syscall(|call| match call {
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_MAP_CREATE,
+                attr,
+            } => {
+                let attr = unsafe { attr.__bindgen_anon_1 };
+                assert_eq!(attr.btf_fd, crate::MockableFd::mock_signed_fd() as u32);
+                assert_eq!(attr.btf_key_type_id, 0);
+                assert_eq!(attr.btf_value_type_id, 7);
+                Ok(crate::MockableFd::mock_signed_fd().into())
+            }
+            call => panic!("unexpected syscall {call:?}"),
+        });
+
+        let btf_fd = unsafe { BorrowedFd::borrow_raw(crate::MockableFd::mock_signed_fd()) };
+        assert_matches!(
+            MapData::create(new_data_obj_map(Some(7)), ".data", Some(btf_fd)),
+            Ok(_)
+        );
+    }
+
+    #[test]
+    fn test_create_data_map_retries_without_btf() {
+        use std::sync::atomic::{AtomicUsize, Ordering};
+
+        static WITH_BTF: AtomicUsize = AtomicUsize::new(0);
+        static WITHOUT_BTF: AtomicUsize = AtomicUsize::new(0);
+
+        // A kernel that refuses the DATASEC but accepts the map itself.
+        override_syscall(|call| match call {
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_MAP_CREATE,
+                attr,
+            } => {
+                let attr = unsafe { attr.__bindgen_anon_1 };
+                if attr.btf_value_type_id != 0 {
+                    WITH_BTF.fetch_add(1, Ordering::Relaxed);
+                    Err((-1, io::Error::from_raw_os_error(libc::EINVAL)))
+                } else {
+                    assert_eq!(attr.btf_fd, 0);
+                    WITHOUT_BTF.fetch_add(1, Ordering::Relaxed);
+                    Ok(crate::MockableFd::mock_signed_fd().into())
+                }
+            }
+            call => panic!("unexpected syscall {call:?}"),
+        });
+
+        let btf_fd = unsafe { BorrowedFd::borrow_raw(crate::MockableFd::mock_signed_fd()) };
+        assert_matches!(
+            MapData::create(new_data_obj_map(Some(7)), ".data", Some(btf_fd)),
+            Ok(_)
+        );
+        assert_eq!(WITH_BTF.load(Ordering::Relaxed), 1);
+        assert_eq!(WITHOUT_BTF.load(Ordering::Relaxed), 1);
     }
 
     #[test]

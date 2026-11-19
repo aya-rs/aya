@@ -744,6 +744,7 @@ mod test {
             section_kind: EbpfSectionKind::Undefined,
             symbol_index: Some(symbol_index),
             data: Vec::new(),
+            btf_value_type_id: None,
         })
     }
 

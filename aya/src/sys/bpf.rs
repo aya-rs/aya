@@ -112,6 +112,22 @@ pub(crate) fn bpf_create_map(
         }
     }
 
+    // The contents of a data section are described by a DATASEC. Passing it
+    // lets the kernel find the fields it gives a meaning to, such as a
+    // `bpf_spin_lock` in a global variable. The verifier refuses programs
+    // that use such a field in a map created without BTF.
+    let has_data_btf = if let aya_obj::Map::Legacy(m) = def
+        && let Some(btf_value_type_id) = m.btf_value_type_id
+        && let Some(btf_fd) = btf_fd
+    {
+        u.btf_fd = btf_fd.as_raw_fd() as u32;
+        u.btf_key_type_id = 0;
+        u.btf_value_type_id = btf_value_type_id;
+        true
+    } else {
+        false
+    };
+
     // https://github.com/torvalds/linux/commit/ad5b177bd
     // The map name was added as a parameter in kernel 4.15+ so we skip adding it on
     // older kernels for compatibility
@@ -122,7 +138,19 @@ pub(crate) fn bpf_create_map(
             .copy_from_slice(unsafe { mem::transmute::<&[u8], &[c_char]>(&name_bytes[..len]) });
     }
 
-    bpf_map_create(&mut attr)
+    match bpf_map_create(&mut attr) {
+        // A data map does not need BTF to be created, and a kernel may refuse
+        // BTF it does not understand. Retry without it, like libbpf does:
+        // https://github.com/libbpf/libbpf/blob/f5dcbae73/src/libbpf.c#L5407-L5419
+        Err(_) if has_data_btf => {
+            let u = unsafe { &mut attr.__bindgen_anon_1 };
+            u.btf_fd = 0;
+            u.btf_key_type_id = 0;
+            u.btf_value_type_id = 0;
+            bpf_map_create(&mut attr)
+        }
+        result => result,
+    }
 }
 
 pub(crate) fn bpf_pin_object(fd: BorrowedFd<'_>, path: &CStr) -> io::Result<()> {
@@ -1270,6 +1298,7 @@ pub(crate) fn probe_bpf_global_data() -> io::Result<bool> {
             section_kind: EbpfSectionKind::Maps,
             symbol_index: None,
             data: Vec::new(),
+            btf_value_type_id: None,
         }),
         "aya_global",
         None,
