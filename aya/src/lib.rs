@@ -47,6 +47,7 @@ pub mod programs;
 pub mod sys;
 #[cfg(feature = "test-helpers")]
 pub mod test_helpers;
+pub mod token;
 pub mod util;
 
 use std::os::fd::{AsFd, AsRawFd, BorrowedFd, FromRawFd, OwnedFd, RawFd};
