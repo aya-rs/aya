@@ -382,6 +382,7 @@ extend-ignore-identifiers-re = [
     # variables
     "__PT_PARM",           # PARM
     "^allowed_attachs$",   # attachs
+    "^delegate_attachs$",  # attachs
     "BPF_F_WRONLY",        # WRONLY
     "BPF_SOCK_OPS_RTO_CB", # RTO
 ]
