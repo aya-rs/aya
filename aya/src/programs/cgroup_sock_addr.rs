@@ -8,11 +8,11 @@ pub use aya_obj::programs::CgroupSockAddrAttachType;
 use crate::{
     VerifierLogLevel,
     programs::{
-        CgroupAttachMode, FdLink, Link, LinkError, ProgAttachLink, ProgramData, ProgramError,
-        ProgramType, define_link_wrapper, id_as_key, impl_try_from_fdlink, impl_try_into_fdlink,
-        load_program_with_attach_type,
+        CgroupAttachMode, FdLink, Link, ProgAttachLink, ProgramData, ProgramError, ProgramType,
+        define_link_wrapper, id_as_key, impl_program_adopt_link, impl_try_from_fdlink,
+        impl_try_into_fdlink, load_program_with_attach_type,
     },
-    sys::{LinkTarget, SyscallError, bpf_link_create, bpf_link_update},
+    sys::{LinkTarget, SyscallError, bpf_link_create},
     util::KernelVersion,
 };
 
@@ -27,6 +27,9 @@ use crate::{
 /// # Minimum kernel version
 ///
 /// The minimum kernel version required to use this feature is 4.17.
+///
+/// On kernels before 5.7, [`Self::attach`] creates legacy `BPF_PROG_ATTACH` links,
+/// which [`Self::adopt_link`] rejects with [`crate::programs::LinkError::InvalidLink`].
 ///
 /// # Examples
 ///
@@ -106,40 +109,6 @@ impl CgroupSockAddr {
         }
     }
 
-    /// Atomically replaces the program referenced by the provided link.
-    ///
-    /// Ownership of the link will transfer to this program.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`LinkError::InvalidLink`] for a `BPF_PROG_ATTACH` attachment,
-    /// which is what kernels before 5.7 get, as it's currently not supported.
-    pub fn attach_to_link(
-        &mut self,
-        link: CgroupSockAddrLink,
-    ) -> Result<CgroupSockAddrLinkId, ProgramError> {
-        let prog_fd = self.fd()?;
-        let prog_fd = prog_fd.as_fd();
-        match link.into_inner() {
-            CgroupSockAddrLinkInner::Fd(fd_link) => {
-                let link_fd = fd_link.fd;
-                bpf_link_update(link_fd.as_fd(), prog_fd, None, 0).map_err(|io_error| {
-                    SyscallError {
-                        call: "bpf_link_update",
-                        io_error,
-                    }
-                })?;
-
-                self.data
-                    .links
-                    .insert(CgroupSockAddrLink::new(CgroupSockAddrLinkInner::Fd(
-                        FdLink::new(link_fd),
-                    )))
-            }
-            CgroupSockAddrLinkInner::ProgAttach(_) => Err(LinkError::InvalidLink.into()),
-        }
-    }
-
     /// Creates a program from a pinned entry on a bpffs.
     ///
     /// Existing links will not be populated. To work with existing links you should use [`crate::programs::links::PinnedLink`].
@@ -194,6 +163,13 @@ define_link_wrapper!(
     CgroupSockAddrLinkInner,
     CgroupSockAddrLinkIdInner,
     CgroupSockAddr,
+);
+
+impl_program_adopt_link!(
+    CgroupSockAddr,
+    CgroupSockAddrLink,
+    CgroupSockAddrLinkId,
+    CgroupSockAddrLinkInner,
 );
 
 impl_try_into_fdlink!(CgroupSockAddrLink, CgroupSockAddrLinkInner);
