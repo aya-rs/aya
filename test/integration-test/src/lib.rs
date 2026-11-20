@@ -10,6 +10,8 @@ bpf_file!(
     EXT => "ext.bpf.o",
     ITER_TASK => "iter.bpf.o",
     MAIN => "main.bpf.o",
+    TC_LEGACY_MAP => "tc_legacy_map.bpf.o",
+    TC_LEGACY_MAP_IN_MAP => "tc_legacy_map_in_map.bpf.o",
     RINGBUF_BTF => "ringbuf-btf.bpf.o",
     KSYMS => "ksyms.bpf.o",
     KSYMS_STRONG => "ksyms_strong.bpf.o",
