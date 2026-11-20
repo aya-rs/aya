@@ -23,6 +23,7 @@ members = [
     "ebpf/aya-ebpf-cty",
     "ebpf/aya-log-ebpf",
     "test/integration-ebpf",
+    "test/integration-ebpf-jumptable",
 ]
 
 resolver = "2"

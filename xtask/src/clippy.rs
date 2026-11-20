@@ -70,6 +70,7 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
         "aya-ebpf-bindings",
         "aya-log-ebpf",
         "integration-ebpf",
+        "integration-ebpf-jumptable",
     ];
 
     for arch in [

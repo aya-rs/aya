@@ -6,7 +6,7 @@ use std::{
 };
 
 use log::debug;
-use object::{SectionIndex, SymbolKind};
+use object::{Endian as _, Endianness, SectionIndex, SymbolKind};
 
 use crate::{
     EbpfSectionKind,
@@ -16,7 +16,7 @@ use crate::{
         BPF_PSEUDO_FUNC, BPF_PSEUDO_KFUNC_CALL, BPF_PSEUDO_MAP_FD, BPF_PSEUDO_MAP_VALUE, bpf_insn,
     },
     maps::Map,
-    obj::{Function, Object},
+    obj::{Function, JumpTable, JumpTablesSection, Object},
     util::{HashMap, HashSet},
 };
 
@@ -106,6 +106,15 @@ pub enum RelocationError {
         /// Name of the extern symbol
         name: String,
     },
+
+    /// Invalid jump table
+    #[error("invalid jump table `{}`: {reason}", .symbol_name.clone().unwrap_or_default())]
+    InvalidJumpTable {
+        /// The symbol name
+        symbol_name: Option<String>,
+        /// Why the table is invalid
+        reason: String,
+    },
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -155,6 +164,7 @@ impl Object {
             }
         }
 
+        let jump_tables_section = self.jump_tables.as_ref().map(|s| s.section_index);
         for function in self.functions.values_mut() {
             if let Some(relocations) = self.relocations.get(&function.section_index) {
                 relocate_maps(
@@ -164,6 +174,7 @@ impl Object {
                     &maps_by_symbol,
                     &self.symbol_table,
                     text_sections,
+                    jump_tables_section,
                 )
                 .map_err(|error| EbpfRelocationError {
                     function: function.name.clone(),
@@ -217,6 +228,8 @@ impl Object {
                 &self.relocations,
                 &self.symbol_table,
                 text_sections,
+                self.jump_tables.as_ref(),
+                self.endianness,
             );
 
             let func_orig =
@@ -381,6 +394,7 @@ fn relocate_maps<'a, I: Iterator<Item = &'a Relocation>>(
     maps_by_symbol: &HashMap<usize, (&str, RawFd, &Map)>,
     symbol_table: &HashMap<usize, Symbol>,
     text_sections: &HashSet<usize>,
+    jump_tables_section: Option<usize>,
 ) -> Result<(), RelocationError> {
     let section_offset = fun.section_offset;
     let instructions = &mut fun.instructions;
@@ -414,6 +428,11 @@ fn relocate_maps<'a, I: Iterator<Item = &'a Relocation>>(
             // this is not a map relocation
             continue;
         };
+
+        // jump tables are resolved by the linker, see `FunctionLinker::relocate_jump_tables`
+        if Some(section_index) == jump_tables_section {
+            continue;
+        }
 
         // calls and relocation to .text symbols are handled in a separate step
         if insn_is_call(instructions[ins_index]) || text_sections.contains(&section_index) {
@@ -468,12 +487,92 @@ fn relocate_maps<'a, I: Iterator<Item = &'a Relocation>>(
     Ok(())
 }
 
+/// Translates the entries of the jump table `sym` in `data` (the `.jumptables` section) into
+/// instruction indices of the program that `fun` has been linked into at `start_ins`.
+///
+/// Entries are `u64` byte offsets relative to the start of the ELF section containing `fun`.
+fn jump_table_targets(
+    data: &[u8],
+    sym: &Symbol,
+    fun: &Function,
+    start_ins: usize,
+    endianness: Endianness,
+) -> Result<Vec<u32>, RelocationError> {
+    const ENTRY_SIZE: usize = size_of::<u64>();
+
+    let invalid = |reason: String| RelocationError::InvalidJumpTable {
+        symbol_name: sym.name.clone(),
+        reason,
+    };
+    let does_not_fit = |what: &'static str, value: u64| {
+        move |std::num::TryFromIntError { .. }| {
+            invalid(format!("{what} {value:#x} does not fit in usize"))
+        }
+    };
+
+    // The symbol spans the table within the section. Its value and size come straight from the ELF
+    // file, so every step of the arithmetic is checked.
+    let sym_offset = usize::try_from(sym.address).map_err(does_not_fit("offset", sym.address))?;
+    let sym_size = usize::try_from(sym.size).map_err(does_not_fit("size", sym.size))?;
+    if !sym_offset.is_multiple_of(ENTRY_SIZE) || !sym_size.is_multiple_of(ENTRY_SIZE) {
+        return Err(invalid(format!(
+            "offset {sym_offset} and size {sym_size} must be multiples of {ENTRY_SIZE}"
+        )));
+    }
+    let sym_end = sym_offset
+        .checked_add(sym_size)
+        .ok_or_else(|| invalid(format!("offset {sym_offset} and size {sym_size} overflow")))?;
+    let entries = data.get(sym_offset..sym_end).ok_or_else(|| {
+        invalid(format!(
+            "offset {sym_offset} and size {sym_size} exceed the section size {}",
+            data.len()
+        ))
+    })?;
+    // The remainder is empty: the size is a multiple of ENTRY_SIZE.
+    let (entries, _) = entries.as_chunks::<ENTRY_SIZE>();
+
+    let function_start = fun.section_offset / INS_SIZE;
+    entries
+        .iter()
+        .map(|entry| {
+            let entry = endianness.read_u64(*entry);
+            let offset = usize::try_from(entry).map_err(does_not_fit("entry", entry))?;
+            if !offset.is_multiple_of(INS_SIZE) {
+                return Err(invalid(format!(
+                    "entry {entry:#x} is not instruction aligned"
+                )));
+            }
+            let Some(target) = (offset / INS_SIZE).checked_sub(function_start) else {
+                return Err(invalid(format!(
+                    "entry {entry:#x} precedes function `{}`",
+                    fun.name
+                )));
+            };
+            if target >= fun.instructions.len() {
+                return Err(invalid(format!(
+                    "entry {entry:#x} is past the end of function `{}`",
+                    fun.name
+                )));
+            }
+            u32::try_from(start_ins + target).map_err(|std::num::TryFromIntError { .. }| {
+                invalid(format!("entry {entry:#x} does not fit in u32"))
+            })
+        })
+        .collect()
+}
+
 struct FunctionLinker<'a> {
     functions: &'a BTreeMap<(usize, u64), Function>,
     linked_functions: HashMap<(SectionIndex, u64), usize>,
     relocations: &'a HashMap<SectionIndex, HashMap<u64, Relocation>>,
     symbol_table: &'a HashMap<usize, Symbol>,
     text_sections: &'a HashSet<usize>,
+    jump_tables: Option<&'a JumpTablesSection>,
+    // Index in `Function::jump_tables` of each table already recorded for the program, keyed by
+    // the table's offset in `.jumptables`. A table may be loaded by more than one instruction;
+    // all of them must share one map, so libbpf keys its maps the same way.
+    linked_jump_tables: HashMap<u64, usize>,
+    endianness: Endianness,
 }
 
 impl<'a> FunctionLinker<'a> {
@@ -482,6 +581,8 @@ impl<'a> FunctionLinker<'a> {
         relocations: &'a HashMap<SectionIndex, HashMap<u64, Relocation>>,
         symbol_table: &'a HashMap<usize, Symbol>,
         text_sections: &'a HashSet<usize>,
+        jump_tables: Option<&'a JumpTablesSection>,
+        endianness: Endianness,
     ) -> Self {
         Self {
             functions,
@@ -489,6 +590,9 @@ impl<'a> FunctionLinker<'a> {
             relocations,
             symbol_table,
             text_sections,
+            jump_tables,
+            linked_jump_tables: HashMap::new(),
+            endianness,
         }
     }
 
@@ -518,6 +622,7 @@ impl<'a> FunctionLinker<'a> {
             line_info: _,
             func_info_rec_size: _,
             line_info_rec_size: _,
+            jump_tables: _,
         } = fun;
         if func_info.func_info.is_empty() != program.func_info.func_info.is_empty() {
             return Err(RelocationError::FunctionInfoMismatch { name: name.clone() });
@@ -647,10 +752,114 @@ impl<'a> FunctionLinker<'a> {
             }
         }
 
+        self.relocate_jump_tables(program, fun, start_ins)?;
+
         debug!(
             "finished relocating program `{}` function `{}`",
             program.name, fun.name
         );
+
+        Ok(())
+    }
+
+    /// Records the jump tables referenced by `fun`, linked into `program` at instruction
+    /// `start_ins`, translating their entries into instruction indices of `program`.
+    ///
+    /// This mirrors libbpf's `create_jt_map`, minus the map creation which is left to the caller.
+    fn relocate_jump_tables(
+        &mut self,
+        program: &mut Function,
+        fun: &Function,
+        start_ins: usize,
+    ) -> Result<(), RelocationError> {
+        let Some(JumpTablesSection {
+            section_index: jump_tables_section,
+            data,
+        }) = self.jump_tables
+        else {
+            return Ok(());
+        };
+        let Some(relocations) = self.relocations.get(&fun.section_index) else {
+            return Ok(());
+        };
+
+        let section_offset = fun.section_offset;
+        let n_instructions = fun.instructions.len();
+
+        // Relocations live in a hash map; visit the ones in this function in instruction order so
+        // the recorded tables and their loads are deterministic.
+        let mut relocations: Vec<_> = relocations
+            .values()
+            .filter(|rel| {
+                let rel_offset = rel.offset as usize;
+                rel_offset >= section_offset
+                    && rel_offset < section_offset + n_instructions * INS_SIZE
+            })
+            .collect();
+        relocations.sort_unstable_by_key(|rel| rel.offset);
+
+        for rel in relocations {
+            let sym =
+                self.symbol_table
+                    .get(&rel.symbol_index)
+                    .ok_or(RelocationError::UnknownSymbol {
+                        index: rel.symbol_index,
+                    })?;
+            if sym.section_index != Some(*jump_tables_section) {
+                continue;
+            }
+            let invalid = |reason: String| RelocationError::InvalidJumpTable {
+                symbol_name: sym.name.clone(),
+                reason,
+            };
+
+            let ins_offset = rel.offset as usize - section_offset;
+            if !ins_offset.is_multiple_of(INS_SIZE) {
+                return Err(invalid(format!(
+                    "relocation offset {} is not instruction aligned",
+                    rel.offset
+                )));
+            }
+            // The table address is loaded by a two-slot `ld_imm64`.
+            let insn_index = start_ins + ins_offset / INS_SIZE;
+            if program
+                .instructions
+                .get(insn_index)
+                .is_none_or(|ins| ins.code != (BPF_LD | BPF_IMM | BPF_DW) as u8)
+                || insn_index + 1 >= program.instructions.len()
+            {
+                return Err(invalid(format!(
+                    "instruction {insn_index} is not an ld_imm64"
+                )));
+            }
+
+            match self.linked_jump_tables.entry(sym.address) {
+                Entry::Occupied(entry) => {
+                    debug!(
+                        "jump table `{}` is also loaded at instruction {insn_index} of `{}`",
+                        sym.name.as_deref().unwrap_or_default(),
+                        program.name,
+                    );
+                    program.jump_tables[*entry.get()]
+                        .insn_indices
+                        .push(insn_index);
+                }
+                Entry::Vacant(entry) => {
+                    let targets = jump_table_targets(data, sym, fun, start_ins, self.endianness)?;
+                    debug!(
+                        "jump table `{}` loaded at instruction {insn_index} of `{}` has {} targets",
+                        sym.name.as_deref().unwrap_or_default(),
+                        program.name,
+                        targets.len()
+                    );
+                    entry.insert(program.jump_tables.len());
+                    program.jump_tables.push(JumpTable {
+                        insn_indices: vec![insn_index],
+                        targets,
+                    });
+                }
+            }
+        }
 
         Ok(())
     }
@@ -768,7 +977,193 @@ mod test {
             line_info: Default::default(),
             func_info_rec_size: Default::default(),
             line_info_rec_size: Default::default(),
+            jump_tables: Vec::new(),
         }
+    }
+
+    fn fake_jump_tables(entries: &[u64]) -> JumpTablesSection {
+        JumpTablesSection {
+            section_index: 5,
+            data: entries
+                .iter()
+                .flat_map(|e| Endianness::Little.write_u64(*e))
+                .collect(),
+        }
+    }
+
+    // `ld_imm64 rN, 0` occupies two instruction slots.
+    fn ld_imm64(dst: u8) -> [bpf_insn; 2] {
+        [ins(&[0x18, dst, 0, 0, 0, 0, 0, 0]), ins(&[0; 8])]
+    }
+
+    fn gotox(src: u8) -> bpf_insn {
+        ins(&[0x0d, src, 0, 0, 0, 0, 0, 0])
+    }
+
+    fn exit() -> bpf_insn {
+        ins(&[0x95, 0, 0, 0, 0, 0, 0, 0])
+    }
+
+    // ld_imm64 r1, T; gotox r1; exit; exit
+    fn fake_gotox_func(section_offset: usize) -> Function {
+        let [ld_lo, ld_hi] = ld_imm64(1);
+        let mut fun = fake_func("gotox", vec![ld_lo, ld_hi, gotox(1), exit(), exit()]);
+        fun.section_index = SectionIndex(1);
+        fun.section_offset = section_offset;
+        fun
+    }
+
+    #[test]
+    fn test_jump_table_relocation() {
+        // The function starts 16 bytes into its section; the table starts 8 bytes into
+        // `.jumptables` and points at the two `exit` instructions.
+        let fun = fake_gotox_func(16);
+        let symbol_table = HashMap::from([(7, fake_sym(7, 5, 8, "BPF.JT.0.0", 16))]);
+        let relocations = HashMap::from([(
+            SectionIndex(1),
+            HashMap::from([(
+                16,
+                Relocation {
+                    offset: 16,
+                    symbol_index: 7,
+                    size: 64,
+                },
+            )]),
+        )]);
+        let jump_tables = fake_jump_tables(&[0xdead, 16 + 4 * 8, 16 + 3 * 8]);
+
+        let functions = BTreeMap::new();
+        let text_sections = HashSet::new();
+        let linker = FunctionLinker::new(
+            &functions,
+            &relocations,
+            &symbol_table,
+            &text_sections,
+            Some(&jump_tables),
+            Endianness::Little,
+        );
+        let linked = linker.link(&fun).unwrap();
+
+        assert_eq!(
+            linked.jump_tables,
+            vec![JumpTable {
+                insn_indices: vec![0],
+                targets: vec![4, 3],
+            }]
+        );
+    }
+
+    #[test]
+    fn test_jump_table_relocation_shares_table_between_loads() {
+        // ld_imm64 r1, T; ld_imm64 r2, T; gotox r1; exit; exit: both loads reference the same
+        // table and must end up in a single `JumpTable`.
+        let [ld1_lo, ld1_hi] = ld_imm64(1);
+        let [ld2_lo, ld2_hi] = ld_imm64(2);
+        let mut fun = fake_func(
+            "gotox",
+            vec![ld1_lo, ld1_hi, ld2_lo, ld2_hi, gotox(1), exit(), exit()],
+        );
+        fun.section_index = SectionIndex(1);
+        let symbol_table = HashMap::from([(7, fake_sym(7, 5, 0, "BPF.JT.0.0", 16))]);
+        let relocation = |offset| Relocation {
+            offset,
+            symbol_index: 7,
+            size: 64,
+        };
+        let relocations = HashMap::from([(
+            SectionIndex(1),
+            HashMap::from([(16, relocation(16)), (0, relocation(0))]),
+        )]);
+        let jump_tables = fake_jump_tables(&[5 * 8, 6 * 8]);
+
+        let functions = BTreeMap::new();
+        let text_sections = HashSet::new();
+        let linker = FunctionLinker::new(
+            &functions,
+            &relocations,
+            &symbol_table,
+            &text_sections,
+            Some(&jump_tables),
+            Endianness::Little,
+        );
+        let linked = linker.link(&fun).unwrap();
+
+        assert_eq!(
+            linked.jump_tables,
+            vec![JumpTable {
+                insn_indices: vec![0, 2],
+                targets: vec![5, 6],
+            }]
+        );
+    }
+
+    #[test]
+    fn test_jump_table_relocation_rejects_overflowing_symbol() {
+        // Aligned offset and size whose sum overflows must be rejected, not panic.
+        let fun = fake_gotox_func(0);
+        let symbol_table = HashMap::from([(7, fake_sym(7, 5, 8, "BPF.JT.0.0", u64::MAX - 7))]);
+        let relocations = HashMap::from([(
+            SectionIndex(1),
+            HashMap::from([(
+                0,
+                Relocation {
+                    offset: 0,
+                    symbol_index: 7,
+                    size: 64,
+                },
+            )]),
+        )]);
+        let jump_tables = fake_jump_tables(&[0, 2 * 8]);
+
+        let functions = BTreeMap::new();
+        let text_sections = HashSet::new();
+        let linker = FunctionLinker::new(
+            &functions,
+            &relocations,
+            &symbol_table,
+            &text_sections,
+            Some(&jump_tables),
+            Endianness::Little,
+        );
+
+        assert!(matches!(
+            linker.link(&fun),
+            Err(RelocationError::InvalidJumpTable { .. })
+        ));
+    }
+
+    #[test]
+    fn test_jump_table_relocation_rejects_target_outside_function() {
+        let fun = fake_gotox_func(0);
+        let symbol_table = HashMap::from([(7, fake_sym(7, 5, 0, "BPF.JT.0.0", 8))]);
+        let relocations = HashMap::from([(
+            SectionIndex(1),
+            HashMap::from([(
+                0,
+                Relocation {
+                    offset: 0,
+                    symbol_index: 7,
+                    size: 64,
+                },
+            )]),
+        )]);
+        let jump_tables = fake_jump_tables(&[5 * 8]);
+
+        let functions = BTreeMap::new();
+        let text_sections = HashSet::new();
+        let linker = FunctionLinker::new(
+            &functions,
+            &relocations,
+            &symbol_table,
+            &text_sections,
+            Some(&jump_tables),
+            Endianness::Little,
+        );
+
+        assert!(matches!(
+            linker.link(&fun),
+            Err(RelocationError::InvalidJumpTable { .. })
+        ));
     }
 
     #[test]
@@ -800,6 +1195,7 @@ mod test {
             &maps_by_symbol,
             &symbol_table,
             &HashSet::new(),
+            None,
         )
         .unwrap();
 
@@ -856,6 +1252,7 @@ mod test {
             &maps_by_symbol,
             &symbol_table,
             &HashSet::new(),
+            None,
         )
         .unwrap();
 
@@ -895,6 +1292,7 @@ mod test {
             &maps_by_symbol,
             &symbol_table,
             &HashSet::new(),
+            None,
         )
         .unwrap();
 
@@ -951,6 +1349,7 @@ mod test {
             &maps_by_symbol,
             &symbol_table,
             &HashSet::new(),
+            None,
         )
         .unwrap();
 

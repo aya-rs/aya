@@ -55,6 +55,7 @@ pub struct Object {
     pub programs: HashMap<String, Program>,
     /// Functions
     pub functions: BTreeMap<(usize, u64), Function>,
+    pub(crate) jump_tables: Option<JumpTablesSection>,
     pub(crate) relocations: HashMap<SectionIndex, HashMap<u64, Relocation>>,
     pub(crate) symbol_table: HashMap<usize, Symbol>,
     pub(crate) symbols_by_section: HashMap<SectionIndex, Vec<usize>>,
@@ -107,6 +108,32 @@ pub struct Function {
     pub func_info_rec_size: usize,
     /// Line info record size
     pub line_info_rec_size: usize,
+    /// Jump tables used by indirect jumps (`gotox`) in this function.
+    ///
+    /// Filled in by [`Object::relocate_calls`] once the final instruction layout is known, so the
+    /// indices are relative to the start of the linked program.
+    pub jump_tables: Vec<JumpTable>,
+}
+
+/// A jump table used by indirect jump (`gotox`) instructions.
+///
+/// LLVM emits one table per `switch` it lowers to an indirect jump into the `.jumptables` section.
+/// The loader must back each table with a `BPF_MAP_TYPE_INSN_ARRAY` map holding [`Self::targets`]
+/// and point every `ld_imm64` in [`Self::insn_indices`] to that same map.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct JumpTable {
+    /// The indices of the `ld_imm64` instructions loading the address of the table.
+    pub insn_indices: Vec<usize>,
+    /// The jump targets, as instruction indices relative to the start of the program.
+    pub targets: Vec<u32>,
+}
+
+/// The `.jumptables` section: a flat array of `u64` byte offsets, each relative to the start of the
+/// ELF section containing the function that uses the table.
+#[derive(Debug, Clone)]
+pub(crate) struct JumpTablesSection {
+    pub(crate) section_index: usize,
+    pub(crate) data: Vec<u8>,
 }
 
 /// Section types containing eBPF programs
@@ -491,6 +518,7 @@ impl Object {
             maps: HashMap::new(),
             programs: HashMap::new(),
             functions: BTreeMap::new(),
+            jump_tables: None,
             relocations: HashMap::new(),
             symbol_table: HashMap::new(),
             symbols_by_section: HashMap::new(),
@@ -622,6 +650,7 @@ impl Object {
             line_info,
             func_info_rec_size,
             line_info_rec_size,
+            jump_tables: Vec::new(),
         };
 
         Ok((
@@ -687,6 +716,7 @@ impl Object {
                     line_info,
                     func_info_rec_size,
                     line_info_rec_size,
+                    jump_tables: Vec::new(),
                 },
             );
 
@@ -849,6 +879,12 @@ impl Object {
                     );
                 }
             }
+            EbpfSectionKind::JumpTables => {
+                self.jump_tables = Some(JumpTablesSection {
+                    section_index: section.index.0,
+                    data: section.data.to_vec(),
+                });
+            }
             EbpfSectionKind::Undefined | EbpfSectionKind::License | EbpfSectionKind::Version => {}
         }
 
@@ -1006,6 +1042,8 @@ pub enum EbpfSectionKind {
     Btf,
     /// `.BTF.ext`
     BtfExt,
+    /// `.jumptables`
+    JumpTables,
     /// `license`
     License,
     /// `version`
@@ -1034,6 +1072,8 @@ impl EbpfSectionKind {
             Self::Btf
         } else if name == ".BTF.ext" {
             Self::BtfExt
+        } else if name == ".jumptables" {
+            Self::JumpTables
         } else {
             Self::Undefined
         }
@@ -1696,6 +1736,31 @@ mod tests {
 
     fn fake_obj() -> Object {
         Object::new(Endianness::Little, CString::new("GPL").unwrap(), None)
+    }
+
+    #[test]
+    fn test_parse_jumptables_section() {
+        assert_eq!(
+            EbpfSectionKind::from_name(".jumptables"),
+            EbpfSectionKind::JumpTables
+        );
+
+        let mut obj = fake_obj();
+        let data = Endianness::Little.write_u64(40);
+        obj.parse_section(fake_section(
+            EbpfSectionKind::JumpTables,
+            ".jumptables",
+            &data,
+            Some(5),
+        ))
+        .unwrap();
+
+        let JumpTablesSection {
+            section_index,
+            data: parsed,
+        } = obj.jump_tables.unwrap();
+        assert_eq!(section_index, 5);
+        assert_eq!(parsed, data);
     }
 
     #[test]
