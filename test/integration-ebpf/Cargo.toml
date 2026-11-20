@@ -53,6 +53,10 @@ name = "fexit"
 path = "src/fexit.rs"
 
 [[bin]]
+name = "fmod_ret"
+path = "src/fmod_ret.rs"
+
+[[bin]]
 name = "hash-map"
 path = "src/hash_map.rs"
 
