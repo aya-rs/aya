@@ -811,6 +811,29 @@ impl core::marker::Unpin for aya_obj::generated::_bindgen_ty_18
 impl core::marker::UnsafeUnpin for aya_obj::generated::_bindgen_ty_18
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::_bindgen_ty_18
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::_bindgen_ty_18
+#[repr(u32)] pub enum aya_obj::generated::_bindgen_ty_195
+pub aya_obj::generated::_bindgen_ty_195::VETH_INFO_PEER = 1
+pub aya_obj::generated::_bindgen_ty_195::VETH_INFO_UNSPEC = 0
+pub aya_obj::generated::_bindgen_ty_195::__VETH_INFO_MAX = 2
+impl core::clone::Clone for aya_obj::generated::_bindgen_ty_195
+pub fn aya_obj::generated::_bindgen_ty_195::clone(&self) -> Self
+impl core::cmp::Eq for aya_obj::generated::_bindgen_ty_195
+impl core::cmp::PartialEq for aya_obj::generated::_bindgen_ty_195
+pub fn aya_obj::generated::_bindgen_ty_195::eq(&self, &Self) -> bool
+impl core::fmt::Debug for aya_obj::generated::_bindgen_ty_195
+pub fn aya_obj::generated::_bindgen_ty_195::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya_obj::generated::_bindgen_ty_195
+pub fn aya_obj::generated::_bindgen_ty_195::hash<__H: core::hash::Hasher>(&self, &mut __H)
+impl core::marker::Copy for aya_obj::generated::_bindgen_ty_195
+impl core::marker::StructuralPartialEq for aya_obj::generated::_bindgen_ty_195
+impl core::marker::Forget for aya_obj::generated::_bindgen_ty_195
+impl core::marker::Freeze for aya_obj::generated::_bindgen_ty_195
+impl core::marker::Send for aya_obj::generated::_bindgen_ty_195
+impl core::marker::Sync for aya_obj::generated::_bindgen_ty_195
+impl core::marker::Unpin for aya_obj::generated::_bindgen_ty_195
+impl core::marker::UnsafeUnpin for aya_obj::generated::_bindgen_ty_195
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::_bindgen_ty_195
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::_bindgen_ty_195
 #[repr(u32)] pub enum aya_obj::generated::_bindgen_ty_20
 pub aya_obj::generated::_bindgen_ty_20::BPF_LOCAL_STORAGE_GET_F_CREATE = 1
 impl core::clone::Clone for aya_obj::generated::_bindgen_ty_20
@@ -4310,6 +4333,25 @@ impl core::marker::Unpin for aya_obj::generated::btf_var_secinfo
 impl core::marker::UnsafeUnpin for aya_obj::generated::btf_var_secinfo
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::btf_var_secinfo
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::btf_var_secinfo
+#[repr(C)] pub struct aya_obj::generated::ifaddrmsg
+pub aya_obj::generated::ifaddrmsg::ifa_family: aya_obj::generated::__u8
+pub aya_obj::generated::ifaddrmsg::ifa_flags: aya_obj::generated::__u8
+pub aya_obj::generated::ifaddrmsg::ifa_index: aya_obj::generated::__u32
+pub aya_obj::generated::ifaddrmsg::ifa_prefixlen: aya_obj::generated::__u8
+pub aya_obj::generated::ifaddrmsg::ifa_scope: aya_obj::generated::__u8
+impl core::clone::Clone for aya_obj::generated::ifaddrmsg
+pub fn aya_obj::generated::ifaddrmsg::clone(&self) -> Self
+impl core::fmt::Debug for aya_obj::generated::ifaddrmsg
+pub fn aya_obj::generated::ifaddrmsg::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya_obj::generated::ifaddrmsg
+impl core::marker::Forget for aya_obj::generated::ifaddrmsg
+impl core::marker::Freeze for aya_obj::generated::ifaddrmsg
+impl core::marker::Send for aya_obj::generated::ifaddrmsg
+impl core::marker::Sync for aya_obj::generated::ifaddrmsg
+impl core::marker::Unpin for aya_obj::generated::ifaddrmsg
+impl core::marker::UnsafeUnpin for aya_obj::generated::ifaddrmsg
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::ifaddrmsg
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::ifaddrmsg
 #[repr(C)] pub struct aya_obj::generated::ifinfomsg
 pub aya_obj::generated::ifinfomsg::__ifi_pad: core::ffi::primitives::c_uchar
 pub aya_obj::generated::ifinfomsg::ifi_change: core::ffi::primitives::c_uint
@@ -4331,6 +4373,27 @@ impl core::marker::Unpin for aya_obj::generated::ifinfomsg
 impl core::marker::UnsafeUnpin for aya_obj::generated::ifinfomsg
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::ifinfomsg
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::ifinfomsg
+#[repr(C)] pub struct aya_obj::generated::ndmsg
+pub aya_obj::generated::ndmsg::ndm_family: aya_obj::generated::__u8
+pub aya_obj::generated::ndmsg::ndm_flags: aya_obj::generated::__u8
+pub aya_obj::generated::ndmsg::ndm_ifindex: aya_obj::generated::__s32
+pub aya_obj::generated::ndmsg::ndm_pad1: aya_obj::generated::__u8
+pub aya_obj::generated::ndmsg::ndm_pad2: aya_obj::generated::__u16
+pub aya_obj::generated::ndmsg::ndm_state: aya_obj::generated::__u16
+pub aya_obj::generated::ndmsg::ndm_type: aya_obj::generated::__u8
+impl core::clone::Clone for aya_obj::generated::ndmsg
+pub fn aya_obj::generated::ndmsg::clone(&self) -> Self
+impl core::fmt::Debug for aya_obj::generated::ndmsg
+pub fn aya_obj::generated::ndmsg::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya_obj::generated::ndmsg
+impl core::marker::Forget for aya_obj::generated::ndmsg
+impl core::marker::Freeze for aya_obj::generated::ndmsg
+impl core::marker::Send for aya_obj::generated::ndmsg
+impl core::marker::Sync for aya_obj::generated::ndmsg
+impl core::marker::Unpin for aya_obj::generated::ndmsg
+impl core::marker::UnsafeUnpin for aya_obj::generated::ndmsg
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::ndmsg
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::ndmsg
 #[repr(C)] pub struct aya_obj::generated::perf_event_attr
 pub aya_obj::generated::perf_event_attr::__bindgen_anon_1: aya_obj::generated::perf_event_attr__bindgen_ty_1
 pub aya_obj::generated::perf_event_attr::__bindgen_anon_2: aya_obj::generated::perf_event_attr__bindgen_ty_2
@@ -5003,24 +5066,24 @@ pub const aya_obj::generated::HW_BREAKPOINT_R: aya_obj::generated::_bindgen_ty_4
 pub const aya_obj::generated::HW_BREAKPOINT_RW: aya_obj::generated::_bindgen_ty_46
 pub const aya_obj::generated::HW_BREAKPOINT_W: aya_obj::generated::_bindgen_ty_46
 pub const aya_obj::generated::HW_BREAKPOINT_X: aya_obj::generated::_bindgen_ty_46
-pub const aya_obj::generated::IFLA_XDP_ATTACHED: aya_obj::generated::_bindgen_ty_95
-pub const aya_obj::generated::IFLA_XDP_DRV_PROG_ID: aya_obj::generated::_bindgen_ty_95
-pub const aya_obj::generated::IFLA_XDP_EXPECTED_FD: aya_obj::generated::_bindgen_ty_95
-pub const aya_obj::generated::IFLA_XDP_FD: aya_obj::generated::_bindgen_ty_95
-pub const aya_obj::generated::IFLA_XDP_FLAGS: aya_obj::generated::_bindgen_ty_95
-pub const aya_obj::generated::IFLA_XDP_HW_PROG_ID: aya_obj::generated::_bindgen_ty_95
-pub const aya_obj::generated::IFLA_XDP_PROG_ID: aya_obj::generated::_bindgen_ty_95
-pub const aya_obj::generated::IFLA_XDP_SKB_PROG_ID: aya_obj::generated::_bindgen_ty_95
-pub const aya_obj::generated::IFLA_XDP_UNSPEC: aya_obj::generated::_bindgen_ty_95
-pub const aya_obj::generated::NFPROTO_ARP: aya_obj::generated::_bindgen_ty_103
-pub const aya_obj::generated::NFPROTO_BRIDGE: aya_obj::generated::_bindgen_ty_103
-pub const aya_obj::generated::NFPROTO_DECNET: aya_obj::generated::_bindgen_ty_103
-pub const aya_obj::generated::NFPROTO_INET: aya_obj::generated::_bindgen_ty_103
-pub const aya_obj::generated::NFPROTO_IPV4: aya_obj::generated::_bindgen_ty_103
-pub const aya_obj::generated::NFPROTO_IPV6: aya_obj::generated::_bindgen_ty_103
-pub const aya_obj::generated::NFPROTO_NETDEV: aya_obj::generated::_bindgen_ty_103
-pub const aya_obj::generated::NFPROTO_NUMPROTO: aya_obj::generated::_bindgen_ty_103
-pub const aya_obj::generated::NFPROTO_UNSPEC: aya_obj::generated::_bindgen_ty_103
+pub const aya_obj::generated::IFLA_XDP_ATTACHED: aya_obj::generated::_bindgen_ty_96
+pub const aya_obj::generated::IFLA_XDP_DRV_PROG_ID: aya_obj::generated::_bindgen_ty_96
+pub const aya_obj::generated::IFLA_XDP_EXPECTED_FD: aya_obj::generated::_bindgen_ty_96
+pub const aya_obj::generated::IFLA_XDP_FD: aya_obj::generated::_bindgen_ty_96
+pub const aya_obj::generated::IFLA_XDP_FLAGS: aya_obj::generated::_bindgen_ty_96
+pub const aya_obj::generated::IFLA_XDP_HW_PROG_ID: aya_obj::generated::_bindgen_ty_96
+pub const aya_obj::generated::IFLA_XDP_PROG_ID: aya_obj::generated::_bindgen_ty_96
+pub const aya_obj::generated::IFLA_XDP_SKB_PROG_ID: aya_obj::generated::_bindgen_ty_96
+pub const aya_obj::generated::IFLA_XDP_UNSPEC: aya_obj::generated::_bindgen_ty_96
+pub const aya_obj::generated::NFPROTO_ARP: aya_obj::generated::_bindgen_ty_109
+pub const aya_obj::generated::NFPROTO_BRIDGE: aya_obj::generated::_bindgen_ty_109
+pub const aya_obj::generated::NFPROTO_DECNET: aya_obj::generated::_bindgen_ty_109
+pub const aya_obj::generated::NFPROTO_INET: aya_obj::generated::_bindgen_ty_109
+pub const aya_obj::generated::NFPROTO_IPV4: aya_obj::generated::_bindgen_ty_109
+pub const aya_obj::generated::NFPROTO_IPV6: aya_obj::generated::_bindgen_ty_109
+pub const aya_obj::generated::NFPROTO_NETDEV: aya_obj::generated::_bindgen_ty_109
+pub const aya_obj::generated::NFPROTO_NUMPROTO: aya_obj::generated::_bindgen_ty_109
+pub const aya_obj::generated::NFPROTO_UNSPEC: aya_obj::generated::_bindgen_ty_109
 pub const aya_obj::generated::NLMSG_ALIGNTO: u32
 pub const aya_obj::generated::NR_BTF_KINDS: aya_obj::generated::_bindgen_ty_43
 pub const aya_obj::generated::PERF_EVENT_IOC_DISABLE: u32
@@ -5043,19 +5106,19 @@ pub const aya_obj::generated::PERF_MAX_CONTEXTS_PER_STACK: u32
 pub const aya_obj::generated::PERF_MAX_STACK_DEPTH: u32
 pub const aya_obj::generated::SO_ATTACH_BPF: u32
 pub const aya_obj::generated::SO_DETACH_BPF: u32
-pub const aya_obj::generated::TCA_BPF_ACT: aya_obj::generated::_bindgen_ty_164
-pub const aya_obj::generated::TCA_BPF_CLASSID: aya_obj::generated::_bindgen_ty_164
-pub const aya_obj::generated::TCA_BPF_FD: aya_obj::generated::_bindgen_ty_164
-pub const aya_obj::generated::TCA_BPF_FLAGS: aya_obj::generated::_bindgen_ty_164
-pub const aya_obj::generated::TCA_BPF_FLAGS_GEN: aya_obj::generated::_bindgen_ty_164
+pub const aya_obj::generated::TCA_BPF_ACT: aya_obj::generated::_bindgen_ty_170
+pub const aya_obj::generated::TCA_BPF_CLASSID: aya_obj::generated::_bindgen_ty_170
+pub const aya_obj::generated::TCA_BPF_FD: aya_obj::generated::_bindgen_ty_170
+pub const aya_obj::generated::TCA_BPF_FLAGS: aya_obj::generated::_bindgen_ty_170
+pub const aya_obj::generated::TCA_BPF_FLAGS_GEN: aya_obj::generated::_bindgen_ty_170
 pub const aya_obj::generated::TCA_BPF_FLAG_ACT_DIRECT: u32
-pub const aya_obj::generated::TCA_BPF_ID: aya_obj::generated::_bindgen_ty_164
-pub const aya_obj::generated::TCA_BPF_NAME: aya_obj::generated::_bindgen_ty_164
-pub const aya_obj::generated::TCA_BPF_OPS: aya_obj::generated::_bindgen_ty_164
-pub const aya_obj::generated::TCA_BPF_OPS_LEN: aya_obj::generated::_bindgen_ty_164
-pub const aya_obj::generated::TCA_BPF_POLICE: aya_obj::generated::_bindgen_ty_164
-pub const aya_obj::generated::TCA_BPF_TAG: aya_obj::generated::_bindgen_ty_164
-pub const aya_obj::generated::TCA_BPF_UNSPEC: aya_obj::generated::_bindgen_ty_164
+pub const aya_obj::generated::TCA_BPF_ID: aya_obj::generated::_bindgen_ty_170
+pub const aya_obj::generated::TCA_BPF_NAME: aya_obj::generated::_bindgen_ty_170
+pub const aya_obj::generated::TCA_BPF_OPS: aya_obj::generated::_bindgen_ty_170
+pub const aya_obj::generated::TCA_BPF_OPS_LEN: aya_obj::generated::_bindgen_ty_170
+pub const aya_obj::generated::TCA_BPF_POLICE: aya_obj::generated::_bindgen_ty_170
+pub const aya_obj::generated::TCA_BPF_TAG: aya_obj::generated::_bindgen_ty_170
+pub const aya_obj::generated::TCA_BPF_UNSPEC: aya_obj::generated::_bindgen_ty_170
 pub const aya_obj::generated::TCA_CHAIN: aya_obj::generated::_bindgen_ty_192
 pub const aya_obj::generated::TCA_DUMP_FLAGS: aya_obj::generated::_bindgen_ty_192
 pub const aya_obj::generated::TCA_DUMP_INVISIBLE: aya_obj::generated::_bindgen_ty_192
@@ -5082,6 +5145,8 @@ pub const aya_obj::generated::TC_H_MIN_MASK: u32
 pub const aya_obj::generated::TC_H_MIN_PRIORITY: u32
 pub const aya_obj::generated::TC_H_ROOT: u32
 pub const aya_obj::generated::TC_H_UNSPEC: u32
+pub const aya_obj::generated::VETH_INFO_PEER: aya_obj::generated::_bindgen_ty_195
+pub const aya_obj::generated::VETH_INFO_UNSPEC: aya_obj::generated::_bindgen_ty_195
 pub const aya_obj::generated::XDP_FLAGS_DRV_MODE: u32
 pub const aya_obj::generated::XDP_FLAGS_HW_MODE: u32
 pub const aya_obj::generated::XDP_FLAGS_MASK: u32
@@ -5089,10 +5154,11 @@ pub const aya_obj::generated::XDP_FLAGS_MODES: u32
 pub const aya_obj::generated::XDP_FLAGS_REPLACE: u32
 pub const aya_obj::generated::XDP_FLAGS_SKB_MODE: u32
 pub const aya_obj::generated::XDP_FLAGS_UPDATE_IF_NOEXIST: u32
-pub const aya_obj::generated::__IFLA_XDP_MAX: aya_obj::generated::_bindgen_ty_95
+pub const aya_obj::generated::__IFLA_XDP_MAX: aya_obj::generated::_bindgen_ty_96
 pub const aya_obj::generated::__MAX_BPF_REG: aya_obj::generated::_bindgen_ty_1
-pub const aya_obj::generated::__TCA_BPF_MAX: aya_obj::generated::_bindgen_ty_164
+pub const aya_obj::generated::__TCA_BPF_MAX: aya_obj::generated::_bindgen_ty_170
 pub const aya_obj::generated::__TCA_MAX: aya_obj::generated::_bindgen_ty_192
+pub const aya_obj::generated::__VETH_INFO_MAX: aya_obj::generated::_bindgen_ty_195
 pub type aya_obj::generated::__s16 = core::ffi::primitives::c_short
 pub type aya_obj::generated::__s32 = core::ffi::primitives::c_int
 pub type aya_obj::generated::__s64 = core::ffi::primitives::c_longlong
@@ -5101,14 +5167,14 @@ pub type aya_obj::generated::__u32 = core::ffi::primitives::c_uint
 pub type aya_obj::generated::__u64 = core::ffi::primitives::c_ulonglong
 pub type aya_obj::generated::__u8 = core::ffi::primitives::c_uchar
 pub type aya_obj::generated::_bindgen_ty_10 = core::ffi::primitives::c_uint
-pub type aya_obj::generated::_bindgen_ty_103 = core::ffi::primitives::c_uint
+pub type aya_obj::generated::_bindgen_ty_109 = core::ffi::primitives::c_uint
 pub type aya_obj::generated::_bindgen_ty_11 = core::ffi::primitives::c_uint
 pub type aya_obj::generated::_bindgen_ty_12 = core::ffi::primitives::c_uint
 pub type aya_obj::generated::_bindgen_ty_13 = core::ffi::primitives::c_uint
 pub type aya_obj::generated::_bindgen_ty_14 = core::ffi::primitives::c_ulong
 pub type aya_obj::generated::_bindgen_ty_15 = core::ffi::primitives::c_int
-pub type aya_obj::generated::_bindgen_ty_164 = core::ffi::primitives::c_uint
 pub type aya_obj::generated::_bindgen_ty_17 = core::ffi::primitives::c_uint
+pub type aya_obj::generated::_bindgen_ty_170 = core::ffi::primitives::c_uint
 pub type aya_obj::generated::_bindgen_ty_19 = core::ffi::primitives::c_uint
 pub type aya_obj::generated::_bindgen_ty_192 = core::ffi::primitives::c_uint
 pub type aya_obj::generated::_bindgen_ty_2 = core::ffi::primitives::c_uint
@@ -5127,7 +5193,7 @@ pub type aya_obj::generated::_bindgen_ty_5 = core::ffi::primitives::c_uint
 pub type aya_obj::generated::_bindgen_ty_7 = core::ffi::primitives::c_uint
 pub type aya_obj::generated::_bindgen_ty_8 = core::ffi::primitives::c_uint
 pub type aya_obj::generated::_bindgen_ty_9 = core::ffi::primitives::c_uint
-pub type aya_obj::generated::_bindgen_ty_95 = core::ffi::primitives::c_uint
+pub type aya_obj::generated::_bindgen_ty_96 = core::ffi::primitives::c_uint
 pub mod aya_obj::links
 pub mod aya_obj::maps
 pub enum aya_obj::maps::Map
