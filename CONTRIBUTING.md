@@ -164,11 +164,10 @@ gh actions-lock --verify
 
 Commit `.github/workflows/actions.lock` with the workflow changes. The
 `--no-narrow` option preserves major-version references such as `@v2`; the
-lockfile records their exact commits. Dependabot groups action version bumps
+lockfile records their exact commits. Renovate groups action version bumps
 into a monthly pull request and updates the corresponding lockfile entries.
-If a tag or branch advances without changing its name, its locked commit stays
-in place. Use `gh actions-lock --relock --no-narrow` to update those pins
-manually.
+If a locked action's tag or branch moves, its locked commit stays in place.
+Use `gh actions-lock --relock --no-narrow` to update those pins manually.
 
 ## Source References
 
