@@ -399,6 +399,30 @@ impl Btf {
         self.string_at(ty.name_offset())
     }
 
+    /// Returns whether the name of `ty` starts with `prefix`, without decoding it.
+    ///
+    /// Callers scanning every type for a name use this to skip the vast majority
+    /// that differ in their first bytes, decoding only the few that might match.
+    /// BTF names are C identifiers, so comparing bytes rejects exactly the names
+    /// whose decoded form could not start with `prefix`.
+    pub(crate) fn type_name_starts_with(
+        &self,
+        ty: &BtfType,
+        prefix: &str,
+    ) -> Result<bool, BtfError> {
+        let offset = ty.name_offset() as usize;
+        let Some(name) = self.strings.get(offset..) else {
+            return Err(BtfError::InvalidStringOffset { offset });
+        };
+        let prefix = prefix.as_bytes();
+        // Most names differ in the first byte: check it before comparing the rest.
+        // An empty prefix (an anonymous local type) matches every name.
+        Ok(match prefix.first() {
+            None => true,
+            Some(first) => name.first() == Some(first) && name.starts_with(prefix),
+        })
+    }
+
     pub(crate) fn err_type_name(&self, ty: &BtfType) -> Option<String> {
         self.string_at(ty.name_offset()).ok().map(String::from)
     }
@@ -406,7 +430,7 @@ impl Btf {
     /// Returns a type id matching the type name and [`BtfKind`].
     pub fn id_by_type_name_kind(&self, name: &str, kind: BtfKind) -> Result<u32, BtfError> {
         for (type_id, ty) in self.types().enumerate() {
-            if ty.kind() != kind {
+            if ty.kind() != kind || !self.type_name_starts_with(ty, name)? {
                 continue;
             }
             if self.type_name(ty)? == name {
@@ -1341,6 +1365,42 @@ mod tests {
 
     use super::*;
     use crate::btf::{BtfParam, DeclTag, Float, Func, FuncProto, Ptr, TypeTag};
+
+    #[test]
+    fn test_id_by_type_name_kind_skips_longer_names() {
+        let mut btf = Btf::new();
+        let longer = btf.add_string("foobar");
+        let exact = btf.add_string("foo");
+        let shorter = btf.add_string("fo");
+        btf.add_type(BtfType::Struct(Struct::new(longer, vec![], 8)));
+        btf.add_type(BtfType::Struct(Struct::new(shorter, vec![], 8)));
+        let id = btf.add_type(BtfType::Struct(Struct::new(exact, vec![], 8)));
+        assert_eq!(
+            btf.id_by_type_name_kind("foo", BtfKind::Struct).unwrap(),
+            id
+        );
+        assert_matches!(
+            btf.id_by_type_name_kind("foo", BtfKind::Union),
+            Err(BtfError::UnknownBtfTypeName { .. })
+        );
+    }
+
+    #[test]
+    fn test_type_name_starts_with() {
+        let mut btf = Btf::new();
+        let name_offset = btf.add_string("task_struct");
+        let ty = BtfType::Struct(Struct::new(name_offset, vec![], 8));
+        assert!(btf.type_name_starts_with(&ty, "task").unwrap());
+        assert!(btf.type_name_starts_with(&ty, "task_struct").unwrap());
+        assert!(btf.type_name_starts_with(&ty, "").unwrap());
+        assert!(!btf.type_name_starts_with(&ty, "task_structs").unwrap());
+        assert!(!btf.type_name_starts_with(&ty, "file").unwrap());
+        let bad = BtfType::Struct(Struct::new(u32::MAX, vec![], 8));
+        assert_matches!(
+            btf.type_name_starts_with(&bad, "task"),
+            Err(BtfError::InvalidStringOffset { .. })
+        );
+    }
 
     #[test]
     fn test_btf_string_offsets() {
