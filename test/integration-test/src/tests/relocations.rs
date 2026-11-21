@@ -72,7 +72,7 @@ fn variables_reloc() {
         .unwrap()
         .try_into()
         .unwrap();
-    prog.load().unwrap();
+    prog.load(None).unwrap();
 }
 
 fn load_and_attach(name: &str, bytes: &[u8]) -> Ebpf {

@@ -334,8 +334,8 @@ impl AsFd for ProgramFd {
 pub struct ProgramId(u32);
 
 impl ProgramId {
-    /// Create a new program id.  
-    ///  
+    /// Create a new program id.
+    ///
     /// # Safety
     ///
     /// This method is unsafe since it doesn't check that the given `id` is a
@@ -741,7 +741,7 @@ fn load_program_without_attach_type<T: Link>(
     prog_type: bpf_prog_type,
     data: &mut ProgramData<T>,
 ) -> Result<(), ProgramError> {
-    load_program(prog_type, None, data)
+    load_program(prog_type, None, data, 0, 0)
 }
 
 fn load_program_with_attach_type<A: Into<bpf_attach_type>, T: Link>(
@@ -749,13 +749,15 @@ fn load_program_with_attach_type<A: Into<bpf_attach_type>, T: Link>(
     expected_attach_type: A,
     data: &mut ProgramData<T>,
 ) -> Result<(), ProgramError> {
-    load_program(prog_type, Some(expected_attach_type.into()), data)
+    load_program(prog_type, Some(expected_attach_type.into()), data, 0, 0)
 }
 
 fn load_program<T: Link>(
     prog_type: bpf_prog_type,
     expected_attach_type: Option<bpf_attach_type>,
     data: &mut ProgramData<T>,
+    prog_ifindex: u32,
+    extra_flags: u32,
 ) -> Result<(), ProgramError> {
     let ProgramData {
         name,
@@ -823,7 +825,8 @@ fn load_program<T: Link>(
         func_info: func_info.clone(),
         line_info_rec_size: *line_info_rec_size,
         line_info: line_info.clone(),
-        flags: *flags,
+        flags: *flags | extra_flags,
+        prog_ifindex,
     };
 
     let (ret, verifier_log) = retry_with_verifier_logs(10, |logger| {
