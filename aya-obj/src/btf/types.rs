@@ -5,7 +5,10 @@ use std::{fmt::Display, ptr, string::ToString as _};
 
 use object::{Endian as _, Endianness};
 
-use crate::btf::{Btf, BtfError, MAX_RESOLVE_DEPTH};
+use crate::{
+    btf::{Btf, BtfError, MAX_RESOLVE_DEPTH},
+    generated::BTF_INT_SIGNED,
+};
 
 #[derive(Debug)]
 pub(crate) struct BtfRebaseInfoField {
@@ -79,6 +82,24 @@ pub struct Fwd {
 }
 
 impl Fwd {
+    #[cfg(test)]
+    pub(crate) const fn new(name_offset: u32, is_union: bool) -> Self {
+        let mut info = (BtfKind::Fwd as u32) << 24;
+        if is_union {
+            info |= 1 << 31;
+        }
+        Self {
+            name_offset,
+            info,
+            unused: 0,
+        }
+    }
+
+    /// Whether this declares a union (`kind_flag` set) rather than a struct.
+    pub(crate) const fn is_union(&self) -> bool {
+        self.info >> 31 == 1
+    }
+
     pub(crate) fn to_bytes(&self) -> Vec<u8> {
         bytes_of::<Self>(self).to_vec()
     }
@@ -1999,6 +2020,237 @@ pub(crate) fn fields_are_compatible(
     Err(BtfError::MaximumTypeDepthReached { type_id: local_id })
 }
 
+/// Maximum nesting of composite types and function prototypes that
+/// [`types_match`] descends into.
+const MAX_TYPES_MATCH_LEVEL: usize = 32;
+
+/// Checks whether two types "match".
+///
+/// This is a mostly faithful port of libbpf's `__bpf_core_types_match()`:
+///
+/// - modifiers and typedefs are ignored, but names must match at every level
+/// - integers must have the same size and signedness
+/// - pointers and arrays match if their element types do (arrays also need the same length)
+/// - every local struct or union member must exist in the target, with a matching type
+///   behind a pointer, only the name and kind are compared, and a forward
+///   declaration of the same kind matches;
+/// - local enum variants must exist in the target by name, and sizes must be equal
+/// - function prototypes must have the same number of parameters, and each
+///   parameter and the return type must match.
+pub(crate) fn types_match(
+    local_btf: &Btf,
+    local_id: u32,
+    target_btf: &Btf,
+    target_id: u32,
+) -> Result<bool, BtfError> {
+    types_match_at(
+        local_btf,
+        local_id,
+        target_btf,
+        target_id,
+        false,
+        MAX_TYPES_MATCH_LEVEL,
+    )
+}
+
+fn type_names_match(
+    local_btf: &Btf,
+    local_name_offset: u32,
+    target_btf: &Btf,
+    target_name_offset: u32,
+) -> Result<bool, BtfError> {
+    let essential_name = |name: &str| name.split_once("___").map_or(name, |x| x.0).to_string();
+
+    let local_name = local_btf.string_at(local_name_offset)?;
+    let target_name = target_btf.string_at(target_name_offset)?;
+    if target_name.is_empty() {
+        return Ok(local_name.is_empty());
+    }
+    Ok(essential_name(&local_name) == essential_name(&target_name))
+}
+
+/// Size and variant name offsets of an enum, or of an ENUM64 that was
+/// sanitized into a union.
+fn enum_variant_names(ty: &BtfType) -> Option<(u32, Vec<u32>)> {
+    match ty {
+        BtfType::Enum(en) => Some((en.size, en.variants.iter().map(|v| v.name_offset).collect())),
+        BtfType::Enum64(en) => Some((en.size, en.variants.iter().map(|v| v.name_offset).collect())),
+        BtfType::Union(Union {
+            size,
+            enum64_fallback: Some(fallback),
+            ..
+        }) => Some((
+            *size,
+            fallback.variants.iter().map(|v| v.name_offset).collect(),
+        )),
+        _ => None,
+    }
+}
+
+fn types_match_at(
+    local_btf: &Btf,
+    mut local_id: u32,
+    target_btf: &Btf,
+    mut target_id: u32,
+    mut behind_ptr: bool,
+    level: usize,
+) -> Result<bool, BtfError> {
+    if level == 0 {
+        return Err(BtfError::MaximumTypeDepthReached { type_id: local_id });
+    }
+
+    for () in core::iter::repeat_n((), MAX_RESOLVE_DEPTH) {
+        local_id = local_btf.resolve_type(local_id)?;
+        target_id = target_btf.resolve_type(target_id)?;
+        let local_ty = local_btf.type_by_id(local_id)?;
+        let target_ty = target_btf.type_by_id(target_id)?;
+
+        if !type_names_match(
+            local_btf,
+            local_ty.name_offset(),
+            target_btf,
+            target_ty.name_offset(),
+        )? {
+            return Ok(false);
+        }
+
+        if let Some((local_size, local_variants)) = enum_variant_names(local_ty) {
+            let Some((target_size, target_variants)) = enum_variant_names(target_ty) else {
+                return Ok(false);
+            };
+            if local_size != target_size || local_variants.len() > target_variants.len() {
+                return Ok(false);
+            }
+            for local_variant in local_variants {
+                let mut matched = false;
+                for &target_variant in &target_variants {
+                    if type_names_match(local_btf, local_variant, target_btf, target_variant)? {
+                        matched = true;
+                        break;
+                    }
+                }
+                if !matched {
+                    return Ok(false);
+                }
+            }
+            return Ok(true);
+        }
+
+        match local_ty {
+            BtfType::Unknown => return Ok(matches!(target_ty, BtfType::Unknown)),
+            BtfType::Fwd(local) => {
+                return Ok(match target_ty {
+                    BtfType::Fwd(target) => local.is_union() == target.is_union(),
+                    BtfType::Struct(_) => behind_ptr && !local.is_union(),
+                    BtfType::Union(_) => behind_ptr && local.is_union(),
+                    _ => false,
+                });
+            }
+            BtfType::Struct(_) | BtfType::Union(_) => {
+                let local_is_union = matches!(local_ty, BtfType::Union(_));
+                let (local_members, target_members) = match (local_ty, target_ty) {
+                    (BtfType::Struct(local), BtfType::Struct(target)) => {
+                        (&local.members, &target.members)
+                    }
+                    (BtfType::Union(local), BtfType::Union(target)) => {
+                        (&local.members, &target.members)
+                    }
+                    (_, BtfType::Fwd(target)) => {
+                        return Ok(behind_ptr && local_is_union == target.is_union());
+                    }
+                    _ => return Ok(false),
+                };
+
+                if behind_ptr {
+                    return Ok(true);
+                }
+
+                if local_members.len() > target_members.len() {
+                    return Ok(false);
+                }
+                for local_member in local_members {
+                    let mut matched = false;
+                    for target_member in target_members {
+                        if !type_names_match(
+                            local_btf,
+                            local_member.name_offset,
+                            target_btf,
+                            target_member.name_offset,
+                        )? {
+                            continue;
+                        }
+                        if types_match_at(
+                            local_btf,
+                            local_member.btf_type,
+                            target_btf,
+                            target_member.btf_type,
+                            behind_ptr,
+                            level - 1,
+                        )? {
+                            matched = true;
+                            break;
+                        }
+                    }
+                    if !matched {
+                        return Ok(false);
+                    }
+                }
+                return Ok(true);
+            }
+            BtfType::Int(local) => {
+                let BtfType::Int(target) = target_ty else {
+                    return Ok(false);
+                };
+                let is_signed = |int: &Int| (int.data >> 24) & 0x0F & BTF_INT_SIGNED != 0;
+                return Ok(local.size == target.size && is_signed(local) == is_signed(target));
+            }
+            BtfType::Ptr(local) => {
+                let BtfType::Ptr(target) = target_ty else {
+                    return Ok(false);
+                };
+                behind_ptr = true;
+                local_id = local.btf_type;
+                target_id = target.btf_type;
+            }
+            BtfType::Array(Array { array: local, .. }) => {
+                let BtfType::Array(Array { array: target, .. }) = target_ty else {
+                    return Ok(false);
+                };
+                if local.len != target.len {
+                    return Ok(false);
+                }
+                local_id = local.element_type;
+                target_id = target.element_type;
+            }
+            BtfType::FuncProto(local) => {
+                let BtfType::FuncProto(target) = target_ty else {
+                    return Ok(false);
+                };
+                if local.params.len() != target.params.len() {
+                    return Ok(false);
+                }
+                for (local_param, target_param) in local.params.iter().zip(&target.params) {
+                    if !types_match_at(
+                        local_btf,
+                        local_param.btf_type,
+                        target_btf,
+                        target_param.btf_type,
+                        behind_ptr,
+                        level - 1,
+                    )? {
+                        return Ok(false);
+                    }
+                }
+                local_id = local.return_type;
+                target_id = target.return_type;
+            }
+            _ => return Ok(false),
+        }
+    }
+
+    Err(BtfError::MaximumTypeDepthReached { type_id: local_id })
+}
+
 const fn bytes_of<T>(val: &T) -> &[u8] {
     // Safety: all btf types are POD
     //
@@ -2273,6 +2525,142 @@ mod tests {
         // int types are compatible if offsets match. size and encoding aren't compared
         assert!(types_are_compatible(&btf, u32t, &btf, u64t).unwrap());
         assert!(types_are_compatible(&btf, array_type, &btf, array_type).unwrap());
+    }
+
+    fn add_int(btf: &mut Btf, name: &str, size: u32, signed: bool) -> u32 {
+        let name = btf.add_string(name);
+        let encoding = if signed {
+            IntEncoding::Signed
+        } else {
+            IntEncoding::None
+        };
+        btf.add_type(BtfType::Int(Int::new(name, size, encoding, 0)))
+    }
+
+    fn add_func_proto(btf: &mut Btf, return_type: u32, params: &[u32]) -> u32 {
+        let params = params
+            .iter()
+            .map(|&btf_type| BtfParam {
+                name_offset: 0,
+                btf_type,
+            })
+            .collect();
+        btf.add_type(BtfType::FuncProto(FuncProto::new(params, return_type)))
+    }
+
+    #[test]
+    fn test_types_match_func_proto() {
+        let mut btf = Btf::new();
+        let int = add_int(&mut btf, "int", 4, true);
+        let long = add_int(&mut btf, "long", 8, true);
+        let proto = add_func_proto(&mut btf, int, &[int, long]);
+        let same = add_func_proto(&mut btf, int, &[int, long]);
+        let extra_param = add_func_proto(&mut btf, int, &[int, long, int]);
+        let swapped_params = add_func_proto(&mut btf, int, &[long, int]);
+        let other_return = add_func_proto(&mut btf, long, &[int, long]);
+
+        assert!(types_match(&btf, proto, &btf, same).unwrap());
+        assert!(!types_match(&btf, proto, &btf, extra_param).unwrap());
+        assert!(!types_match(&btf, proto, &btf, swapped_params).unwrap());
+        assert!(!types_match(&btf, proto, &btf, other_return).unwrap());
+    }
+
+    #[test]
+    fn test_types_match_composites() {
+        let mut btf = Btf::new();
+        let int = add_int(&mut btf, "int", 4, true);
+        let long = add_int(&mut btf, "long", 8, true);
+        let const_int = btf.add_type(BtfType::Const(Const::new(int)));
+        let name = btf.add_string("my_int");
+        let typedef_int = btf.add_type(BtfType::Typedef(Typedef::new(name, const_int)));
+        let a = btf.add_string("a");
+        let b = btf.add_string("b");
+        let member = |name_offset, btf_type| BtfMember {
+            name_offset,
+            btf_type,
+            offset: 0,
+        };
+        let mut add_foo = |name, members| {
+            let name = btf.add_string(name);
+            btf.add_type(BtfType::Struct(Struct::new(name, members, 0)))
+        };
+
+        let local = add_foo("foo___local", vec![member(a, typedef_int)]);
+        let target = add_foo("foo", vec![member(b, long), member(a, int)]);
+        let target_other_type = add_foo("foo", vec![member(a, long)]);
+        let target_missing_member = add_foo("foo", vec![member(b, int)]);
+
+        // Flavors, modifiers and typedefs are ignored, and the
+        // target may have more members.
+        assert!(types_match(&btf, local, &btf, target).unwrap());
+        assert!(!types_match(&btf, local, &btf, target_other_type).unwrap());
+        assert!(!types_match(&btf, local, &btf, target_missing_member).unwrap());
+    }
+
+    #[test]
+    fn test_types_match_ints() {
+        let mut btf = Btf::new();
+        let int = add_int(&mut btf, "int", 4, true);
+        let unsigned = add_int(&mut btf, "int", 4, false);
+        let larger = add_int(&mut btf, "int", 8, true);
+
+        assert!(types_match(&btf, int, &btf, int).unwrap());
+        assert!(!types_match(&btf, int, &btf, unsigned).unwrap());
+        assert!(!types_match(&btf, int, &btf, larger).unwrap());
+    }
+
+    #[test]
+    fn test_types_match_fwd_behind_pointer() {
+        let mut local = Btf::new();
+        let name = local.add_string("inode");
+        let fwd = local.add_type(BtfType::Fwd(Fwd::new(name, false)));
+        let fwd_ptr = local.add_type(BtfType::Ptr(Ptr::new(0, fwd)));
+        let name = local.add_string("inode");
+        let union_fwd = local.add_type(BtfType::Fwd(Fwd::new(name, true)));
+        let union_fwd_ptr = local.add_type(BtfType::Ptr(Ptr::new(0, union_fwd)));
+
+        let mut target = Btf::new();
+        let name = target.add_string("inode");
+        let struct_id = target.add_type(BtfType::Struct(Struct::new(name, Vec::new(), 0)));
+        let struct_ptr = target.add_type(BtfType::Ptr(Ptr::new(0, struct_id)));
+
+        assert!(types_match(&local, fwd_ptr, &target, struct_ptr).unwrap());
+        assert!(!types_match(&local, union_fwd_ptr, &target, struct_ptr).unwrap());
+        // Outside of a pointer, a forward declaration only matches another one.
+        assert!(!types_match(&local, fwd, &target, struct_id).unwrap());
+    }
+
+    #[test]
+    fn test_types_match_enums() {
+        let mut local = Btf::new();
+        let name = local.add_string("mode");
+        let a = local.add_string("MODE_A");
+        let local_enum = local.add_type(BtfType::Enum(Enum::new(
+            name,
+            false,
+            vec![BtfEnum::new(a, 0)],
+        )));
+
+        let mut target = Btf::new();
+        let name = target.add_string("mode");
+        let a = target.add_string("MODE_A");
+        let b = target.add_string("MODE_B");
+        let target_enum = target.add_type(BtfType::Enum(Enum::new(
+            name,
+            false,
+            vec![BtfEnum::new(b, 0), BtfEnum::new(a, 7)],
+        )));
+        let name = target.add_string("mode");
+        let b = target.add_string("MODE_B");
+        let target_enum_without_a = target.add_type(BtfType::Enum(Enum::new(
+            name,
+            false,
+            vec![BtfEnum::new(b, 0)],
+        )));
+
+        // Variants match by name, not by value.
+        assert!(types_match(&local, local_enum, &target, target_enum).unwrap());
+        assert!(!types_match(&local, local_enum, &target, target_enum_without_a).unwrap());
     }
 
     #[test]
