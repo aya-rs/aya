@@ -27,6 +27,7 @@ C_BPF_OBJECTS = [
     ("bpf/target_nonfinal_zero_array_reloc.bpf.c", True),
     ("bpf/pointer_reloc.bpf.c", True),
     ("bpf/struct_flavors_reloc.bpf.c", True),
+    ("bpf/type_matches_reloc.bpf.c", True),
     ("bpf/text_64_64_reloc.c", False),
     ("bpf/variables_reloc.bpf.c", False),
     ("bpf/func_info_missing_callee.bpf.c", False),
