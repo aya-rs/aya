@@ -94,6 +94,7 @@ fn main() -> Result<()> {
         ("target_nonfinal_zero_array_reloc.bpf.c", true),
         ("pointer_reloc.bpf.c", true),
         ("struct_flavors_reloc.bpf.c", true),
+        ("type_matches_reloc.bpf.c", true),
         ("text_64_64_reloc.c", false),
         ("variables_reloc.bpf.c", false),
         ("func_info_missing_callee.bpf.c", false),
