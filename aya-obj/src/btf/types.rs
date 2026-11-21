@@ -2037,6 +2037,16 @@ const MAX_TYPES_MATCH_LEVEL: usize = 32;
 /// - local enum variants must exist in the target by name, and sizes must be equal
 /// - function prototypes must have the same number of parameters, and each
 ///   parameter and the return type must match.
+///
+/// There are two small differences to libbpf's implementation, both to do with
+/// integer:
+///
+/// - Integer type names are ignored. `libbpf` compares type names, but GCC and
+///   clang spell some integers differently: a GCC-built kernel's BTF says
+///   `short unsigned int` and `long unsigned int`, while a clang-built BPF
+///   object says `unsigned short` and `unsigned long`. So libbpf's rule rejects
+///   any prototype taking such an integer, `umode_t` for example. This function
+///   compares integers by size and signedness only.
 pub(crate) fn types_match(
     local_btf: &Btf,
     local_id: u32,
@@ -2105,12 +2115,17 @@ fn types_match_at(
         let local_ty = local_btf.type_by_id(local_id)?;
         let target_ty = target_btf.type_by_id(target_id)?;
 
-        if !type_names_match(
-            local_btf,
-            local_ty.name_offset(),
-            target_btf,
-            target_ty.name_offset(),
-        )? {
+        // Integer names are compiler-specific spellings (GCC-built kernels name
+        // `unsigned short` "short unsigned int"), so integers are only compared
+        // by size and signedness below.
+        if !matches!(local_ty, BtfType::Int(_))
+            && !type_names_match(
+                local_btf,
+                local_ty.name_offset(),
+                target_btf,
+                target_ty.name_offset(),
+            )?
+        {
             return Ok(false);
         }
 
@@ -2601,10 +2616,13 @@ mod tests {
     fn test_types_match_ints() {
         let mut btf = Btf::new();
         let int = add_int(&mut btf, "int", 4, true);
+        let other_name = add_int(&mut btf, "signed int", 4, true);
         let unsigned = add_int(&mut btf, "int", 4, false);
         let larger = add_int(&mut btf, "int", 8, true);
 
         assert!(types_match(&btf, int, &btf, int).unwrap());
+        // Integer names are ignored.
+        assert!(types_match(&btf, int, &btf, other_name).unwrap());
         assert!(!types_match(&btf, int, &btf, unsigned).unwrap());
         assert!(!types_match(&btf, int, &btf, larger).unwrap());
     }
