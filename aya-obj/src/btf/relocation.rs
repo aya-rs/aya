@@ -226,7 +226,7 @@ impl Object {
             return Ok(());
         };
 
-        let mut candidates_cache = HashMap::<u32, Vec<Candidate<'_>>>::new();
+        let mut candidates_cache = HashMap::<(u32, bool), Vec<Candidate<'_>>>::new();
         for (sec_name_off, relos) in btf_ext.relocations() {
             let section_name =
                 local_btf
@@ -302,7 +302,7 @@ fn relocate_btf_functions<'target>(
     relos: &[Relocation],
     local_btf: &Btf,
     target_btf: &'target Btf,
-    candidates_cache: &mut HashMap<u32, Vec<Candidate<'target>>>,
+    candidates_cache: &mut HashMap<(u32, bool), Vec<Candidate<'target>>>,
 ) -> Result<(), RelocationError> {
     let mut last_function_opt: Option<&mut Function> = None;
 
@@ -332,14 +332,20 @@ fn relocate_btf_functions<'target>(
             // we don't need to look at target types to relocate this value
             Vec::new()
         } else {
-            let candidates = if let Some(cands) = candidates_cache.get(&rel.type_id) {
+            // `TypeMatches` compares integers by size and signedness only, so an integer
+            // accepts target integers of any name. The other relocations still match names,
+            // so they keep their own cache entry.
+            let ignore_name = matches!(rel.kind, RelocationKind::TypeMatches)
+                && matches!(local_ty, BtfType::Int(_));
+            let cache_key = (rel.type_id, ignore_name);
+            let candidates = if let Some(cands) = candidates_cache.get(&cache_key) {
                 cands
             } else {
                 candidates_cache.insert(
-                    rel.type_id,
-                    find_candidates(local_ty, local_name, target_btf)?,
+                    cache_key,
+                    find_candidates(local_ty, local_name, ignore_name, target_btf)?,
                 );
-                candidates_cache.get(&rel.type_id).unwrap()
+                candidates_cache.get(&cache_key).unwrap()
             };
 
             let mut matches = Vec::new();
@@ -423,6 +429,7 @@ fn is_flex_array(btf: &Btf, array_len: u32, parent: &Accessor) -> Result<bool, B
 fn find_candidates<'target>(
     local_ty: &BtfType,
     local_name: &str,
+    ignore_name: bool,
     target_btf: &'target Btf,
 ) -> Result<Vec<Candidate<'target>>, BtfError> {
     let mut candidates = Vec::new();
@@ -448,7 +455,7 @@ fn find_candidates<'target>(
         candidate_kind == local_kind || (allow_enum_match && candidate_kind == BtfKind::Enum64)
     }) {
         let name = &*target_btf.type_name(ty)?;
-        if local_name != flavorless_name(name) {
+        if !ignore_name && local_name != flavorless_name(name) {
             continue;
         }
 
@@ -1369,5 +1376,34 @@ impl ComputedRelocation {
             size: 0,
             type_id: None,
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::btf::Int;
+
+    #[test]
+    fn test_find_candidates_ignore_name() {
+        let mut local = Btf::new();
+        let name = local.add_string("unsigned short");
+        let local_id = local.add_type(BtfType::Int(Int::new(name, 2, IntEncoding::None, 0)));
+        let local_ty = local.type_by_id(local_id).unwrap();
+
+        // How GCC spells `unsigned short` in kernel BTF.
+        let mut target = Btf::new();
+        let name = target.add_string("short unsigned int");
+        let target_id = target.add_type(BtfType::Int(Int::new(name, 2, IntEncoding::None, 0)));
+
+        let candidate_ids = |ignore_name| {
+            find_candidates(local_ty, "unsigned short", ignore_name, &target)
+                .unwrap()
+                .iter()
+                .map(|candidate| candidate.type_id)
+                .collect::<Vec<_>>()
+        };
+        assert_eq!(candidate_ids(false), Vec::<u32>::new());
+        assert_eq!(candidate_ids(true), vec![target_id]);
     }
 }
