@@ -14,7 +14,7 @@ use crate::{
     Function, Object,
     btf::{
         Array, Btf, BtfError, BtfKind, BtfMember, BtfType, IntEncoding, MAX_SPEC_LEN, Struct,
-        Union, fields_are_compatible, types_are_compatible,
+        Union, fields_are_compatible, types_are_compatible, types_match,
     },
     generated::{
         BPF_ALU, BPF_ALU64, BPF_B, BPF_CALL, BPF_DW, BPF_H, BPF_JMP, BPF_K, BPF_LD, BPF_LDX,
@@ -164,6 +164,7 @@ enum RelocationKind {
     TypeIdTarget = bpf_core_relo_kind::BPF_CORE_TYPE_ID_TARGET,
     TypeExists = bpf_core_relo_kind::BPF_CORE_TYPE_EXISTS,
     TypeSize = bpf_core_relo_kind::BPF_CORE_TYPE_SIZE,
+    TypeMatches = bpf_core_relo_kind::BPF_CORE_TYPE_MATCHES,
     EnumVariantExists = bpf_core_relo_kind::BPF_CORE_ENUMVAL_EXISTS,
     EnumVariantValue = bpf_core_relo_kind::BPF_CORE_ENUMVAL_VALUE,
 }
@@ -183,6 +184,7 @@ impl TryFrom<u32> for RelocationKind {
             bpf_core_relo_kind::BPF_CORE_TYPE_ID_TARGET => Self::TypeIdTarget,
             bpf_core_relo_kind::BPF_CORE_TYPE_EXISTS => Self::TypeExists,
             bpf_core_relo_kind::BPF_CORE_TYPE_SIZE => Self::TypeSize,
+            bpf_core_relo_kind::BPF_CORE_TYPE_MATCHES => Self::TypeMatches,
             bpf_core_relo_kind::BPF_CORE_ENUMVAL_EXISTS => Self::EnumVariantExists,
             bpf_core_relo_kind::BPF_CORE_ENUMVAL_VALUE => Self::EnumVariantValue,
             kind => return Err(BtfError::InvalidRelocationKind { kind }),
@@ -490,6 +492,18 @@ fn match_candidate<'target>(
                 Ok(None)
             }
         }
+        RelocationKind::TypeMatches => {
+            if types_match(
+                local_spec.btf,
+                local_spec.root_type_id,
+                candidate.btf,
+                candidate.type_id,
+            )? {
+                Ok(Some(target_spec))
+            } else {
+                Ok(None)
+            }
+        }
         RelocationKind::EnumVariantExists | RelocationKind::EnumVariantValue => {
             let target_id = candidate.btf.resolve_type(candidate.type_id)?;
 
@@ -701,7 +715,8 @@ impl<'a> AccessSpec<'a> {
             RelocationKind::TypeIdLocal
             | RelocationKind::TypeIdTarget
             | RelocationKind::TypeExists
-            | RelocationKind::TypeSize => {
+            | RelocationKind::TypeSize
+            | RelocationKind::TypeMatches => {
                 if parts != [0] {
                     return Err(RelocationError::InvalidAccessString {
                         access_str: spec.to_string(),
@@ -982,7 +997,8 @@ impl ComputedRelocation {
             RelocationKind::TypeIdLocal
             | RelocationKind::TypeIdTarget
             | RelocationKind::TypeExists
-            | RelocationKind::TypeSize => Self {
+            | RelocationKind::TypeSize
+            | RelocationKind::TypeMatches => Self {
                 local: Self::compute_type_relocation(rel, local_spec, target_spec)?,
                 target: Self::compute_type_relocation(rel, local_spec, target_spec).ok(),
             },
@@ -1307,6 +1323,7 @@ impl ComputedRelocation {
             | RelocationKind::TypeIdTarget
             | RelocationKind::TypeExists
             | RelocationKind::TypeSize
+            | RelocationKind::TypeMatches
             | RelocationKind::EnumVariantExists
             | RelocationKind::EnumVariantValue) => {
                 #[expect(
@@ -1332,7 +1349,9 @@ impl ComputedRelocation {
             (RelocationKind::TypeIdTarget, Some(target_spec)) => {
                 u64::from(target_spec.root_type_id)
             }
-            (RelocationKind::TypeExists, target_spec) => u64::from(target_spec.is_some()),
+            (RelocationKind::TypeExists | RelocationKind::TypeMatches, target_spec) => {
+                u64::from(target_spec.is_some())
+            }
             (RelocationKind::TypeSize, Some(target_spec)) => {
                 target_spec.btf.type_size(target_spec.root_type_id)? as u64
             }
