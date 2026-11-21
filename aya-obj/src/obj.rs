@@ -481,7 +481,11 @@ impl Object {
         Ok(bpf_obj)
     }
 
-    fn new(endianness: Endianness, license: CString, kernel_version: Option<u32>) -> Self {
+    pub(crate) fn new(
+        endianness: Endianness,
+        license: CString,
+        kernel_version: Option<u32>,
+    ) -> Self {
         Self {
             endianness,
             license,
