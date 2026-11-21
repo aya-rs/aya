@@ -19,7 +19,10 @@ use object::{
 };
 
 use crate::{
-    btf::{Array, Btf, BtfError, BtfExt, BtfType, DataSecEntry, FuncSecInfo, LineSecInfo, Struct},
+    btf::{
+        Array, Btf, BtfError, BtfExt, BtfKind, BtfType, DataSecEntry, FuncSecInfo, LineSecInfo,
+        Struct,
+    },
     generated::{
         BPF_CALL, BPF_F_RDONLY_PROG, BPF_JMP, BPF_K, bpf_func_id, bpf_insn, bpf_map_info,
         bpf_map_type::BPF_MAP_TYPE_ARRAY,
@@ -789,6 +792,7 @@ impl Object {
                     def,
                     inner_def: None,
                     data: Vec::new(),
+                    btf_value_type_id: None,
                 }),
             );
             have_symbols = true;
@@ -807,8 +811,14 @@ impl Object {
             .insert(section.name.to_owned(), (section.index, section.size));
         match section.kind {
             EbpfSectionKind::Data | EbpfSectionKind::Rodata | EbpfSectionKind::Bss => {
-                self.maps
-                    .insert(section.name.to_string(), parse_data_map_section(&section));
+                let mut map = parse_data_map_section(&section);
+                // The DATASEC named after the section describes its contents.
+                if let (Map::Legacy(map), Some(btf)) = (&mut map, &self.btf) {
+                    map.btf_value_type_id = btf
+                        .id_by_type_name_kind(section.name, BtfKind::DataSec)
+                        .ok();
+                }
+                self.maps.insert(section.name.to_string(), map);
             }
             EbpfSectionKind::Text => self.parse_text_section(section)?,
             EbpfSectionKind::Btf => self.parse_btf(&section)?,
@@ -1199,6 +1209,7 @@ fn parse_data_map_section(section: &Section<'_>) -> Map {
         def,
         inner_def: None,
         data,
+        btf_value_type_id: None,
     })
 }
 
@@ -1407,6 +1418,7 @@ pub const fn parse_map_info(info: bpf_map_info, pinned: PinningType) -> Map {
             symbol_index: None,
             section_kind: EbpfSectionKind::Undefined,
             data: Vec::new(),
+            btf_value_type_id: None,
         })
     }
 }
@@ -1473,7 +1485,7 @@ mod tests {
 
     use super::*;
     use crate::{
-        btf::BtfFeature,
+        btf::{BtfFeature, DataSec},
         generated::{bpf_map_type::BPF_MAP_TYPE_BLOOM_FILTER, btf_ext_header},
     };
 
@@ -1689,6 +1701,7 @@ mod tests {
                     pinning: PinningType::None,
                 },
                 data,
+                btf_value_type_id: None,
                 ..
             }) if data == map_data && value_size == map_data.len() as u32
         )
@@ -2332,6 +2345,37 @@ mod tests {
     }
 
     #[test]
+    fn test_parse_section_data_btf_value_type() {
+        let mut obj = fake_obj();
+
+        // Only `.data.described` has a DATASEC.
+        let mut btf = Btf::new();
+        let name_offset = btf.add_string(".data.described");
+        let datasec_id = btf.add_type(BtfType::DataSec(DataSec::new(name_offset, Vec::new(), 8)));
+        let btf_data = btf.to_bytes();
+        obj.parse_section(fake_section(EbpfSectionKind::Btf, ".BTF", &btf_data, None))
+            .unwrap();
+
+        for name in [".data.described", ".data.plain"] {
+            obj.parse_section(fake_section(EbpfSectionKind::Data, name, b"map data", None))
+                .unwrap();
+        }
+
+        assert_matches!(
+            &obj.maps[".data.described"],
+            Map::Legacy(LegacyMap { btf_value_type_id, .. })
+                if *btf_value_type_id == Some(datasec_id)
+        );
+        assert_matches!(
+            &obj.maps[".data.plain"],
+            Map::Legacy(LegacyMap {
+                btf_value_type_id: None,
+                ..
+            })
+        );
+    }
+
+    #[test]
     fn test_parse_section_btf_tracepoint() {
         let mut obj = fake_obj();
         fake_sym(&mut obj, 0, 0, "foo", FAKE_INS_LEN);
@@ -2722,6 +2766,7 @@ mod tests {
                 section_kind: EbpfSectionKind::Rodata,
                 symbol_index: Some(1),
                 data: vec![0, 0, 0],
+                btf_value_type_id: None,
             }),
         );
         obj.symbol_table.insert(

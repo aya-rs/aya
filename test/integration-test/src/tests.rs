@@ -87,6 +87,7 @@ mod cgrp_storage;
 mod elf;
 mod feature_probe;
 mod fexit;
+mod global_spin_lock;
 mod hash_map;
 mod info;
 mod inode_storage;

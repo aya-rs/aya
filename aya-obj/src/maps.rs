@@ -274,6 +274,7 @@ impl Map {
                     section_kind: EbpfSectionKind::Undefined,
                     symbol_index: None,
                     data: Vec::new(),
+                    btf_value_type_id: None,
                 })
             }),
             Self::Btf(m) => m.inner_def.as_ref().map(|inner_def| {
@@ -311,6 +312,7 @@ impl Map {
             section_kind: EbpfSectionKind::Undefined,
             symbol_index: None,
             data: Vec::new(),
+            btf_value_type_id: None,
         })
     }
 }
@@ -337,6 +339,11 @@ pub struct LegacyMap {
     pub symbol_index: Option<usize>,
     /// The map data
     pub data: Vec<u8>,
+    /// The BTF type id of the `DATASEC` that describes the map's value.
+    ///
+    /// Only maps created from data sections (`.bss`, `.data` and `.rodata`)
+    /// whose contents the object's BTF describes have one.
+    pub btf_value_type_id: Option<u32>,
 }
 
 /// A BTF-defined map, most likely from a `.maps` section.
