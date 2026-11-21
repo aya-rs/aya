@@ -1636,6 +1636,14 @@ const MAX_TYPES_MATCH_LEVEL: usize = 32;
 ///   object says `unsigned short` and `unsigned long`. So libbpf's rule rejects
 ///   any prototype taking such an integer, `umode_t` for example. This function
 ///   compares integers by size and signedness only.
+/// - Plain `char` ignores signedness. Its signedness in kernel BTF can't be
+///   relied on: kernels build with `-funsigned-char` since 6.2, and pahole
+///   before v1.24 encoded every `char` (even `signed char`) as unsigned,
+///   whatever the kernel. Both clang and GCC keep `char` signed on the BPF
+///   target, so under libbpf's rule `const char *` parameters only match
+///   pre-6.2 kernels whose BTF comes from pahole v1.24 or later. To mitigate
+///   this, we only require the same size for an unprefixed `char`.
+///   `signed char` and `unsigned char` are still compared strictly.
 pub(crate) fn types_match(
     local_btf: &Btf,
     local_id: u32,
@@ -1806,7 +1814,14 @@ fn types_match_at(
                     return Ok(false);
                 };
                 let is_signed = |int: &Int| (int.data >> 24) & 0x0F & BTF_INT_SIGNED != 0;
-                return Ok(local.size == target.size && is_signed(local) == is_signed(target));
+                // Kernel BTF can't be trusted for `char` signedness
+                // (`-funsigned-char` since 6.2, and pahole before v1.24 encoded
+                // every `char` as unsigned), while the clang/gcc BPF target
+                // keeps `char` signed.
+                let is_plain_char = local_btf.string_at(local.name_offset)? == "char"
+                    || target_btf.string_at(target.name_offset)? == "char";
+                return Ok(local.size == target.size
+                    && (is_plain_char || is_signed(local) == is_signed(target)));
             }
             BtfType::Ptr(local) => {
                 let BtfType::Ptr(target) = target_ty else {
@@ -2208,12 +2223,19 @@ mod tests {
         let other_name = add_int(&mut btf, "signed int", 4, true);
         let unsigned = add_int(&mut btf, "int", 4, false);
         let larger = add_int(&mut btf, "int", 8, true);
+        let signed_char = add_int(&mut btf, "char", 1, true);
+        let unsigned_char = add_int(&mut btf, "char", 1, false);
+        let schar = add_int(&mut btf, "signed char", 1, true);
+        let uchar = add_int(&mut btf, "unsigned char", 1, false);
 
         assert!(types_match(&btf, int, &btf, int).unwrap());
         // Integer names are ignored.
         assert!(types_match(&btf, int, &btf, other_name).unwrap());
         assert!(!types_match(&btf, int, &btf, unsigned).unwrap());
         assert!(!types_match(&btf, int, &btf, larger).unwrap());
+        // Plain `char` signedness is ignored, explicit signedness is not.
+        assert!(types_match(&btf, signed_char, &btf, unsigned_char).unwrap());
+        assert!(!types_match(&btf, schar, &btf, uchar).unwrap());
     }
 
     #[test]
