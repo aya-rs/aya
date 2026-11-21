@@ -70,6 +70,7 @@ use rstest::rstest;
 )]
 #[case(crate::POINTER_RELOC_BPF, crate::POINTER_RELOC_BTF, 21)]
 #[case(crate::STRUCT_FLAVORS_RELOC_BPF, crate::STRUCT_FLAVORS_RELOC_BTF, 2)]
+#[case(crate::TYPE_MATCHES_RELOC_BPF, crate::TYPE_MATCHES_RELOC_BTF, 1)]
 #[test_attr(test_log::test)]
 fn relocation_tests(#[case] bpf: &[u8], #[case] btf: &[u8], #[case] expected: u64) {
     let btf = Btf::parse(btf, Endianness::default()).unwrap();
