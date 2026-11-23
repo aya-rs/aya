@@ -1469,6 +1469,20 @@ const fn type_vlen(info: u32) -> usize {
     (info & 0xFFFF) as usize
 }
 
+/// Like [`BtfType::is_compatible`], but an ENUM64 sanitized into a union is
+/// also compatible with target enums.
+fn is_compatible_with_sanitized_enum64(local_ty: &BtfType, target_ty: &BtfType) -> bool {
+    let is_sanitized_enum64 = matches!(
+        local_ty,
+        BtfType::Union(Union {
+            enum64_fallback: Some(_),
+            ..
+        })
+    );
+    local_ty.is_compatible(target_ty)
+        || (is_sanitized_enum64 && matches!(target_ty, BtfType::Enum(_) | BtfType::Enum64(_)))
+}
+
 pub(crate) fn types_are_compatible(
     local_btf: &Btf,
     root_local_id: u32,
@@ -1480,7 +1494,7 @@ pub(crate) fn types_are_compatible(
     let local_ty = local_btf.type_by_id(local_id)?;
     let target_ty = target_btf.type_by_id(target_id)?;
 
-    if !local_ty.is_compatible(target_ty) {
+    if !is_compatible_with_sanitized_enum64(local_ty, target_ty) {
         return Ok(false);
     }
 
@@ -1490,7 +1504,7 @@ pub(crate) fn types_are_compatible(
         let local_ty = local_btf.type_by_id(local_id)?;
         let target_ty = target_btf.type_by_id(target_id)?;
 
-        if !local_ty.is_compatible(target_ty) {
+        if !is_compatible_with_sanitized_enum64(local_ty, target_ty) {
             return Ok(false);
         }
 
@@ -2152,6 +2166,25 @@ mod tests {
             })
             .collect();
         btf.add_type(BtfType::FuncProto(FuncProto::new(params, return_type)))
+    }
+
+    #[test]
+    fn test_types_are_compatible_sanitized_enum64() {
+        let mut btf = Btf::new();
+        let name = btf.add_string("e");
+        let target_enum = btf.add_type(BtfType::Enum(Enum::new(name, false, Vec::new())));
+        let target_enum64 = btf.add_type(BtfType::Enum64(Enum64::new(name, false, Vec::new())));
+        let fallback = Some(Enum64Fallback {
+            signed: false,
+            variants: Vec::new(),
+        });
+        let sanitized_enum64 = Union::new(name, 8, Vec::new(), fallback);
+        let sanitized_enum64 = btf.add_type(BtfType::Union(sanitized_enum64));
+        let union = btf.add_type(BtfType::Union(Union::new(name, 8, Vec::new(), None)));
+
+        assert!(types_are_compatible(&btf, sanitized_enum64, &btf, target_enum).unwrap());
+        assert!(types_are_compatible(&btf, sanitized_enum64, &btf, target_enum64).unwrap());
+        assert!(!types_are_compatible(&btf, union, &btf, target_enum).unwrap());
     }
 
     #[test]
