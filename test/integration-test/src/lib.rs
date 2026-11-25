@@ -11,6 +11,7 @@ bpf_file!(
     ITER_TASK => "iter.bpf.o",
     MAIN => "main.bpf.o",
     RINGBUF_BTF => "ringbuf-btf.bpf.o",
+    STRUCT_OPS => "struct_ops.bpf.o",
     KSYMS => "ksyms.bpf.o",
     KSYMS_STRONG => "ksyms_strong.bpf.o",
     KSYMS_TYPED_MISSING_VAR => "ksyms_typed_missing_var.bpf.o",
