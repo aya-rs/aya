@@ -1,8 +1,11 @@
 use std::{
     borrow::{Cow, ToOwned as _},
     cell::OnceCell,
+    cmp::Ordering,
     ffi::{CStr, FromBytesUntilNulError},
-    format, mem, ptr,
+    format, mem,
+    ops::Range,
+    ptr,
 };
 
 use bytes::BufMut as _;
@@ -239,6 +242,13 @@ pub struct Btf {
     strings: Vec<u8>,
     types: BtfTypes,
     _endianness: Endianness,
+    /// Whether every type name can be read and the types are sorted by name (as `str`s, which
+    /// compare bytewise like the kernel's `strcmp`, so anonymous types come first). Linux 7.0+
+    /// emits vmlinux BTF in this order, which lets name lookups binary-search instead of scanning
+    /// every type.
+    ///
+    /// Only ever set by [`Btf::parse`]; anything that adds or rewrites types clears it.
+    sorted_by_name: bool,
     /// Extern symbols parsed from the `.ksyms` section.
     pub(crate) externs: ExternCollection,
 }
@@ -269,6 +279,7 @@ impl Btf {
             strings: vec![0],
             types: BtfTypes::default(),
             _endianness: Endianness::default(),
+            sorted_by_name: false,
             externs: ExternCollection::new(),
         }
     }
@@ -293,6 +304,7 @@ impl Btf {
 
     /// Adds a type to BTF metadata, returning a type id
     pub fn add_type(&mut self, btf_type: BtfType) -> u32 {
+        self.sorted_by_name = false;
         add_type(&mut self.header, &mut self.types, btf_type)
     }
 
@@ -335,13 +347,16 @@ impl Btf {
         let strings = data[str_off..str_off + str_len].to_vec();
         let types = Self::read_type_info(&header, data, endianness)?;
 
-        Ok(Self {
+        let mut btf = Self {
             header,
             strings,
             types,
             _endianness: endianness,
+            sorted_by_name: false,
             externs: ExternCollection::new(),
-        })
+        };
+        btf.sorted_by_name = btf.is_sorted_by_name();
+        Ok(btf)
     }
 
     fn read_type_info(
@@ -376,6 +391,7 @@ impl Btf {
             strings,
             types: _,
             _endianness,
+            sorted_by_name: _,
             externs: _,
         } = self;
 
@@ -405,18 +421,83 @@ impl Btf {
 
     /// Returns a type id matching the type name and [`BtfKind`].
     pub fn id_by_type_name_kind(&self, name: &str, kind: BtfKind) -> Result<u32, BtfError> {
-        for (type_id, ty) in self.types().enumerate() {
-            if ty.kind() != kind {
-                continue;
+        let type_id = if let Some(mut type_ids) = self.sorted_ids_by(exact_name(name)) {
+            // Names are not unique (e.g. a kernel can carry two `struct e1000_adapter`), so look
+            // through the whole run of equal names. The run is in id order, so this returns the
+            // same id as the linear scan below.
+            type_ids.find(|&type_id| self.types.types[type_id].kind() == kind)
+        } else {
+            let mut found = None;
+            for (type_id, ty) in self.types().enumerate() {
+                if ty.kind() != kind {
+                    continue;
+                }
+                if self.type_name(ty)? == name {
+                    found = Some(type_id);
+                    break;
+                }
             }
-            if self.type_name(ty)? == name {
-                return Ok(type_id as u32);
-            }
-        }
+            found
+        };
 
-        Err(BtfError::UnknownBtfTypeName {
-            type_name: name.to_owned(),
-        })
+        type_id
+            .map(|type_id| type_id as u32)
+            .ok_or_else(|| BtfError::UnknownBtfTypeName {
+                type_name: name.to_owned(),
+            })
+    }
+
+    /// Returns `(type_id, type)` for every type whose name may start with `prefix`, in id order.
+    ///
+    /// On name-sorted BTF this is just the range of types whose name starts with `prefix`, found
+    /// by binary search. Otherwise it is every type, so callers must still check each name.
+    pub(crate) fn types_with_name_prefix(
+        &self,
+        prefix: &str,
+    ) -> impl Iterator<Item = (u32, &BtfType)> {
+        let types = &self.types.types;
+        let type_ids = self
+            .sorted_ids_by(name_prefix(prefix))
+            .unwrap_or(0..types.len());
+        let start = type_ids.start;
+        types[type_ids]
+            .iter()
+            .enumerate()
+            .map(move |(i, ty)| ((start + i) as u32, ty))
+    }
+
+    /// On name-sorted BTF, returns the ids of the types whose name `cmp` maps to
+    /// [`Ordering::Equal`]. `cmp` must agree with the sort order: [`Ordering::Less`] for every
+    /// name before that range and [`Ordering::Greater`] for every name after it.
+    ///
+    /// Returns `None` if the BTF is not sorted by name.
+    fn sorted_ids_by(&self, cmp: impl Fn(&str) -> Ordering) -> Option<Range<usize>> {
+        if !self.sorted_by_name {
+            return None;
+        }
+        let types = &self.types.types;
+        // `sorted_by_name` guarantees every name can be read.
+        let cmp = |ty: &BtfType| cmp(&self.type_name(ty).unwrap_or_default());
+        let start = types.partition_point(|ty| cmp(ty) == Ordering::Less);
+        let len = types[start..].partition_point(|ty| cmp(ty) == Ordering::Equal);
+        Some(start..start + len)
+    }
+
+    /// Whether every type name can be read and the types are sorted by name. Names are read with
+    /// [`Btf::type_name`], like the linear scans do, so the binary searches compare names exactly
+    /// as those scans would.
+    fn is_sorted_by_name(&self) -> bool {
+        let mut prev = Cow::Borrowed("");
+        for ty in self.types() {
+            let Ok(name) = self.type_name(ty) else {
+                return false;
+            };
+            if name < prev {
+                return false;
+            }
+            prev = name;
+        }
+        true
     }
 
     pub(crate) fn type_size(&self, root_type_id: u32) -> Result<usize, BtfError> {
@@ -480,6 +561,7 @@ impl Btf {
     where
         F: FnMut(BtfFeature) -> bool,
     {
+        self.sorted_by_name = false;
         if !self.externs.is_empty() {
             let datasec_id = self
                 .externs
@@ -807,6 +889,7 @@ impl Btf {
         datasec_id: u32,
         ksym_func_placeholder_id: Option<u32>,
     ) -> Result<(), BtfError> {
+        self.sorted_by_name = false;
         // Use the placeholder var's name/type when present; otherwise fall back to a plain
         // 4-byte int for `.ksyms` datasec fixup.
         let (placeholder_name_offset, int_btf_id) =
@@ -960,6 +1043,23 @@ impl Object {
             Ok(Some(obj_btf))
         } else {
             Ok(None)
+        }
+    }
+}
+
+/// Orders names relative to `name`, for [`Btf::sorted_ids_by`].
+fn exact_name(name: &str) -> impl Fn(&str) -> Ordering {
+    move |candidate| candidate.cmp(name)
+}
+
+/// Orders names relative to the range of names starting with `prefix`, for
+/// [`Btf::sorted_ids_by`]. Names sharing a prefix are contiguous in sorted order.
+fn name_prefix(prefix: &str) -> impl Fn(&str) -> Ordering {
+    move |candidate| {
+        if candidate.starts_with(prefix) {
+            Ordering::Equal
+        } else {
+            candidate.cmp(prefix)
         }
     }
 }
@@ -2378,6 +2478,130 @@ mod tests {
         // Ensure we can convert to bytes and back again
         let raw = btf.to_bytes();
         Btf::parse(&raw, Endianness::default()).unwrap();
+    }
+
+    /// Builds BTF from `(name, kind)` pairs in the given order and parses it back, as if read from
+    /// a kernel.
+    fn parsed_btf(types: &[(&str, BtfKind)]) -> Btf {
+        let mut btf = Btf::new();
+        for &(name, kind) in types {
+            let name = if name.is_empty() {
+                0
+            } else {
+                btf.add_string(name)
+            };
+            btf.add_type(match kind {
+                BtfKind::Int => BtfType::Int(Int::new(name, 4, IntEncoding::Signed, 0)),
+                BtfKind::Struct => BtfType::Struct(Struct::new(name, vec![], 0)),
+                // Points at type 1, whatever that is; only names and kinds matter here.
+                BtfKind::Typedef => BtfType::Typedef(Typedef::new(name, 1)),
+                kind => panic!("unsupported kind {kind:?}"),
+            });
+        }
+        Btf::parse(&btf.to_bytes(), Endianness::default()).unwrap()
+    }
+
+    const SORTED: &[(&str, BtfKind)] = &[
+        ("", BtfKind::Struct),
+        ("", BtfKind::Int),
+        ("e1000_adapter", BtfKind::Struct),
+        ("e1000_adapter", BtfKind::Struct),
+        ("foo", BtfKind::Typedef),
+        ("foo", BtfKind::Struct),
+        ("foo1", BtfKind::Struct),
+        ("foo___v2", BtfKind::Struct),
+        ("fop", BtfKind::Struct),
+        ("zzz", BtfKind::Int),
+    ];
+
+    #[test]
+    fn test_sorted_by_name_detection() {
+        assert!(parsed_btf(SORTED).sorted_by_name);
+        // Anonymous types must come first.
+        assert!(!parsed_btf(&[("a", BtfKind::Int), ("", BtfKind::Int)]).sorted_by_name);
+        assert!(!parsed_btf(&[("b", BtfKind::Int), ("a", BtfKind::Int)]).sorted_by_name);
+        // Bytewise order: `_` (0x5f) sorts after `1` (0x31).
+        assert!(!parsed_btf(&[("foo_", BtfKind::Int), ("foo1", BtfKind::Int)]).sorted_by_name);
+
+        // Changing the types drops the fast path.
+        let mut btf = parsed_btf(SORTED);
+        btf.add_type(BtfType::Int(Int::new(0, 4, IntEncoding::Signed, 0)));
+        assert!(!btf.sorted_by_name);
+    }
+
+    #[rstest]
+    #[case("e1000_adapter", BtfKind::Struct)]
+    #[case("foo", BtfKind::Struct)]
+    #[case("foo", BtfKind::Typedef)]
+    #[case("foo", BtfKind::Int)]
+    #[case("foo1", BtfKind::Struct)]
+    #[case("foo___v2", BtfKind::Struct)]
+    #[case("fo", BtfKind::Struct)]
+    #[case("zzz", BtfKind::Int)]
+    #[case("zzzz", BtfKind::Int)]
+    #[case("", BtfKind::Int)]
+    #[case("", BtfKind::Unknown)]
+    #[case("a", BtfKind::Struct)]
+    fn test_id_by_type_name_kind_sorted(#[case] name: &str, #[case] kind: BtfKind) {
+        let sorted = parsed_btf(SORTED);
+        assert!(sorted.sorted_by_name);
+        let linear = Btf {
+            sorted_by_name: false,
+            ..sorted.clone()
+        };
+        assert_eq!(
+            sorted.id_by_type_name_kind(name, kind).ok(),
+            linear.id_by_type_name_kind(name, kind).ok(),
+        );
+    }
+
+    #[test]
+    fn test_id_by_type_name_kind_duplicates() {
+        let btf = parsed_btf(SORTED);
+        // The first of the two `e1000_adapter`s, as a linear scan would find.
+        assert_eq!(
+            btf.id_by_type_name_kind("e1000_adapter", BtfKind::Struct)
+                .unwrap(),
+            3
+        );
+        // Not the first `foo`, but the first one of the requested kind.
+        assert_eq!(btf.id_by_type_name_kind("foo", BtfKind::Struct).unwrap(), 6);
+    }
+
+    #[rstest]
+    #[case("foo", &[5, 6, 7, 8])]
+    #[case("foo_", &[8])]
+    #[case("fo", &[5, 6, 7, 8, 9])]
+    #[case("e1000_adapter", &[3, 4])]
+    #[case("nope", &[])]
+    #[case("zzzz", &[])]
+    fn test_types_with_name_prefix(#[case] prefix: &str, #[case] expected: &[u32]) {
+        let btf = parsed_btf(SORTED);
+        let ids: Vec<u32> = btf
+            .types_with_name_prefix(prefix)
+            .map(|(type_id, ty)| {
+                assert!(btf.type_name(ty).unwrap().starts_with(prefix));
+                type_id
+            })
+            .collect();
+        assert_eq!(ids, expected);
+
+        // Unsorted BTF yields every type in id order, leaving the filtering to the caller...
+        let mut linear = btf;
+        linear.sorted_by_name = false;
+        let all: Vec<u32> = linear
+            .types_with_name_prefix(prefix)
+            .map(|(type_id, _)| type_id)
+            .collect();
+        assert_eq!(all, (0..=SORTED.len() as u32).collect::<Vec<_>>());
+
+        // ...and filtering those by name finds the same types as the binary search.
+        let filtered: Vec<u32> = linear
+            .types_with_name_prefix(prefix)
+            .filter(|(_, ty)| linear.type_name(ty).unwrap().starts_with(prefix))
+            .map(|(type_id, _)| type_id)
+            .collect();
+        assert_eq!(filtered, expected);
     }
 
     #[test]
