@@ -268,7 +268,10 @@ pub fn aya_obj::btf::Btf::id_by_type_name_kind(&self, &str, aya_obj::btf::BtfKin
 pub fn aya_obj::btf::Btf::new() -> Self
 pub fn aya_obj::btf::Btf::parse(&[u8], object::endian::Endianness) -> core::result::Result<Self, aya_obj::btf::BtfError>
 pub fn aya_obj::btf::Btf::parse_file<P: core::convert::AsRef<std::path::Path>>(P, object::endian::Endianness) -> core::result::Result<Self, aya_obj::btf::BtfError>
+pub fn aya_obj::btf::Btf::string_at(&self, u32) -> core::result::Result<alloc::borrow::Cow<'_, str>, aya_obj::btf::BtfError>
 pub fn aya_obj::btf::Btf::to_bytes(&self) -> alloc::vec::Vec<u8>
+pub fn aya_obj::btf::Btf::type_by_id(&self, u32) -> core::result::Result<&aya_obj::btf::BtfType, aya_obj::btf::BtfError>
+pub fn aya_obj::btf::Btf::type_name(&self, &aya_obj::btf::BtfType) -> core::result::Result<alloc::borrow::Cow<'_, str>, aya_obj::btf::BtfError>
 impl core::clone::Clone for aya_obj::btf::Btf
 pub fn aya_obj::btf::Btf::clone(&self) -> Self
 impl core::default::Default for aya_obj::btf::Btf
@@ -333,6 +336,23 @@ impl core::marker::Unpin for aya_obj::btf::BtfExt
 impl core::marker::UnsafeUnpin for aya_obj::btf::BtfExt
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::BtfExt
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::BtfExt
+#[repr(C)] pub struct aya_obj::btf::BtfMember
+pub aya_obj::btf::BtfMember::btf_type: u32
+pub aya_obj::btf::BtfMember::name_offset: u32
+pub aya_obj::btf::BtfMember::offset: u32
+impl core::clone::Clone for aya_obj::btf::BtfMember
+pub fn aya_obj::btf::BtfMember::clone(&self) -> Self
+impl core::fmt::Debug for aya_obj::btf::BtfMember
+pub fn aya_obj::btf::BtfMember::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Forget for aya_obj::btf::BtfMember
+impl core::marker::Freeze for aya_obj::btf::BtfMember
+impl core::marker::Move for aya_obj::btf::BtfMember
+impl core::marker::Send for aya_obj::btf::BtfMember
+impl core::marker::Sync for aya_obj::btf::BtfMember
+impl core::marker::Unpin for aya_obj::btf::BtfMember
+impl core::marker::UnsafeUnpin for aya_obj::btf::BtfMember
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::BtfMember
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::BtfMember
 #[repr(C)] pub struct aya_obj::btf::BtfParam
 pub aya_obj::btf::BtfParam::btf_type: u32
 pub aya_obj::btf::BtfParam::name_offset: u32
@@ -627,6 +647,8 @@ impl core::marker::UnsafeUnpin for aya_obj::btf::Restrict
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::Restrict
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::Restrict
 #[repr(C)] pub struct aya_obj::btf::Struct
+pub aya_obj::btf::Struct::members: alloc::vec::Vec<aya_obj::btf::BtfMember>
+pub aya_obj::btf::Struct::size: u32
 impl core::clone::Clone for aya_obj::btf::Struct
 pub fn aya_obj::btf::Struct::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::btf::Struct
@@ -5133,6 +5155,7 @@ pub mod aya_obj::maps
 pub enum aya_obj::maps::Map
 pub aya_obj::maps::Map::Btf(aya_obj::maps::BtfMap)
 pub aya_obj::maps::Map::Legacy(aya_obj::maps::LegacyMap)
+pub aya_obj::maps::Map::StructOps(aya_obj::maps::StructOpsMap)
 impl aya_obj::maps::Map
 pub fn aya_obj::maps::Map::data(&self) -> &[u8]
 pub fn aya_obj::maps::Map::data_mut(&mut self) -> &mut alloc::vec::Vec<u8>
@@ -5264,6 +5287,25 @@ impl core::marker::Unpin for aya_obj::maps::LegacyMap
 impl core::marker::UnsafeUnpin for aya_obj::maps::LegacyMap
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::maps::LegacyMap
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::maps::LegacyMap
+pub struct aya_obj::maps::StructOpsMap
+pub aya_obj::maps::StructOpsMap::auto_attach: bool
+pub aya_obj::maps::StructOpsMap::data: alloc::vec::Vec<u8>
+pub aya_obj::maps::StructOpsMap::section_index: usize
+pub aya_obj::maps::StructOpsMap::struct_type_name: alloc::string::String
+pub aya_obj::maps::StructOpsMap::symbol_index: usize
+impl core::clone::Clone for aya_obj::maps::StructOpsMap
+pub fn aya_obj::maps::StructOpsMap::clone(&self) -> Self
+impl core::fmt::Debug for aya_obj::maps::StructOpsMap
+pub fn aya_obj::maps::StructOpsMap::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Forget for aya_obj::maps::StructOpsMap
+impl core::marker::Freeze for aya_obj::maps::StructOpsMap
+impl core::marker::Move for aya_obj::maps::StructOpsMap
+impl core::marker::Send for aya_obj::maps::StructOpsMap
+impl core::marker::Sync for aya_obj::maps::StructOpsMap
+impl core::marker::Unpin for aya_obj::maps::StructOpsMap
+impl core::marker::UnsafeUnpin for aya_obj::maps::StructOpsMap
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::maps::StructOpsMap
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::maps::StructOpsMap
 #[repr(C)] pub struct aya_obj::maps::bpf_map_def
 pub aya_obj::maps::bpf_map_def::id: u32
 pub aya_obj::maps::bpf_map_def::key_size: u32
@@ -5303,6 +5345,8 @@ pub aya_obj::obj::EbpfSectionKind::License
 pub aya_obj::obj::EbpfSectionKind::Maps
 pub aya_obj::obj::EbpfSectionKind::Program
 pub aya_obj::obj::EbpfSectionKind::Rodata
+pub aya_obj::obj::EbpfSectionKind::StructOps
+pub aya_obj::obj::EbpfSectionKind::StructOpsLink
 pub aya_obj::obj::EbpfSectionKind::Text
 pub aya_obj::obj::EbpfSectionKind::Undefined
 pub aya_obj::obj::EbpfSectionKind::Version
@@ -5418,6 +5462,8 @@ pub aya_obj::obj::ProgramSection::SkSkbStream
 pub aya_obj::obj::ProgramSection::SkSkbStream::kind: aya_obj::programs::sk_skb::SkSkbKind
 pub aya_obj::obj::ProgramSection::SockOps
 pub aya_obj::obj::ProgramSection::SocketFilter
+pub aya_obj::obj::ProgramSection::StructOps
+pub aya_obj::obj::ProgramSection::StructOps::sleepable: bool
 pub aya_obj::obj::ProgramSection::TracePoint
 pub aya_obj::obj::ProgramSection::UProbe
 pub aya_obj::obj::ProgramSection::UProbe::multi: bool
@@ -5907,6 +5953,8 @@ pub aya_obj::EbpfSectionKind::License
 pub aya_obj::EbpfSectionKind::Maps
 pub aya_obj::EbpfSectionKind::Program
 pub aya_obj::EbpfSectionKind::Rodata
+pub aya_obj::EbpfSectionKind::StructOps
+pub aya_obj::EbpfSectionKind::StructOpsLink
 pub aya_obj::EbpfSectionKind::Text
 pub aya_obj::EbpfSectionKind::Undefined
 pub aya_obj::EbpfSectionKind::Version
@@ -5969,6 +6017,7 @@ impl !core::panic::unwind_safe::UnwindSafe for aya_obj::KsymsError
 pub enum aya_obj::Map
 pub aya_obj::Map::Btf(aya_obj::maps::BtfMap)
 pub aya_obj::Map::Legacy(aya_obj::maps::LegacyMap)
+pub aya_obj::Map::StructOps(aya_obj::maps::StructOpsMap)
 impl aya_obj::maps::Map
 pub fn aya_obj::maps::Map::data(&self) -> &[u8]
 pub fn aya_obj::maps::Map::data_mut(&mut self) -> &mut alloc::vec::Vec<u8>
@@ -6093,6 +6142,8 @@ pub aya_obj::ProgramSection::SkSkbStream
 pub aya_obj::ProgramSection::SkSkbStream::kind: aya_obj::programs::sk_skb::SkSkbKind
 pub aya_obj::ProgramSection::SockOps
 pub aya_obj::ProgramSection::SocketFilter
+pub aya_obj::ProgramSection::StructOps
+pub aya_obj::ProgramSection::StructOps::sleepable: bool
 pub aya_obj::ProgramSection::TracePoint
 pub aya_obj::ProgramSection::UProbe
 pub aya_obj::ProgramSection::UProbe::multi: bool
@@ -6213,6 +6264,25 @@ impl core::marker::Unpin for aya_obj::Program
 impl core::marker::UnsafeUnpin for aya_obj::Program
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::Program
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::Program
+pub struct aya_obj::StructOpsMap
+pub aya_obj::StructOpsMap::auto_attach: bool
+pub aya_obj::StructOpsMap::data: alloc::vec::Vec<u8>
+pub aya_obj::StructOpsMap::section_index: usize
+pub aya_obj::StructOpsMap::struct_type_name: alloc::string::String
+pub aya_obj::StructOpsMap::symbol_index: usize
+impl core::clone::Clone for aya_obj::maps::StructOpsMap
+pub fn aya_obj::maps::StructOpsMap::clone(&self) -> Self
+impl core::fmt::Debug for aya_obj::maps::StructOpsMap
+pub fn aya_obj::maps::StructOpsMap::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Forget for aya_obj::maps::StructOpsMap
+impl core::marker::Freeze for aya_obj::maps::StructOpsMap
+impl core::marker::Move for aya_obj::maps::StructOpsMap
+impl core::marker::Send for aya_obj::maps::StructOpsMap
+impl core::marker::Sync for aya_obj::maps::StructOpsMap
+impl core::marker::Unpin for aya_obj::maps::StructOpsMap
+impl core::marker::UnsafeUnpin for aya_obj::maps::StructOpsMap
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::maps::StructOpsMap
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::maps::StructOpsMap
 pub struct aya_obj::VerifierLog(_)
 impl aya_obj::VerifierLog
 pub const fn aya_obj::VerifierLog::new(alloc::string::String) -> Self

@@ -99,6 +99,7 @@ fn main() -> Result<()> {
         ("func_info_missing_callee.bpf.c", false),
         ("func_info_missing_program.bpf.c", false),
         ("func_info_absent.bpf.c", false),
+        ("struct_ops.bpf.c", false),
         ("ksyms.bpf.c", true),
         ("ksyms_strong.bpf.c", true),
         ("ksyms_typed_missing_var.bpf.c", true),

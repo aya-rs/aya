@@ -24,7 +24,7 @@ use crate::{
         BPF_CALL, BPF_F_RDONLY_PROG, BPF_JMP, BPF_K, bpf_func_id, bpf_insn, bpf_map_info,
         bpf_map_type::BPF_MAP_TYPE_ARRAY,
     },
-    maps::{BtfMap, BtfMapDef, LegacyMap, MINIMUM_MAP_SIZE, Map, PinningType, bpf_map_def},
+    maps::{self, BtfMap, BtfMapDef, LegacyMap, MINIMUM_MAP_SIZE, Map, PinningType, bpf_map_def},
     programs::{
         CgroupSkbAttachType, CgroupSockAddrAttachType, CgroupSockAttachType,
         CgroupSockoptAttachType, SkReuseportAttachType, SkSkbKind, XdpAttachType,
@@ -197,6 +197,9 @@ pub enum ProgramSection {
     },
     CgroupDevice,
     Iter {
+        sleepable: bool,
+    },
+    StructOps {
         sleepable: bool,
     },
 }
@@ -396,6 +399,8 @@ impl FromStr for ProgramSection {
             }
             "iter" => Self::Iter { sleepable: false },
             "iter.s" => Self::Iter { sleepable: true },
+            "struct_ops" => Self::StructOps { sleepable: false },
+            "struct_ops.s" => Self::StructOps { sleepable: true },
             _ => {
                 return Err(ParseError::InvalidProgramSection {
                     section: section.to_owned(),
@@ -802,6 +807,78 @@ impl Object {
         Ok(())
     }
 
+    /// Parses a `.struct_ops` or `.struct_ops.link` section into a [`Map::StructOps`] entry.
+    ///
+    /// These sections contain the initializer data for a kernel struct (e.g.,
+    /// `sched_ext_ops`). The struct type name is resolved from BTF by following
+    /// the section's VAR type to its underlying STRUCT type.
+    fn parse_struct_ops_section(&mut self, section: &Section<'_>) -> Result<(), ParseError> {
+        let auto_attach = section.kind == EbpfSectionKind::StructOpsLink;
+
+        // Find the symbol for this section to get the struct name
+        let syms = self.symbols_by_section.get(&section.index).ok_or_else(|| {
+            ParseError::NoSymbolsForSection {
+                section_name: section.name.to_string(),
+            }
+        })?;
+
+        for symbol_index in syms {
+            let symbol = self
+                .symbol_table
+                .get(symbol_index)
+                .expect("all symbols in symbols_by_section are also in symbol_table");
+
+            let name = match symbol.name.as_ref() {
+                Some(name) if !name.is_empty() && symbol.kind == SymbolKind::Data => name,
+                _ => continue,
+            };
+
+            // Determine the struct type name from BTF if available
+            let struct_type_name = if let Some(btf) = &self.btf {
+                // Look up the BTF type for this variable
+                let mut found_type_name = None;
+                for t in btf.types() {
+                    if let BtfType::Var(var) = t
+                        && let Ok(var_name) = btf.type_name(t)
+                        && var_name == *name
+                    {
+                        // Follow the type to find the struct.
+                        if let Ok(inner_type) = btf.type_by_id(var.btf_type)
+                            && let Ok(type_name) = btf.type_name(inner_type)
+                        {
+                            found_type_name = Some(type_name.to_string());
+                        }
+                        break;
+                    }
+                }
+                found_type_name.unwrap_or_default()
+            } else {
+                String::new()
+            };
+
+            let start = symbol.address as usize;
+            let end = start + symbol.size as usize;
+            let data = if end <= section.data.len() {
+                section.data[start..end].to_vec()
+            } else {
+                section.data.to_vec()
+            };
+
+            self.maps.insert(
+                name.clone(),
+                Map::StructOps(maps::StructOpsMap {
+                    section_index: section.index.0,
+                    symbol_index: *symbol_index,
+                    struct_type_name,
+                    data,
+                    auto_attach,
+                }),
+            );
+        }
+
+        Ok(())
+    }
+
     fn parse_section(&mut self, section: Section<'_>) -> Result<(), ParseError> {
         self.section_infos
             .insert(section.name.to_owned(), (section.index, section.size));
@@ -848,6 +925,9 @@ impl Object {
                             .collect(),
                     );
                 }
+            }
+            EbpfSectionKind::StructOps | EbpfSectionKind::StructOpsLink => {
+                self.parse_struct_ops_section(&section)?;
             }
             EbpfSectionKind::Undefined | EbpfSectionKind::License | EbpfSectionKind::Version => {}
         }
@@ -1010,6 +1090,10 @@ pub enum EbpfSectionKind {
     License,
     /// `version`
     Version,
+    /// `.struct_ops`
+    StructOps,
+    /// `.struct_ops.link`
+    StructOpsLink,
 }
 
 impl EbpfSectionKind {
@@ -1034,6 +1118,10 @@ impl EbpfSectionKind {
             Self::Btf
         } else if name == ".BTF.ext" {
             Self::BtfExt
+        } else if name.starts_with(".struct_ops.link") {
+            Self::StructOpsLink
+        } else if name.starts_with(".struct_ops") {
+            Self::StructOps
         } else {
             Self::Undefined
         }
@@ -2915,6 +3003,110 @@ mod tests {
             assert_eq!(m.def.key_size, 4);
             assert_eq!(m.def.value_size, 8);
             assert_eq!(m.def.max_entries, 1);
+        });
+    }
+
+    #[test]
+    fn test_section_kind_struct_ops() {
+        assert_eq!(
+            EbpfSectionKind::from_name(".struct_ops"),
+            EbpfSectionKind::StructOps
+        );
+        assert_eq!(
+            EbpfSectionKind::from_name(".struct_ops.link"),
+            EbpfSectionKind::StructOpsLink
+        );
+        // .struct_ops.link must be detected before .struct_ops
+        assert_ne!(
+            EbpfSectionKind::from_name(".struct_ops.link"),
+            EbpfSectionKind::StructOps
+        );
+    }
+
+    #[test]
+    fn test_program_section_struct_ops() {
+        assert_matches!(
+            ProgramSection::from_str("struct_ops/enqueue"),
+            Ok(ProgramSection::StructOps { sleepable: false })
+        );
+        assert_matches!(
+            ProgramSection::from_str("struct_ops.s/init"),
+            Ok(ProgramSection::StructOps { sleepable: true })
+        );
+        assert_matches!(
+            ProgramSection::from_str("struct_ops"),
+            Ok(ProgramSection::StructOps { sleepable: false })
+        );
+    }
+
+    #[test]
+    fn test_parse_struct_ops_section() {
+        use crate::btf::{Btf, BtfType, DataSec, DataSecEntry, Struct, Var, VarLinkage};
+
+        let mut obj = fake_obj();
+        // Build a minimal BTF with a VAR pointing to a STRUCT
+        let mut btf = Btf::new();
+
+        let struct_name = btf.add_string("my_ops");
+        let struct_type_id = btf.add_type(BtfType::Struct(Struct::new(struct_name, vec![], 16)));
+
+        let var_name = btf.add_string("_my_ops");
+        let var_type_id = btf.add_type(BtfType::Var(Var::new(
+            var_name,
+            struct_type_id,
+            VarLinkage::Global,
+        )));
+
+        let sec_name = btf.add_string(".struct_ops.link");
+        btf.add_type(BtfType::DataSec(DataSec::new(
+            sec_name,
+            vec![DataSecEntry {
+                btf_type: var_type_id,
+                offset: 0,
+                size: 16,
+            }],
+            16,
+        )));
+
+        obj.btf = Some(btf);
+
+        // Add a symbol for the section
+        let section_index = 5;
+        let sym_idx = 1;
+        obj.symbol_table.insert(
+            sym_idx,
+            Symbol {
+                index: sym_idx,
+                section_index: Some(section_index),
+                name: Some("_my_ops".to_string()),
+                address: 0,
+                size: 16,
+                is_definition: true,
+                is_weak: false,
+                kind: SymbolKind::Data,
+            },
+        );
+        obj.symbols_by_section
+            .entry(SectionIndex(section_index))
+            .or_default()
+            .push(sym_idx);
+
+        let data = vec![0u8; 16];
+        let section = fake_section(
+            EbpfSectionKind::StructOpsLink,
+            ".struct_ops.link",
+            &data,
+            Some(section_index),
+        );
+
+        obj.parse_struct_ops_section(&section).unwrap();
+
+        assert!(obj.maps.contains_key("_my_ops"));
+        let map = &obj.maps["_my_ops"];
+        assert_matches!(map, Map::StructOps(m) => {
+            assert_eq!(m.struct_type_name, "my_ops");
+            assert!(m.auto_attach);
+            assert_eq!(m.data.len(), 16);
         });
     }
 }

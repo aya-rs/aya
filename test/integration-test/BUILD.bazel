@@ -32,6 +32,7 @@ C_BPF_OBJECTS = [
     ("bpf/func_info_missing_callee.bpf.c", False),
     ("bpf/func_info_missing_program.bpf.c", False),
     ("bpf/func_info_absent.bpf.c", False),
+    ("bpf/struct_ops.bpf.c", False),
     ("bpf/ksyms.bpf.c", True),
     ("bpf/ksyms_strong.bpf.c", True),
     ("bpf/ksyms_typed_missing_kfunc.bpf.c", True),

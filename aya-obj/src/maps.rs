@@ -1,5 +1,20 @@
 //! Map struct and type bindings.
 
+/// Struct ops map definition
+#[derive(Debug, Clone)]
+pub struct StructOpsMap {
+    /// The section index
+    pub section_index: usize,
+    /// The symbol index
+    pub symbol_index: usize,
+    /// The struct type name (e.g., `sched_ext_ops`)
+    pub struct_type_name: String,
+    /// The initial section data (scalar field values)
+    pub data: Vec<u8>,
+    /// Whether auto-attach is requested (`.struct_ops.link` suffix)
+    pub auto_attach: bool,
+}
+
 use crate::{EbpfSectionKind, InvalidTypeBinding, generated::bpf_map_type};
 
 impl TryFrom<u32> for bpf_map_type {
@@ -142,6 +157,8 @@ pub enum Map {
     Legacy(LegacyMap),
     /// A map defined in the `.maps` section
     Btf(BtfMap),
+    /// A `struct_ops` map defined in `.struct_ops` or `.struct_ops.link` sections
+    StructOps(StructOpsMap),
 }
 
 impl Map {
@@ -150,6 +167,7 @@ impl Map {
         match self {
             Self::Legacy(m) => m.def.map_type,
             Self::Btf(m) => m.def.map_type,
+            Self::StructOps(_) => bpf_map_type::BPF_MAP_TYPE_STRUCT_OPS as u32,
         }
     }
 
@@ -158,6 +176,7 @@ impl Map {
         match self {
             Self::Legacy(m) => m.def.key_size,
             Self::Btf(m) => m.def.key_size,
+            Self::StructOps(_) => size_of::<u32>() as u32,
         }
     }
 
@@ -166,6 +185,7 @@ impl Map {
         match self {
             Self::Legacy(m) => m.def.value_size,
             Self::Btf(m) => m.def.value_size,
+            Self::StructOps(m) => m.data.len() as u32,
         }
     }
 
@@ -174,6 +194,7 @@ impl Map {
         match self {
             Self::Legacy(m) => m.def.value_size = size,
             Self::Btf(m) => m.def.value_size = size,
+            Self::StructOps(_) => {} // struct_ops value size is determined by kernel BTF
         }
     }
 
@@ -182,6 +203,7 @@ impl Map {
         match self {
             Self::Legacy(m) => m.def.max_entries,
             Self::Btf(m) => m.def.max_entries,
+            Self::StructOps(_) => 1,
         }
     }
 
@@ -190,6 +212,7 @@ impl Map {
         match self {
             Self::Legacy(m) => m.def.max_entries = v,
             Self::Btf(m) => m.def.max_entries = v,
+            Self::StructOps(_) => {} // struct_ops always has max_entries=1
         }
     }
 
@@ -198,6 +221,7 @@ impl Map {
         match self {
             Self::Legacy(m) => m.def.map_flags,
             Self::Btf(m) => m.def.map_flags,
+            Self::StructOps(_) => 0,
         }
     }
 
@@ -206,6 +230,7 @@ impl Map {
         match self {
             Self::Legacy(_) => 0,
             Self::Btf(m) => m.def.map_extra,
+            Self::StructOps(_) => 0,
         }
     }
 
@@ -214,6 +239,7 @@ impl Map {
         match self {
             Self::Legacy(m) => m.def.pinning,
             Self::Btf(m) => m.def.pinning,
+            Self::StructOps(_) => PinningType::None,
         }
     }
 
@@ -222,6 +248,7 @@ impl Map {
         match self {
             Self::Legacy(m) => &m.data,
             Self::Btf(m) => &m.data,
+            Self::StructOps(m) => &m.data,
         }
     }
 
@@ -230,6 +257,7 @@ impl Map {
         match self {
             Self::Legacy(m) => m.data.as_mut(),
             Self::Btf(m) => m.data.as_mut(),
+            Self::StructOps(m) => m.data.as_mut(),
         }
     }
 
@@ -238,6 +266,7 @@ impl Map {
         match self {
             Self::Legacy(m) => m.section_index,
             Self::Btf(m) => m.section_index,
+            Self::StructOps(m) => m.section_index,
         }
     }
 
@@ -246,6 +275,13 @@ impl Map {
         match self {
             Self::Legacy(m) => m.section_kind,
             Self::Btf(_) => EbpfSectionKind::BtfMaps,
+            Self::StructOps(m) => {
+                if m.auto_attach {
+                    EbpfSectionKind::StructOpsLink
+                } else {
+                    EbpfSectionKind::StructOps
+                }
+            }
         }
     }
 
@@ -257,6 +293,7 @@ impl Map {
         match self {
             Self::Legacy(m) => m.symbol_index,
             Self::Btf(m) => Some(m.symbol_index),
+            Self::StructOps(m) => Some(m.symbol_index),
         }
     }
 
@@ -266,6 +303,7 @@ impl Map {
     /// so neutral metadata values are used.
     pub fn inner(&self) -> Option<Self> {
         match self {
+            Self::StructOps(_) => None,
             Self::Legacy(m) => m.inner_def.as_ref().map(|inner_def| {
                 Self::Legacy(LegacyMap {
                     def: *inner_def,

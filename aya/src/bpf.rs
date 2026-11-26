@@ -10,7 +10,7 @@ use std::{
 
 use aya_obj::{
     EbpfSectionKind, KsymsError, Object, ParseError, ProgramSection,
-    btf::{Btf, BtfError, BtfRelocationError},
+    btf::{Btf, BtfError, BtfKind, BtfRelocationError, BtfType},
     generated::{BPF_F_SLEEPABLE, BPF_F_XDP_HAS_FRAGS, bpf_map_type},
     relocation::EbpfRelocationError,
 };
@@ -24,10 +24,13 @@ use crate::{
         BtfTracePoint, CgroupDevice, CgroupSkb, CgroupSock, CgroupSockAddr, CgroupSockopt,
         CgroupSysctl, Extension, FEntry, FExit, FlowDissector, Iter, KProbe, LircMode2, Lsm,
         LsmCgroup, PerfEvent, ProbeKind, Program, ProgramData, ProgramError, RawTracePoint,
-        SchedClassifier, SkLookup, SkMsg, SkReuseport, SkSkb, SockOps, SocketFilter, TracePoint,
-        UProbe, Xdp, uprobe::AttachMode,
+        SchedClassifier, SkLookup, SkMsg, SkReuseport, SkSkb, SockOps, SocketFilter, StructOps,
+        TracePoint, UProbe, Xdp, links::FdLink, struct_ops::StructOpsLink, uprobe::AttachMode,
     },
-    sys::{bpf_load_btf, retry_with_verifier_logs},
+    sys::{
+        LinkTarget, bpf_link_create, bpf_load_btf, bpf_map_update_elem_ptr,
+        retry_with_verifier_logs,
+    },
     util::{bytes_of, bytes_of_slice, nr_cpus, page_size},
 };
 
@@ -480,7 +483,8 @@ impl<'a> EbpfLoader<'a> {
                             | ProgramSection::Lsm { sleepable: _ }
                             | ProgramSection::LsmCgroup
                             | ProgramSection::BtfTracePoint
-                            | ProgramSection::Iter { sleepable: _ } => {
+                            | ProgramSection::Iter { sleepable: _ }
+                            | ProgramSection::StructOps { sleepable: _ } => {
                                 return Err(EbpfError::BtfError(err));
                             }
                             ProgramSection::KRetProbe
@@ -531,7 +535,11 @@ impl<'a> EbpfLoader<'a> {
             None
         };
 
-        if obj.has_btf_relocations() || obj.has_typed_ksyms() {
+        let has_struct_ops = obj
+            .programs
+            .values()
+            .any(|p| matches!(p.section, ProgramSection::StructOps { .. }));
+        if has_struct_ops || obj.has_btf_relocations() || obj.has_typed_ksyms() {
             let endianness = obj.endianness;
             let target_btf: Result<Cow<'_, Btf>, EbpfError> = match btf {
                 TargetBtf::System => Btf::from_sys_fs().map(Cow::Owned).map_err(EbpfError::from),
@@ -560,7 +568,7 @@ impl<'a> EbpfLoader<'a> {
                 Err(err) => {
                     // CO-RE relocations and strong typed ksyms cannot be resolved without target
                     // BTF, so preserve the original loading error.
-                    if obj.has_btf_relocations() || obj.has_strong_typed_ksyms() {
+                    if has_struct_ops || obj.has_btf_relocations() || obj.has_strong_typed_ksyms() {
                         return Err(err);
                     }
 
@@ -585,7 +593,12 @@ impl<'a> EbpfLoader<'a> {
         let mut regular_maps: Vec<(String, aya_obj::Map, bpf_map_type)> = Vec::new();
         let mut maps_of_maps: Vec<(String, aya_obj::Map, bpf_map_type)> = Vec::new();
 
+        let mut struct_ops_maps = HashMap::new();
         for (name, map_obj) in obj.maps.drain() {
+            if matches!(map_obj, aya_obj::Map::StructOps(_)) {
+                struct_ops_maps.insert(name, map_obj);
+                continue;
+            }
             if matches!(
                 map_obj.section_kind(),
                 EbpfSectionKind::Bss | EbpfSectionKind::Data | EbpfSectionKind::Rodata
@@ -877,6 +890,14 @@ impl<'a> EbpfLoader<'a> {
                             }
                             Program::Iter(Iter { data })
                         }
+                        ProgramSection::StructOps { sleepable } => {
+                            let mut data =
+                                ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level);
+                            if *sleepable {
+                                data.flags = BPF_F_SLEEPABLE;
+                            }
+                            Program::StructOps(StructOps { data })
+                        }
                     }
                 };
                 (name, program)
@@ -887,7 +908,20 @@ impl<'a> EbpfLoader<'a> {
             .map(|data| parse_map(data, *allow_unsupported_maps))
             .collect::<Result<HashMap<String, Map>, EbpfError>>()?;
 
-        Ok(Ebpf { maps, programs })
+        Ok(Ebpf {
+            maps,
+            programs,
+            struct_ops_maps,
+            btf_fd,
+            kernel_btf: if has_struct_ops {
+                match btf {
+                    TargetBtf::Parsed(btf) => Some(btf.as_ref().clone()),
+                    _ => None,
+                }
+            } else {
+                None
+            },
+        })
     }
 }
 
@@ -1122,6 +1156,9 @@ impl Default for EbpfLoader<'_> {
 pub struct Ebpf {
     maps: HashMap<String, Map>,
     programs: HashMap<String, Program>,
+    struct_ops_maps: HashMap<String, aya_obj::Map>,
+    btf_fd: Option<Arc<crate::MockableFd>>,
+    kernel_btf: Option<Btf>,
 }
 
 /// The main entry point into the library, used to work with eBPF programs and maps.
@@ -1363,6 +1400,189 @@ impl Ebpf {
     pub fn programs_mut(&mut self) -> impl Iterator<Item = (&str, &mut Program)> {
         self.programs.iter_mut().map(|(s, p)| (s.as_str(), p))
     }
+
+    /// Attaches a `struct_ops` map, loading its associated programs and creating
+    /// a BPF link.
+    ///
+    /// This method handles the complete `struct_ops` lifecycle:
+    /// 1. Loads each `struct_ops` program referenced by the map
+    /// 2. Creates the `struct_ops` BPF map with program FDs
+    /// 3. Attaches the map via `BPF_LINK_CREATE`
+    ///
+    /// The `map_name` should match the symbol name from the `.struct_ops` or
+    /// `.struct_ops.link` ELF section (e.g., `"_scx_ops"`).
+    ///
+    /// Returns a [`StructOpsLink`] that keeps the `struct_ops` attached. Dropping
+    /// the link detaches the `struct_ops`.
+    pub fn attach_struct_ops(&mut self, map_name: &str) -> Result<StructOpsLink, EbpfError> {
+        use aya_obj::generated::{bpf_attach_type, bpf_attr};
+
+        let struct_ops_obj =
+            self.struct_ops_maps
+                .get(map_name)
+                .ok_or_else(|| EbpfError::StructOpsMapNotFound {
+                    name: map_name.to_owned(),
+                })?;
+
+        let (struct_type_name, section_data) = match struct_ops_obj {
+            aya_obj::Map::StructOps(m) => (m.struct_type_name.clone(), m.data.clone()),
+            _ => {
+                return Err(EbpfError::StructOpsMapNotFound {
+                    name: map_name.to_owned(),
+                });
+            }
+        };
+
+        // Clone kernel BTF before taking &mut self for program loading
+        let kernel_btf = self.kernel_btf.clone().ok_or(EbpfError::NoBTF)?;
+
+        // Look up inner struct and wrapper struct in vmlinux BTF
+        let vmlinux_type_id = kernel_btf
+            .id_by_type_name_kind(&struct_type_name, BtfKind::Struct)
+            .map_err(EbpfError::BtfError)?;
+
+        let wrapper_name = format!("bpf_struct_ops_{struct_type_name}");
+        let vmlinux_value_type_id = kernel_btf
+            .id_by_type_name_kind(&wrapper_name, BtfKind::Struct)
+            .map_err(|e| {
+                EbpfError::StructOpsError(format!(
+                    "wrapper struct `{wrapper_name}` not found in vmlinux BTF: {e}"
+                ))
+            })?;
+
+        let members = match kernel_btf
+            .type_by_id(vmlinux_type_id)
+            .map_err(EbpfError::BtfError)?
+        {
+            BtfType::Struct(s) => &s.members,
+            other => {
+                return Err(EbpfError::StructOpsError(format!(
+                    "expected struct type for {struct_type_name}, got {other:?}",
+                )));
+            }
+        };
+
+        // Get wrapper struct size and data field offset
+        let (wrapper_size, data_offset) = match kernel_btf
+            .type_by_id(vmlinux_value_type_id)
+            .map_err(EbpfError::BtfError)?
+        {
+            BtfType::Struct(s) => {
+                let data_off = s
+                    .members
+                    .iter()
+                    .find_map(|m| {
+                        let name = kernel_btf.string_at(m.name_offset).unwrap_or_default();
+                        (name == "data").then_some(m.offset / 8)
+                    })
+                    .unwrap_or(0);
+                (s.size, data_off as usize)
+            }
+            _ => {
+                return Err(EbpfError::StructOpsError(format!(
+                    "wrapper struct {wrapper_name} is not a struct"
+                )));
+            }
+        };
+
+        // Load struct_ops programs, matching each to a struct member by name
+        let prog_fds = self.load_struct_ops_programs(&kernel_btf, members, vmlinux_type_id)?;
+
+        // Build the map value: wrapper-sized buffer with section data at data_offset
+        let mut value = vec![0u8; wrapper_size as usize];
+        let copy_len = section_data.len().min(value.len() - data_offset);
+        value[data_offset..data_offset + copy_len].copy_from_slice(&section_data[..copy_len]);
+
+        // Write loaded program FDs into function pointer field positions
+        for member in members {
+            let member_name = kernel_btf.string_at(member.name_offset).unwrap_or_default();
+            if let Some(&fd) = prog_fds.get(member_name.as_ref()) {
+                let offset = data_offset + (member.offset / 8) as usize;
+                if let Ok(member_type) = kernel_btf.type_by_id(member.btf_type)
+                    && matches!(member_type, BtfType::Ptr(_))
+                    && offset + 4 <= value.len()
+                {
+                    value[offset..offset + 4].copy_from_slice(&(fd as u32).to_ne_bytes());
+                }
+            }
+        }
+
+        // Create the struct_ops BPF map
+        let c_name = std::ffi::CString::new(map_name)
+            .map_err(|e| EbpfError::StructOpsError(format!("invalid map name: {e}")))?;
+        let map_fd = {
+            let mut attr = unsafe { std::mem::zeroed::<bpf_attr>() };
+            let u = unsafe { &mut attr.__bindgen_anon_1 };
+            u.map_type = bpf_map_type::BPF_MAP_TYPE_STRUCT_OPS as u32;
+            u.key_size = 4;
+            u.value_size = wrapper_size;
+            u.max_entries = 1;
+            u.map_flags = aya_obj::generated::BPF_F_LINK;
+            u.btf_vmlinux_value_type_id = vmlinux_value_type_id;
+            if let Some(btf_fd) = &self.btf_fd {
+                u.btf_fd = btf_fd.as_fd().as_raw_fd() as u32;
+            }
+            let name_bytes = c_name.to_bytes();
+            let len = name_bytes.len().min(u.map_name.len() - 1);
+            u.map_name[..len].copy_from_slice(unsafe {
+                std::mem::transmute::<&[u8], &[std::ffi::c_char]>(&name_bytes[..len])
+            });
+            crate::sys::bpf_map_create(&mut attr).map_err(|io_error| {
+                EbpfError::StructOpsError(format!("failed to create struct_ops map: {io_error}"))
+            })?
+        };
+
+        // Populate the map value
+        bpf_map_update_elem_ptr(map_fd.as_fd(), &0u32, value.as_mut_ptr(), 0).map_err(
+            |io_error| {
+                EbpfError::StructOpsError(format!("failed to update struct_ops map: {io_error}"))
+            },
+        )?;
+
+        // Attach via BPF_LINK_CREATE (map fd goes in prog_fd position)
+        let link_fd = bpf_link_create(
+            map_fd.as_fd(),
+            LinkTarget::Iter,
+            bpf_attach_type::BPF_STRUCT_OPS,
+            0,
+            None,
+        )
+        .map_err(|io_error| {
+            EbpfError::StructOpsError(format!("failed to attach struct_ops: {io_error}"))
+        })?;
+
+        Ok(StructOpsLink::wrap(FdLink::new(link_fd)))
+    }
+
+    /// Loads `struct_ops` programs, matching each to a kernel struct member by
+    /// name. Returns a map of member name to loaded program fd.
+    fn load_struct_ops_programs(
+        &mut self,
+        kernel_btf: &Btf,
+        members: &[aya_obj::btf::BtfMember],
+        vmlinux_type_id: u32,
+    ) -> Result<HashMap<String, i32>, EbpfError> {
+        let mut prog_fds: HashMap<String, i32> = HashMap::new();
+        for (prog_name, program) in &mut self.programs {
+            if let Program::StructOps(struct_ops_prog) = program {
+                for (member_idx, member) in members.iter().enumerate() {
+                    let member_name = kernel_btf.string_at(member.name_offset).unwrap_or_default();
+                    if member_name != *prog_name {
+                        continue;
+                    }
+                    if let Ok(member_type) = kernel_btf.type_by_id(member.btf_type)
+                        && matches!(member_type, BtfType::Ptr(_))
+                    {
+                        struct_ops_prog.load(vmlinux_type_id, member_idx as u32)?;
+                        let fd = struct_ops_prog.fd()?;
+                        prog_fds.insert(prog_name.clone(), fd.as_fd().as_raw_fd());
+                    }
+                    break;
+                }
+            }
+        }
+        Ok(prog_fds)
+    }
 }
 
 /// The error type returned by [`Ebpf::load_file`] and [`Ebpf::load`].
@@ -1420,6 +1640,17 @@ pub enum EbpfError {
     #[error("program error: {0}")]
     /// A program error
     ProgramError(#[from] ProgramError),
+
+    /// Struct ops map not found
+    #[error("struct_ops map `{name}` not found")]
+    StructOpsMapNotFound {
+        /// The map name
+        name: String,
+    },
+
+    /// Struct ops error
+    #[error("struct_ops error: {0}")]
+    StructOpsError(String),
 }
 
 /// The error type returned by [`Bpf::load_file`] and [`Bpf::load`].

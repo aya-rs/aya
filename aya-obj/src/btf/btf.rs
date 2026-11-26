@@ -370,7 +370,8 @@ impl Btf {
         Ok(types)
     }
 
-    pub(crate) fn string_at(&self, offset: u32) -> Result<Cow<'_, str>, BtfError> {
+    /// Resolves a string in the BTF string table.
+    pub fn string_at(&self, offset: u32) -> Result<Cow<'_, str>, BtfError> {
         let Self {
             header: _,
             strings,
@@ -387,7 +388,8 @@ impl Btf {
         Ok(s.to_string_lossy())
     }
 
-    pub(crate) fn type_by_id(&self, type_id: u32) -> Result<&BtfType, BtfError> {
+    /// Returns the BTF type at the given type ID.
+    pub fn type_by_id(&self, type_id: u32) -> Result<&BtfType, BtfError> {
         self.types.type_by_id(type_id)
     }
 
@@ -395,7 +397,8 @@ impl Btf {
         self.types.resolve_type(root_type_id)
     }
 
-    pub(crate) fn type_name(&self, ty: &BtfType) -> Result<Cow<'_, str>, BtfError> {
+    /// Returns the name of a BTF type.
+    pub fn type_name(&self, ty: &BtfType) -> Result<Cow<'_, str>, BtfError> {
         self.string_at(ty.name_offset())
     }
 
@@ -502,6 +505,16 @@ impl Btf {
                 // do a fixup here.
                 BtfType::Ptr(ptr) => {
                     ptr.name_offset = 0;
+                }
+                // Struct ops initializers are consumed by the loader, not kernel BTF.
+                BtfType::DataSec(d)
+                    if self.string_at(d.name_offset)?.starts_with(".struct_ops") =>
+                {
+                    let old_size = d.type_info_size() as u32;
+                    *t = BtfType::Int(Int::new(d.name_offset, 1, IntEncoding::None, 0));
+                    self.header.type_len =
+                        self.header.type_len - old_size + t.type_info_size() as u32;
+                    self.header.str_off = self.header.type_len;
                 }
                 // Sanitize VAR if they are not supported.
                 BtfType::Var(v) if !features.is_supported(BtfFeature::DataSec) => {
@@ -2489,5 +2502,36 @@ mod tests {
         // Ensure we can convert to bytes and back again.
         let raw = btf.to_bytes();
         Btf::parse(&raw, Endianness::default()).unwrap();
+    }
+
+    #[test]
+    fn test_sanitize_struct_ops_datasec() {
+        for section in [".struct_ops", ".struct_ops.link"] {
+            for size in [0, 4] {
+                for supported in [false, true] {
+                    let mut btf = Btf::new();
+                    let sec_name = btf.add_string(section);
+                    let int_name = btf.add_string("int");
+                    let int_id =
+                        btf.add_type(BtfType::Int(Int::new(int_name, 4, IntEncoding::Signed, 0)));
+                    let var_name = btf.add_string("ops");
+                    let var_id =
+                        btf.add_type(BtfType::Var(Var::new(var_name, int_id, VarLinkage::Global)));
+                    let datasec_id = btf.add_type(BtfType::DataSec(DataSec::new(
+                        sec_name,
+                        vec![DataSecEntry {
+                            btf_type: var_id,
+                            offset: 0,
+                            size: 4,
+                        }],
+                        size,
+                    )));
+                    btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), |_| supported)
+                        .unwrap();
+                    let parsed = Btf::parse(&btf.to_bytes(), Endianness::default()).unwrap();
+                    assert_matches!(parsed.type_by_id(datasec_id).unwrap(), BtfType::Int(_));
+                }
+            }
+        }
     }
 }
