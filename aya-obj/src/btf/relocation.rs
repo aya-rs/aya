@@ -1,6 +1,6 @@
 use std::{
     borrow::{Cow, ToOwned as _},
-    collections::BTreeMap,
+    collections::{BTreeMap, hash_map::Entry},
     format,
     num::ParseIntError,
     ops::Bound::Included,
@@ -20,7 +20,8 @@ use crate::{
         BPF_ALU, BPF_ALU64, BPF_B, BPF_CALL, BPF_DW, BPF_H, BPF_JMP, BPF_K, BPF_LD, BPF_LDX,
         BPF_ST, BPF_STX, BPF_W, BTF_INT_SIGNED, bpf_core_relo, bpf_core_relo_kind, bpf_insn,
     },
-    util::HashMap,
+    relocation::function_ref,
+    util::{HashMap, HashSet},
 };
 
 /// The error type returned by [`Object::relocate_btf`].
@@ -224,7 +225,8 @@ impl Object {
             return Ok(());
         };
 
-        let mut candidates_cache = HashMap::<u32, Vec<Candidate<'_>>>::new();
+        let groups = self.candidate_groups(local_btf, btf_ext.relocations());
+        let mut lists = CandidateLists::default();
         for (sec_name_off, relos) in btf_ext.relocations() {
             let section_name =
                 local_btf
@@ -248,7 +250,8 @@ impl Object {
                 relos,
                 local_btf,
                 target_btf,
-                &mut candidates_cache,
+                &groups,
+                &mut lists,
             ) {
                 Ok(()) => {}
                 Err(error) => {
@@ -261,6 +264,143 @@ impl Object {
         }
 
         Ok(())
+    }
+
+    /// Groups the relocations whose candidates are pruned together. Returns the group of each
+    /// function and local type id, for the functions that carry a relocation of the type that
+    /// looks at the target types.
+    ///
+    /// The linker links each program with the functions that it reaches through the calls and
+    /// text relocations that it follows, and the result runs against one target layout. So two
+    /// functions share a group for a type when some program is linked with both, or when a
+    /// chain of such pairs joins them. A function that carries no relocation of the type
+    /// doesn't join the functions that reach it: programs that call the same helper stay
+    /// apart. A function that no program reaches is never linked, so it joins no group with the
+    /// functions it calls.
+    fn candidate_groups(
+        &self,
+        local_btf: &Btf,
+        core_relos: &[(u32, Vec<Relocation>)],
+    ) -> HashMap<((usize, u64), u32), usize> {
+        // The nodes are the functions and local types that have a relocation to match.
+        let mut nodes = HashMap::<((usize, u64), u32), usize>::new();
+        for (sec_name_off, relos) in core_relos {
+            // An error in the relocation info is for `relocate_btf` to report.
+            let Ok(section_name) = local_btf.string_at(*sec_name_off) else {
+                continue;
+            };
+            let Some((section_index, _)) = self.section_infos.get(&section_name.to_string()) else {
+                continue;
+            };
+            let keys = function_keys_by_relocation(*section_index, &self.functions, relos);
+            for (rel, key) in relos.iter().zip(keys) {
+                if matches!(rel.kind, RelocationKind::TypeIdLocal) {
+                    continue;
+                }
+                if let Some(key) = key {
+                    let next = nodes.len();
+                    nodes.entry((key, rel.type_id)).or_insert(next);
+                }
+            }
+        }
+        if nodes.is_empty() {
+            return HashMap::new();
+        }
+
+        let text_sections = self
+            .functions
+            .keys()
+            .map(|(section_index, _)| *section_index)
+            .collect::<HashSet<_>>();
+        let ids = self
+            .functions
+            .keys()
+            .enumerate()
+            .map(|(id, key)| (*key, id))
+            .collect::<HashMap<_, _>>();
+        let functions = self.functions.values().collect::<Vec<_>>();
+
+        // The functions that the linker starts from, by function id.
+        let program_ids = self
+            .programs
+            .values()
+            .filter_map(|program| ids.get(&program.function_key()).copied())
+            .collect::<Vec<_>>();
+        // The callees of each function, by function id. Only the functions that a walk reaches
+        // get theirs, which are the ones that the linker links.
+        let mut callees = vec![None::<Vec<usize>>; ids.len()];
+        // The nodes of each function, by function id.
+        let mut function_nodes = vec![Vec::new(); ids.len()];
+        for ((key, type_id), node) in &nodes {
+            function_nodes[ids[key]].push((*type_id, *node));
+        }
+
+        // A union-find forest over the nodes, whose roots name the groups.
+        let mut parents = (0..nodes.len()).collect::<Vec<_>>();
+        const fn root(parents: &mut [usize], mut node: usize) -> usize {
+            while parents[node] != node {
+                parents[node] = parents[parents[node]];
+                node = parents[node];
+            }
+            node
+        }
+
+        // The walk starts at each program, as the linker links each one with the functions it
+        // reaches. A function that no program reaches is never linked, so no walk joins its
+        // nodes with others. Each walk visits a function and its calls at most once, and
+        // objects have few programs.
+        for id in program_ids {
+            let mut reached = vec![false; ids.len()];
+            let mut stack = vec![id];
+            // The first node of each type among the functions that `id` reaches.
+            let mut first = HashMap::<u32, usize>::new();
+            while let Some(current) = stack.pop() {
+                if reached[current] {
+                    continue;
+                }
+                reached[current] = true;
+                let current_callees = callees[current].get_or_insert_with(|| {
+                    let fun = functions[current];
+                    let relocations = self.relocations.get(&fun.section_index);
+                    fun.instructions
+                        .iter()
+                        .enumerate()
+                        .filter_map(|(ins_index, ins)| {
+                            // An unresolved callee is for the linker to report.
+                            let callee = function_ref(
+                                fun,
+                                ins_index,
+                                *ins,
+                                relocations,
+                                &self.symbol_table,
+                                &text_sections,
+                            )?
+                            .callee
+                            .ok()?;
+                            ids.get(&callee).copied()
+                        })
+                        .collect()
+                });
+                stack.extend(&*current_callees);
+                for &(type_id, node) in &function_nodes[current] {
+                    match first.entry(type_id) {
+                        Entry::Occupied(entry) => {
+                            let (first_root, node_root) =
+                                (root(&mut parents, *entry.get()), root(&mut parents, node));
+                            parents[node_root] = first_root;
+                        }
+                        Entry::Vacant(entry) => {
+                            entry.insert(node);
+                        }
+                    }
+                }
+            }
+        }
+
+        nodes
+            .into_iter()
+            .map(|(key, node)| (key, root(&mut parents, node)))
+            .collect()
     }
 }
 
@@ -280,18 +420,37 @@ fn is_relocation_inside_function(
     (func_offset..func_offset + func_size).contains(&ins_offset)
 }
 
-fn function_by_relocation<'a>(
+/// Returns the key of the function that each relocation of a section applies to: the function
+/// of the previous relocation if it holds this one too, else the first function that does, or
+/// `None` if none does. With overlapping functions these can differ, so `relocate_btf_functions`
+/// and `candidate_groups` both take their keys from here and agree on them.
+fn function_keys_by_relocation(
     section_index: SectionIndex,
-    functions: &'a mut BTreeMap<(usize, u64), Function>,
-    rel: &Relocation,
-) -> Option<&'a mut Function> {
-    functions
-        .range_mut((
-            Included(&(section_index.0, 0)),
-            Included(&(section_index.0, u64::MAX)),
-        ))
-        .map(|(_, func)| func)
-        .find(|func| is_relocation_inside_function(section_index, func, rel))
+    functions: &BTreeMap<(usize, u64), Function>,
+    relos: &[Relocation],
+) -> Vec<Option<(usize, u64)>> {
+    let mut last_key = None;
+    relos
+        .iter()
+        .map(|rel| {
+            last_key = last_key
+                .filter(|key| {
+                    functions
+                        .get(key)
+                        .is_some_and(|func| is_relocation_inside_function(section_index, func, rel))
+                })
+                .or_else(|| {
+                    functions
+                        .range((
+                            Included(&(section_index.0, 0)),
+                            Included(&(section_index.0, u64::MAX)),
+                        ))
+                        .find(|(_, func)| is_relocation_inside_function(section_index, func, rel))
+                        .map(|(key, _)| *key)
+                });
+            last_key
+        })
+        .collect()
 }
 
 fn relocate_btf_functions<'target>(
@@ -300,16 +459,16 @@ fn relocate_btf_functions<'target>(
     relos: &[Relocation],
     local_btf: &Btf,
     target_btf: &'target Btf,
-    candidates_cache: &mut HashMap<u32, Vec<Candidate<'target>>>,
+    groups: &HashMap<((usize, u64), u32), usize>,
+    lists: &mut CandidateLists<'target>,
 ) -> Result<(), RelocationError> {
-    let mut last_function_opt: Option<&mut Function> = None;
+    let keys = function_keys_by_relocation(section_index, functions, relos);
 
-    for rel in relos {
-        let function = match last_function_opt.take() {
-            Some(func) if is_relocation_inside_function(section_index, func, rel) => func,
-            _ => function_by_relocation(section_index, functions, rel)
-                .ok_or(RelocationError::FunctionNotFound)?,
-        };
+    for (rel, key) in relos.iter().zip(keys) {
+        let key = key.ok_or(RelocationError::FunctionNotFound)?;
+        let function = functions
+            .get_mut(&key)
+            .ok_or(RelocationError::FunctionNotFound)?;
 
         let instructions = &mut function.instructions;
         let ins_index = (rel.ins_offset - function.section_offset) / size_of::<bpf_insn>();
@@ -330,23 +489,43 @@ fn relocate_btf_functions<'target>(
             // we don't need to look at target types to relocate this value
             Vec::new()
         } else {
-            let candidates = if let Some(cands) = candidates_cache.get(&rel.type_id) {
-                cands
-            } else {
-                candidates_cache.insert(
-                    rel.type_id,
-                    find_candidates(local_ty, local_name, target_btf)?,
-                );
-                candidates_cache.get(&rel.type_id).unwrap()
+            // `candidate_groups` has a group for every relocation that gets here.
+            let group = groups[&(key, rel.type_id)];
+            let candidates = match lists.pruned.entry(group) {
+                Entry::Occupied(entry) => entry.into_mut(),
+                Entry::Vacant(entry) => {
+                    let found = match lists.found.entry(rel.type_id) {
+                        Entry::Occupied(entry) => entry.into_mut(),
+                        Entry::Vacant(entry) => {
+                            entry.insert(find_candidates(local_ty, local_name, target_btf)?)
+                        }
+                    };
+                    entry.insert(found.clone())
+                }
             };
 
             let mut matches = Vec::new();
-            for candidate in candidates {
+            for candidate in &*candidates {
                 if let Some(candidate_spec) = match_candidate(&local_spec, candidate)? {
                     let comp_rel =
                         ComputedRelocation::new(rel, &local_spec, Some(&candidate_spec))?;
                     matches.push((candidate.name.clone(), candidate_spec, comp_rel));
                 }
+            }
+
+            // A program runs against one target layout, so keep only the candidates that
+            // matched for the rest of the group: the functions that some program links
+            // together, through the calls and text relocations that the linker follows. Later
+            // relocations can't pick another type of the same name. If none matched, keep them
+            // all, as libbpf does. Functions that no program links together prune apart, as aya
+            // relocates every program in the object, loaded or not, and a helper without a
+            // relocation of the type doesn't join the programs that call it.
+            if !matches.is_empty() {
+                candidates.retain(|candidate| {
+                    matches
+                        .iter()
+                        .any(|(_, spec, _)| spec.root_type_id == candidate.type_id)
+                });
             }
 
             matches
@@ -388,8 +567,6 @@ fn relocate_btf_functions<'target>(
         };
 
         comp_rel.apply(function, rel, local_btf, target_btf)?;
-
-        last_function_opt = Some(function);
     }
 
     Ok(())
@@ -463,7 +640,7 @@ fn find_candidates<'target>(
 
 fn match_candidate<'target>(
     local_spec: &AccessSpec<'_>,
-    candidate: &'target Candidate<'_>,
+    candidate: &Candidate<'target>,
 ) -> Result<Option<AccessSpec<'target>>, RelocationError> {
     let mut target_spec = AccessSpec {
         btf: candidate.btf,
@@ -934,7 +1111,17 @@ fn access_path<'a>(
     path
 }
 
-#[derive(Debug)]
+/// The candidate target types for the local types of an object.
+#[derive(Default)]
+struct CandidateLists<'target> {
+    /// All the candidates found in the target BTF for each local type id.
+    found: HashMap<u32, Vec<Candidate<'target>>>,
+    /// The candidates left for each group of `Object::candidate_groups`. A group holds
+    /// relocations of one local type only.
+    pruned: HashMap<usize, Vec<Candidate<'target>>>,
+}
+
+#[derive(Clone, Debug)]
 struct Candidate<'a> {
     name: String,
     btf: &'a Btf,
@@ -1350,5 +1537,603 @@ impl ComputedRelocation {
             size: 0,
             type_id: None,
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::ffi::CString;
+
+    use object::{Endianness, SymbolKind};
+    use rstest::rstest;
+
+    use super::*;
+    use crate::{
+        Program, ProgramSection,
+        btf::{
+            BtfExt, Int,
+            info::{FuncSecInfo, LineSecInfo},
+        },
+        generated::{BPF_EXIT, BPF_IMM, BPF_MEM, BPF_PSEUDO_CALL, BPF_PSEUDO_FUNC, btf_ext_header},
+        relocation::Symbol,
+        util::bytes_of,
+    };
+
+    // Access strings of the members of the local `e1000_adapter` built by `relocate`.
+    const PTP_DELTA: &str = "0:0";
+    const GOTCL_OLD: &str = "0:1";
+    const MISSING: &str = "0:2";
+
+    fn add_struct(btf: &mut Btf, name: &str, int_id: u32, members: &[&str]) -> u32 {
+        let name_offset = btf.add_string(name);
+        let members = members
+            .iter()
+            .enumerate()
+            .map(|(index, member)| BtfMember {
+                name_offset: btf.add_string(member),
+                btf_type: int_id,
+                offset: index as u32 * 64,
+            })
+            .collect::<Vec<_>>();
+        let size = members.len() as u32 * 8;
+        btf.add_type(BtfType::Struct(Struct::new(name_offset, members, size)))
+    }
+
+    /// Relocates programs that each load the members named by one slice of access strings
+    /// from the local `e1000_adapter`, one `FieldByteOffset` relocation per member. The
+    /// programs are functions placed one after another in one section. Each `(caller, callee)`
+    /// pair in `calls` indexes `programs` and adds a pseudo-call to the callee at the end of
+    /// the caller. Every program ends with an exit, so that one without accesses or calls
+    /// still has an instruction. The programs that no call targets are the ones that the
+    /// object registers, which the linker starts from.
+    ///
+    /// The target BTF holds two structs named `e1000_adapter`, like vmlinux does for the
+    /// e1000 and e1000e drivers. `gotcl_old` is only in the first, at byte 16, and `ptp_delta`
+    /// is only in the second, at byte 32. `missing` is in neither.
+    ///
+    /// Returns the offset each member access ends up with, or `None` if it was poisoned.
+    fn relocate(programs: &[&[&str]], calls: &[(usize, usize)]) -> Vec<Vec<Option<i16>>> {
+        relocate_in_sections(programs, &vec![0; programs.len()], calls, &[], None)
+    }
+
+    /// Adds a relocation of `size` bits at the byte `offset` of section `section_index`,
+    /// against the symbol of the section `target`.
+    fn relocate_to_section(
+        obj: &mut Object,
+        section_index: SectionIndex,
+        offset: u64,
+        size: u8,
+        target: usize,
+    ) {
+        obj.relocations.entry(section_index).or_default().insert(
+            offset,
+            crate::relocation::Relocation {
+                offset,
+                size,
+                symbol_index: target,
+            },
+        );
+        obj.symbol_table.insert(
+            target,
+            Symbol {
+                index: target,
+                section_index: Some(target),
+                name: None,
+                address: 0,
+                size: 0,
+                is_definition: true,
+                kind: SymbolKind::Section,
+                is_weak: false,
+            },
+        );
+    }
+
+    /// Like `relocate`, but puts program `index` in section `sections[index]`, and relocates
+    /// the sections in the order of their indices. A call to a program in another section is
+    /// an `R_BPF_64_32` relocation against the section of the callee, like the one that the
+    /// compiler emits for a call to a function in `.text`. Each `(referrer, target)` pair in
+    /// `references` indexes `programs` and adds, after the calls of the referrer, an
+    /// `ld_imm64` of the address of the target through an `R_BPF_64_64` relocation against the
+    /// section of the target, like the one that the compiler emits for a callback passed to
+    /// `bpf_loop`. The object registers the programs that `entries` lists, or when it is
+    /// `None`, the ones that no call or reference targets.
+    fn relocate_in_sections(
+        programs: &[&[&str]],
+        sections: &[usize],
+        calls: &[(usize, usize)],
+        references: &[(usize, usize)],
+        entries: Option<&[usize]>,
+    ) -> Vec<Vec<Option<i16>>> {
+        let mut local_btf = Btf::new();
+        let u64_name = local_btf.add_string("__u64");
+        let u64_id = local_btf.add_type(BtfType::Int(Int::new(u64_name, 8, IntEncoding::None, 0)));
+        let local_id = add_struct(
+            &mut local_btf,
+            "e1000_adapter",
+            u64_id,
+            &["ptp_delta", "gotcl_old", "missing"],
+        );
+
+        let mut target_btf = Btf::new();
+        let u64_name = target_btf.add_string("long unsigned int");
+        let u64_id = target_btf.add_type(BtfType::Int(Int::new(u64_name, 8, IntEncoding::None, 0)));
+        add_struct(
+            &mut target_btf,
+            "e1000_adapter",
+            u64_id,
+            &["pad0", "pad1", "gotcl_old"],
+        );
+        add_struct(
+            &mut target_btf,
+            "e1000_adapter",
+            u64_id,
+            &["pad0", "pad1", "pad2", "pad3", "ptp_delta"],
+        );
+
+        let mut obj = Object::new(Endianness::default(), CString::new("GPL").unwrap(), None);
+        let section_count = sections.iter().max().map_or(0, |last| last + 1);
+        let section_names = (0..section_count)
+            .map(|section| format!("kprobe{section}"))
+            .collect::<Vec<_>>();
+        // The `bpf_core_relo` records of each section.
+        let mut core_relos = vec![Vec::new(); section_count];
+        // The index of the first instruction of each program in its section: its accesses,
+        // then its calls, then its references of two instructions each, then the exit.
+        let mut starts = Vec::new();
+        let mut instruction_counts = vec![0; section_count];
+        for (index, accesses) in programs.iter().enumerate() {
+            let instruction_count = &mut instruction_counts[sections[index]];
+            starts.push(*instruction_count);
+            *instruction_count += accesses.len()
+                + calls.iter().filter(|(c, _)| *c == index).count()
+                + 2 * references.iter().filter(|(r, _)| *r == index).count()
+                + 1;
+        }
+        let mut section_offsets = Vec::new();
+        for (index, accesses) in programs.iter().enumerate() {
+            let section_index = SectionIndex(sections[index]);
+            let section_offset = starts[index] * size_of::<bpf_insn>();
+            for (insn_index, access) in accesses.iter().enumerate() {
+                core_relos[sections[index]].push([
+                    (section_offset + insn_index * size_of::<bpf_insn>()) as u32,
+                    local_id,
+                    local_btf.add_string(access),
+                    bpf_core_relo_kind::BPF_CORE_FIELD_BYTE_OFFSET,
+                ]);
+            }
+
+            let mut instructions = accesses
+                .iter()
+                .map(|_| bpf_insn {
+                    code: (BPF_LDX | BPF_MEM | BPF_DW) as u8,
+                    _bitfield_1: bpf_insn::new_bitfield_1(0, 0),
+                    off: 0,
+                    imm: 0,
+                })
+                .collect::<Vec<_>>();
+            for (call_index, (_, callee)) in calls
+                .iter()
+                .filter(|(caller, _)| *caller == index)
+                .enumerate()
+            {
+                let call_at = starts[index] + accesses.len() + call_index;
+                let imm = if sections[*callee] == sections[index] {
+                    starts[*callee] as i32 - call_at as i32 - 1
+                } else {
+                    // The linker finds the callee at the address of the section symbol plus
+                    // `(imm + 1) * 8`.
+                    relocate_to_section(
+                        &mut obj,
+                        section_index,
+                        (call_at * size_of::<bpf_insn>()) as u64,
+                        32,
+                        sections[*callee],
+                    );
+                    starts[*callee] as i32 - 1
+                };
+                instructions.push(bpf_insn {
+                    code: (BPF_JMP | BPF_CALL) as u8,
+                    _bitfield_1: bpf_insn::new_bitfield_1(0, BPF_PSEUDO_CALL as u8),
+                    off: 0,
+                    imm,
+                });
+            }
+            let first_reference =
+                starts[index] + accesses.len() + calls.iter().filter(|(c, _)| *c == index).count();
+            for (reference_index, (_, target)) in references
+                .iter()
+                .filter(|(referrer, _)| *referrer == index)
+                .enumerate()
+            {
+                // The linker finds the target at the address of the section symbol plus `imm`.
+                relocate_to_section(
+                    &mut obj,
+                    section_index,
+                    ((first_reference + 2 * reference_index) * size_of::<bpf_insn>()) as u64,
+                    64,
+                    sections[*target],
+                );
+                instructions.push(bpf_insn {
+                    code: (BPF_LD | BPF_IMM | BPF_DW) as u8,
+                    _bitfield_1: bpf_insn::new_bitfield_1(0, BPF_PSEUDO_FUNC as u8),
+                    off: 0,
+                    imm: (starts[*target] * size_of::<bpf_insn>()) as i32,
+                });
+                // The second half of the `ld_imm64`.
+                instructions.push(bpf_insn {
+                    code: 0,
+                    _bitfield_1: bpf_insn::new_bitfield_1(0, 0),
+                    off: 0,
+                    imm: 0,
+                });
+            }
+            instructions.push(bpf_insn {
+                code: (BPF_JMP | BPF_EXIT) as u8,
+                _bitfield_1: bpf_insn::new_bitfield_1(0, 0),
+                off: 0,
+                imm: 0,
+            });
+
+            section_offsets.push(section_offset);
+            obj.functions.insert(
+                (section_index.0, section_offset as u64),
+                Function {
+                    address: section_offset as u64,
+                    name: format!("prog{index}"),
+                    section_index,
+                    section_offset,
+                    instructions,
+                    func_info: FuncSecInfo::default(),
+                    line_info: LineSecInfo::default(),
+                    func_info_rec_size: 0,
+                    line_info_rec_size: 0,
+                },
+            );
+        }
+        let entries = entries.map_or_else(
+            || {
+                (0..programs.len())
+                    .filter(|index| {
+                        !calls
+                            .iter()
+                            .chain(references)
+                            .any(|(_, target)| target == index)
+                    })
+                    .collect()
+            },
+            <[usize]>::to_vec,
+        );
+        for index in entries {
+            obj.programs.insert(
+                format!("prog{index}"),
+                Program {
+                    license: CString::new("GPL").unwrap(),
+                    kernel_version: None,
+                    section: ProgramSection::KProbe,
+                    section_index: sections[index],
+                    address: section_offsets[index] as u64,
+                },
+            );
+        }
+
+        // The `.BTF.ext` core relocation info: the record size, then for each section its name,
+        // the number of `bpf_core_relo` records and the records.
+        let mut core_relo_info = vec![size_of::<bpf_core_relo>() as u32];
+        for (section, (name, relos)) in section_names.iter().zip(&core_relos).enumerate() {
+            core_relo_info.extend([local_btf.add_string(name), relos.len() as u32]);
+            core_relo_info.extend(relos.iter().flatten());
+            obj.section_infos
+                .insert(name.clone(), (SectionIndex(section), 0));
+        }
+
+        let header = btf_ext_header {
+            magic: 0xeb9f,
+            version: 1,
+            flags: 0,
+            hdr_len: size_of::<btf_ext_header>() as u32,
+            func_info_off: 0,
+            func_info_len: 0,
+            line_info_off: 0,
+            line_info_len: 0,
+            core_relo_off: 0,
+            core_relo_len: (core_relo_info.len() * size_of::<u32>()) as u32,
+        };
+        // Safety: `btf_ext_header` is POD.
+        let mut btf_ext_data = unsafe { bytes_of(&header) }.to_vec();
+        btf_ext_data.extend(core_relo_info.iter().flat_map(|word| word.to_ne_bytes()));
+        obj.btf_ext =
+            Some(BtfExt::parse(&btf_ext_data, Endianness::default(), &local_btf).unwrap());
+        obj.btf = Some(local_btf);
+
+        obj.relocate_btf(&target_btf).unwrap();
+
+        programs
+            .iter()
+            .zip(sections)
+            .zip(section_offsets)
+            .map(|((accesses, section), section_offset)| {
+                obj.functions[&(*section, section_offset as u64)]
+                    .instructions
+                    .iter()
+                    .take(accesses.len())
+                    .map(|ins| {
+                        let poisoned =
+                            ins.code == (BPF_JMP | BPF_CALL) as u8 && ins.imm == 0xBAD2310;
+                        (!poisoned).then_some(ins.off)
+                    })
+                    .collect()
+            })
+            .collect()
+    }
+
+    // A program only runs against one target layout, so once a relocation has picked the
+    // struct holding one member, the ones that exist only in the other struct are poisoned.
+    #[rstest]
+    #[case::classic_first(&[GOTCL_OLD, PTP_DELTA], &[Some(16), None])]
+    #[case::extended_first(&[PTP_DELTA, GOTCL_OLD], &[Some(32), None])]
+    fn relocations_of_a_type_share_candidates(
+        #[case] accesses: &[&str],
+        #[case] expected: &[Option<i16>],
+    ) {
+        assert_eq!(relocate(&[accesses], &[]), [expected]);
+    }
+
+    // A relocation that no candidate matches doesn't narrow the candidates.
+    #[test]
+    fn unmatched_relocation_keeps_candidates() {
+        assert_eq!(
+            relocate(&[&[MISSING, GOTCL_OLD, PTP_DELTA]], &[]),
+            [[None, Some(16), None]],
+        );
+    }
+
+    // Every program is relocated whether or not it gets loaded, so the relocations of one
+    // program don't narrow the candidates of another, even in the same section.
+    #[test]
+    fn relocations_in_different_programs_keep_candidates() {
+        assert_eq!(
+            relocate(&[&[GOTCL_OLD], &[PTP_DELTA]], &[]),
+            [vec![Some(16)], vec![Some(32)]],
+        );
+    }
+
+    // A callee is copied into its callers when the programs are linked, so a function and the
+    // functions it calls run against the same layout: the relocations of one narrow the
+    // candidates of the others, whichever is relocated first.
+    #[test]
+    fn relocations_in_called_functions_share_candidates() {
+        assert_eq!(
+            relocate(&[&[GOTCL_OLD], &[PTP_DELTA]], &[(0, 1)]),
+            [vec![Some(16)], vec![None]],
+        );
+    }
+
+    #[test]
+    fn relocations_in_called_functions_share_candidates_callee_first() {
+        assert_eq!(
+            relocate(&[&[PTP_DELTA], &[GOTCL_OLD]], &[(1, 0)]),
+            [vec![Some(32)], vec![None]],
+        );
+    }
+
+    // The functions of a chain of calls share candidates, not only the neighbors.
+    #[test]
+    fn relocations_in_a_chain_of_calls_share_candidates() {
+        assert_eq!(
+            relocate(&[&[GOTCL_OLD], &[MISSING], &[PTP_DELTA]], &[(0, 1), (1, 2)]),
+            [vec![Some(16)], vec![None], vec![None]],
+        );
+    }
+
+    // The subprogram is relocated once and copied into both programs, so the programs that
+    // call it run against the same layout too.
+    #[test]
+    fn relocations_in_programs_sharing_a_subprogram_share_candidates() {
+        assert_eq!(
+            relocate(&[&[GOTCL_OLD], &[PTP_DELTA], &[MISSING]], &[(0, 2), (1, 2)]),
+            [vec![Some(16)], vec![None], vec![None]],
+        );
+    }
+
+    // A helper that has no relocation of the type doesn't join the programs that call it, as
+    // each of them is linked on its own.
+    #[test]
+    fn relocations_in_programs_sharing_an_unrelated_subprogram_keep_candidates() {
+        assert_eq!(
+            relocate(&[&[GOTCL_OLD], &[PTP_DELTA], &[]], &[(0, 2), (1, 2)]),
+            [vec![Some(16)], vec![Some(32)], vec![]],
+        );
+    }
+
+    // The functions that carry the relocations share candidates even when a function without
+    // one sits between them.
+    #[test]
+    fn relocations_in_calls_through_an_unrelated_subprogram_share_candidates() {
+        assert_eq!(
+            relocate(&[&[GOTCL_OLD], &[], &[PTP_DELTA]], &[(0, 1), (1, 2)]),
+            [vec![Some(16)], vec![], vec![None]],
+        );
+    }
+
+    // A call that a relocation resolves to a function in another section links the callee into
+    // the caller as well, whichever section is relocated first.
+    #[test]
+    fn relocations_in_functions_called_across_sections_share_candidates() {
+        assert_eq!(
+            relocate_in_sections(&[&[GOTCL_OLD], &[PTP_DELTA]], &[0, 1], &[(0, 1)], &[], None),
+            [vec![Some(16)], vec![None]],
+        );
+    }
+
+    #[test]
+    fn relocations_in_functions_called_across_sections_share_candidates_callee_first() {
+        assert_eq!(
+            relocate_in_sections(&[&[GOTCL_OLD], &[PTP_DELTA]], &[1, 0], &[(0, 1)], &[], None),
+            [vec![None], vec![Some(32)]],
+        );
+    }
+
+    // The address of a function that a program takes, like a callback passed to `bpf_loop`,
+    // links the function into the program as well, whichever is relocated first.
+    #[test]
+    fn relocations_in_referenced_functions_share_candidates() {
+        assert_eq!(
+            relocate_in_sections(&[&[GOTCL_OLD], &[PTP_DELTA]], &[0, 0], &[], &[(0, 1)], None),
+            [vec![Some(16)], vec![None]],
+        );
+    }
+
+    #[test]
+    fn relocations_in_referenced_functions_share_candidates_callee_first() {
+        assert_eq!(
+            relocate_in_sections(&[&[PTP_DELTA], &[GOTCL_OLD]], &[0, 0], &[], &[(1, 0)], None),
+            [vec![Some(32)], vec![None]],
+        );
+    }
+
+    // The linker only links the functions that a program reaches, so a function that no
+    // program reaches doesn't join the functions it calls, even if it calls both.
+    #[test]
+    fn relocations_in_functions_no_program_reaches_keep_candidates() {
+        assert_eq!(
+            relocate_in_sections(
+                &[&[GOTCL_OLD], &[PTP_DELTA], &[], &[], &[]],
+                &[0; 5],
+                &[(2, 0), (2, 1), (3, 0), (4, 1)],
+                &[],
+                Some(&[3, 4]),
+            ),
+            [vec![Some(16)], vec![Some(32)], vec![], vec![], vec![]],
+        );
+    }
+
+    // The functions of a section can overlap. A relocation applies to the function of the
+    // previous relocation if that one holds it too, so the candidate groups have to take the
+    // same function, not the first one that holds it. `f1` is a program with relocations of
+    // two local types, so the groups of the types must stay apart: a group that joined them
+    // would match `e1000_adapter` against the candidates of `other_struct`.
+    #[test]
+    fn relocations_in_overlapping_functions_resolve() {
+        let mut local_btf = Btf::new();
+        let u64_name = local_btf.add_string("__u64");
+        let u64_id = local_btf.add_type(BtfType::Int(Int::new(u64_name, 8, IntEncoding::None, 0)));
+        let adapter = add_struct(
+            &mut local_btf,
+            "e1000_adapter",
+            u64_id,
+            &["ptp_delta", "gotcl_old"],
+        );
+        let other = add_struct(&mut local_btf, "other_struct", u64_id, &["x"]);
+
+        let mut target_btf = Btf::new();
+        let u64_name = target_btf.add_string("long unsigned int");
+        let u64_id = target_btf.add_type(BtfType::Int(Int::new(u64_name, 8, IntEncoding::None, 0)));
+        add_struct(
+            &mut target_btf,
+            "e1000_adapter",
+            u64_id,
+            &["pad0", "pad1", "gotcl_old"],
+        );
+        add_struct(
+            &mut target_btf,
+            "other_struct",
+            u64_id,
+            &["pad0", "pad1", "pad2", "x"],
+        );
+
+        // `f0` holds the instructions 0 to 3 of the section and `f1` the instructions 2 to 5.
+        let insn_size = size_of::<bpf_insn>();
+        let mut obj = Object::new(Endianness::default(), CString::new("GPL").unwrap(), None);
+        for (start, name) in [(0, "f0"), (2, "f1")] {
+            let section_offset = start * insn_size;
+            obj.functions.insert(
+                (0, section_offset as u64),
+                Function {
+                    address: section_offset as u64,
+                    name: name.into(),
+                    section_index: SectionIndex(0),
+                    section_offset,
+                    instructions: vec![
+                        bpf_insn {
+                            code: (BPF_LDX | BPF_MEM | BPF_DW) as u8,
+                            _bitfield_1: bpf_insn::new_bitfield_1(0, 0),
+                            off: 0,
+                            imm: 0,
+                        };
+                        4
+                    ],
+                    func_info: FuncSecInfo::default(),
+                    line_info: LineSecInfo::default(),
+                    func_info_rec_size: 0,
+                    line_info_rec_size: 0,
+                },
+            );
+        }
+
+        obj.programs.insert(
+            "f1".into(),
+            Program {
+                license: CString::new("GPL").unwrap(),
+                kernel_version: None,
+                section: ProgramSection::KProbe,
+                section_index: 0,
+                address: (2 * insn_size) as u64,
+            },
+        );
+
+        // The first relocation is in `f1` only. The second is in both, so it follows the first.
+        let relos = [
+            [
+                (5 * insn_size) as u32,
+                other,
+                local_btf.add_string("0:0"),
+                bpf_core_relo_kind::BPF_CORE_FIELD_BYTE_OFFSET,
+            ],
+            [
+                (3 * insn_size) as u32,
+                adapter,
+                local_btf.add_string("0:1"),
+                bpf_core_relo_kind::BPF_CORE_FIELD_BYTE_OFFSET,
+            ],
+        ];
+        let mut core_relo_info = vec![size_of::<bpf_core_relo>() as u32];
+        core_relo_info.extend([local_btf.add_string("kprobe0"), relos.len() as u32]);
+        core_relo_info.extend(relos.iter().flatten());
+        obj.section_infos
+            .insert("kprobe0".into(), (SectionIndex(0), 0));
+        let header = btf_ext_header {
+            magic: 0xeb9f,
+            version: 1,
+            flags: 0,
+            hdr_len: size_of::<btf_ext_header>() as u32,
+            func_info_off: 0,
+            func_info_len: 0,
+            line_info_off: 0,
+            line_info_len: 0,
+            core_relo_off: 0,
+            core_relo_len: (core_relo_info.len() * size_of::<u32>()) as u32,
+        };
+        // Safety: `btf_ext_header` is POD.
+        let mut btf_ext_data = unsafe { bytes_of(&header) }.to_vec();
+        btf_ext_data.extend(core_relo_info.iter().flat_map(|word| word.to_ne_bytes()));
+        obj.btf_ext =
+            Some(BtfExt::parse(&btf_ext_data, Endianness::default(), &local_btf).unwrap());
+        obj.btf = Some(local_btf);
+
+        obj.relocate_btf(&target_btf).unwrap();
+
+        // Both relocations patch `f1`: the one on `other_struct::x` at its instruction 3 and
+        // the one on `e1000_adapter::gotcl_old` at its instruction 1, to their byte offsets in
+        // the target structs, which are 3 * 8 and 2 * 8 as `add_struct` places 8 bytes per
+        // member. `f0` stays as it was.
+        let offsets = |start: usize| {
+            obj.functions[&(0, (start * insn_size) as u64)]
+                .instructions
+                .iter()
+                .map(|ins| ins.off)
+                .collect::<Vec<_>>()
+        };
+        assert_eq!(offsets(0), [0; 4]);
+        assert_eq!(offsets(2), [0, 16, 0, 24]);
     }
 }
