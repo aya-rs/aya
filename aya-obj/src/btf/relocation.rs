@@ -13,8 +13,8 @@ use object::SectionIndex;
 use crate::{
     Function, Object,
     btf::{
-        Array, Btf, BtfError, BtfKind, BtfMember, BtfType, IntEncoding, MAX_SPEC_LEN, Struct,
-        Union, fields_are_compatible, types_are_compatible,
+        Array, Btf, BtfError, BtfExt, BtfKind, BtfMember, BtfType, IntEncoding, MAX_SPEC_LEN,
+        Struct, Union, fields_are_compatible, types_are_compatible,
     },
     generated::{
         BPF_ALU, BPF_ALU64, BPF_B, BPF_CALL, BPF_DW, BPF_H, BPF_JMP, BPF_K, BPF_LD, BPF_LDX,
@@ -224,7 +224,7 @@ impl Object {
             return Ok(());
         };
 
-        let mut candidates_cache = HashMap::<u32, Vec<Candidate<'_>>>::new();
+        let mut candidates_cache = prefetch_candidates(btf_ext, local_btf, target_btf)?;
         for (sec_name_off, relos) in btf_ext.relocations() {
             let section_name =
                 local_btf
@@ -418,47 +418,130 @@ fn is_flex_array(btf: &Btf, array_len: u32, parent: &Accessor) -> Result<bool, B
     })
 }
 
-fn find_candidates<'target>(
-    local_ty: &BtfType,
-    local_name: &str,
-    target_btf: &'target Btf,
-) -> Result<Vec<Candidate<'target>>, BtfError> {
-    let mut candidates = Vec::new();
-    let local_name = flavorless_name(local_name);
-    let local_kind = local_ty.kind();
-
+/// What a local type matches in the target BTF: its flavorless name and kind.
+struct CandidateQuery {
+    name: String,
+    kind: BtfKind,
     // When we downgrade an ENUM64 to a UNION we still want to match the enum
     // definition recorded in the target BTF. If the sanitized type has a
     // fallback, allow ENUM64 candidates through the kind check.
     //
     // Note that we do not sanitize the target BTF so the kinds will not
     // naturally match!
-    let allow_enum_match = matches!(
-        local_ty,
-        BtfType::Union(Union {
-            enum64_fallback: Some(_),
-            ..
-        })
-    );
+    allow_enum_match: bool,
+}
 
-    for (type_id, ty) in target_btf.types().enumerate().filter(|(_, ty)| {
-        let candidate_kind = ty.kind();
-        candidate_kind == local_kind || (allow_enum_match && candidate_kind == BtfKind::Enum64)
-    }) {
-        let name = &*target_btf.type_name(ty)?;
-        if local_name != flavorless_name(name) {
-            continue;
+impl CandidateQuery {
+    fn new(local_ty: &BtfType, local_name: &str) -> Self {
+        Self {
+            name: flavorless_name(local_name).to_owned(),
+            kind: local_ty.kind(),
+            allow_enum_match: matches!(
+                local_ty,
+                BtfType::Union(Union {
+                    enum64_fallback: Some(_),
+                    ..
+                })
+            ),
         }
+    }
 
-        candidates.push(Candidate {
+    fn matches_kind(&self, candidate_kind: BtfKind) -> bool {
+        candidate_kind == self.kind || (self.allow_enum_match && candidate_kind == BtfKind::Enum64)
+    }
+
+    /// Returns the candidate if `ty`, of kind `candidate_kind`, matches. A
+    /// flavorless match starts with the local name, so most types are rejected
+    /// before their name is decoded.
+    fn candidate<'target>(
+        &self,
+        target_btf: &'target Btf,
+        type_id: usize,
+        ty: &'target BtfType,
+        candidate_kind: BtfKind,
+    ) -> Result<Option<Candidate<'target>>, BtfError> {
+        if !self.matches_kind(candidate_kind)
+            || !target_btf.type_name_starts_with(ty, &self.name)?
+        {
+            return Ok(None);
+        }
+        let name = &*target_btf.type_name(ty)?;
+        if self.name != flavorless_name(name) {
+            return Ok(None);
+        }
+        Ok(Some(Candidate {
             name: name.to_owned(),
             btf: target_btf,
             _ty: ty,
             type_id: type_id as u32,
-        });
+        }))
+    }
+}
+
+fn find_candidates<'target>(
+    local_ty: &BtfType,
+    local_name: &str,
+    target_btf: &'target Btf,
+) -> Result<Vec<Candidate<'target>>, BtfError> {
+    let query = CandidateQuery::new(local_ty, local_name);
+    let mut candidates = Vec::new();
+    for (type_id, ty) in target_btf.types().enumerate() {
+        if let Some(candidate) = query.candidate(target_btf, type_id, ty, ty.kind())? {
+            candidates.push(candidate);
+        }
+    }
+    Ok(candidates)
+}
+
+/// Finds the candidates of every local type the relocations need, in a single
+/// pass over the target types. Target BTF (vmlinux) has well over 100k types,
+/// so scanning it once rather than once per local type is most of the cost of
+/// relocating a program.
+///
+/// Local types that cannot be resolved here are left out: the relocation loop
+/// looks them up again and reports the error with its section.
+fn prefetch_candidates<'target>(
+    btf_ext: &BtfExt,
+    local_btf: &Btf,
+    target_btf: &'target Btf,
+) -> Result<HashMap<u32, Vec<Candidate<'target>>>, BtfRelocationError> {
+    let mut queries = Vec::new();
+    for (_, relos) in btf_ext.relocations() {
+        for rel in relos {
+            if matches!(rel.kind, RelocationKind::TypeIdLocal)
+                || queries.iter().any(|(type_id, _)| *type_id == rel.type_id)
+            {
+                continue;
+            }
+            let Ok(local_ty) = local_btf.type_by_id(rel.type_id) else {
+                continue;
+            };
+            let Ok(local_name) = local_btf.type_name(local_ty) else {
+                continue;
+            };
+            queries.push((rel.type_id, CandidateQuery::new(local_ty, &local_name)));
+        }
     }
 
-    Ok(candidates)
+    let mut cache: HashMap<u32, Vec<Candidate<'target>>> = queries
+        .iter()
+        .map(|(type_id, _)| (*type_id, Vec::new()))
+        .collect();
+    for (target_id, ty) in target_btf.types().enumerate() {
+        let kind = ty.kind();
+        for (type_id, query) in &queries {
+            let found = query
+                .candidate(target_btf, target_id, ty, kind)
+                .map_err(|error| BtfRelocationError {
+                    section: String::from("candidate search"),
+                    error: RelocationError::BtfError(error),
+                })?;
+            if let Some(candidate) = found {
+                cache.entry(*type_id).or_default().push(candidate);
+            }
+        }
+    }
+    Ok(cache)
 }
 
 fn match_candidate<'target>(
@@ -1350,5 +1433,92 @@ impl ComputedRelocation {
             size: 0,
             type_id: None,
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+
+    /// Target BTF with an empty struct per name, then an empty union per name.
+    fn target(structs: &[&str], unions: &[&str]) -> Btf {
+        let mut btf = Btf::new();
+        for name in structs {
+            let name_offset = btf.add_string(name);
+            btf.add_type(BtfType::Struct(Struct::new(name_offset, Vec::new(), 8)));
+        }
+        for name in unions {
+            let name_offset = btf.add_string(name);
+            btf.add_type(BtfType::Union(Union::new(name_offset, 8, Vec::new(), None)));
+        }
+        btf
+    }
+
+    fn candidate_names(local_ty: &BtfType, local_name: &str, target_btf: &Btf) -> Vec<String> {
+        find_candidates(local_ty, local_name, target_btf)
+            .unwrap()
+            .into_iter()
+            .map(|candidate| candidate.name)
+            .collect()
+    }
+
+    fn local_struct() -> BtfType {
+        BtfType::Struct(Struct::new(0, Vec::new(), 8))
+    }
+
+    #[test]
+    fn candidates_match_flavors_but_not_longer_names() {
+        let btf = target(
+            &[
+                "task_structx",
+                "task_struct",
+                "task_struct_",
+                "task_struct___old",
+                "file",
+            ],
+            &[],
+        );
+        assert_eq!(
+            candidate_names(&local_struct(), "task_struct___mine", &btf),
+            ["task_struct", "task_struct___old"]
+        );
+    }
+
+    #[test]
+    fn candidates_split_at_the_first_flavor_separator() {
+        // "foo____x" is "foo" flavored "_x", not "foo_" flavored "x".
+        let btf = target(&["foo_", "foo____x", "foo___"], &[]);
+        assert_eq!(candidate_names(&local_struct(), "foo_", &btf), ["foo_"]);
+        assert_eq!(
+            candidate_names(&local_struct(), "foo", &btf),
+            ["foo____x", "foo___"]
+        );
+    }
+
+    #[test]
+    fn candidates_have_the_local_kind() {
+        // Type 1 is the struct, type 2 the union.
+        let btf = target(&["thing"], &["thing"]);
+        let local_union = BtfType::Union(Union::new(0, 8, Vec::new(), None));
+        let ids: Vec<u32> = find_candidates(&local_union, "thing", &btf)
+            .unwrap()
+            .iter()
+            .map(|candidate| candidate.type_id)
+            .collect();
+        assert_eq!(ids, [2]);
+    }
+
+    #[test]
+    fn anonymous_local_types_match_anonymous_targets() {
+        let btf = target(&["", "named", ""], &[]);
+        assert_eq!(candidate_names(&local_struct(), "", &btf), ["", ""]);
+    }
+
+    #[test]
+    fn invalid_name_offsets_are_errors() {
+        let mut btf = target(&["ok"], &[]);
+        btf.add_type(BtfType::Struct(Struct::new(u32::MAX, Vec::new(), 8)));
+        find_candidates(&local_struct(), "ok", &btf).unwrap_err();
     }
 }
