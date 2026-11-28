@@ -441,10 +441,16 @@ fn find_candidates<'target>(
         })
     );
 
-    for (type_id, ty) in target_btf.types().enumerate().filter(|(_, ty)| {
-        let candidate_kind = ty.kind();
-        candidate_kind == local_kind || (allow_enum_match && candidate_kind == BtfKind::Enum64)
-    }) {
+    // Every candidate's name starts with `local_name`, so on name-sorted BTF (Linux 7.0+) only
+    // that range of types is visited. The flavor check below still applies: the range also holds
+    // names like `local_name2` or `local_name_x`.
+    for (type_id, ty) in target_btf
+        .types_with_name_prefix(local_name)
+        .filter(|(_, ty)| {
+            let candidate_kind = ty.kind();
+            candidate_kind == local_kind || (allow_enum_match && candidate_kind == BtfKind::Enum64)
+        })
+    {
         let name = &*target_btf.type_name(ty)?;
         if local_name != flavorless_name(name) {
             continue;
@@ -454,7 +460,7 @@ fn find_candidates<'target>(
             name: name.to_owned(),
             btf: target_btf,
             _ty: ty,
-            type_id: type_id as u32,
+            type_id,
         });
     }
 
