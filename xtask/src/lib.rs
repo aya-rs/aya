@@ -3,6 +3,7 @@ use std::{env, ffi::OsString, path::Path, process::Command};
 use anyhow::{Context as _, Result, bail};
 
 pub const AYA_BUILD_INTEGRATION_BPF: &str = "AYA_BUILD_INTEGRATION_BPF";
+pub const IPROUTE2_DIR: &str = "xtask/iproute2";
 pub const LIBBPF_DIR: &str = "xtask/libbpf";
 
 pub fn exec(cmd: &mut Command) -> Result<()> {
