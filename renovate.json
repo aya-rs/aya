@@ -1,0 +1,39 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["schedule:weekly"],
+  "enabledManagers": ["bazel-module", "cargo", "github-actions"],
+  "separateMajorMinor": false,
+  "packageRules": [
+    {
+      "description": [
+        "Mend enabled bazelModDeps for aya-rs, so Renovate refreshes MODULE.bazel.lock when it updates a Bazel dependency.",
+        "https://github.com/renovatebot/renovate/discussions/47308#discussioncomment-19198981"
+      ],
+      "matchManagers": ["bazel-module"],
+      "groupName": "bazel-modules"
+    },
+    {
+      "description": "Keep pahole synchronized with manual probes until aya-rs/aya#1821 removes them.",
+      "matchManagers": ["bazel-module"],
+      "matchPackageNames": ["pahole"],
+      "enabled": false
+    },
+    {
+      "matchManagers": ["cargo"],
+      "minimumReleaseAge": "3 days",
+      "groupName": "cargo-crates"
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "extends": ["schedule:monthly"],
+      "minimumReleaseAge": "3 days",
+      "groupName": "github-actions"
+    },
+    {
+      "description": "Keep runner image selection explicit, as with Dependabot.",
+      "matchManagers": ["github-actions"],
+      "matchDepTypes": ["github-runner"],
+      "enabled": false
+    }
+  ]
+}
