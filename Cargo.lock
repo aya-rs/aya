@@ -1987,6 +1987,7 @@ dependencies = [
  "anyhow",
  "ar",
  "aya-tool",
+ "bindgen",
  "cargo_metadata",
  "clap",
  "dialoguer",

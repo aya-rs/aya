@@ -29,6 +29,19 @@ pub struct bpf_core_relo {
     pub access_str_off: __u32,
     pub kind: bpf_core_relo_kind::Type,
 }
+#[allow(clippy::unnecessary_operation, clippy::identity_op)]
+const _: () = {
+    ["Size of bpf_core_relo"][::core::mem::size_of::<bpf_core_relo>() - 16usize];
+    ["Alignment of bpf_core_relo"][::core::mem::align_of::<bpf_core_relo>() - 4usize];
+    ["Offset of field: bpf_core_relo::insn_off"]
+        [::core::mem::offset_of!(bpf_core_relo, insn_off) - 0usize];
+    ["Offset of field: bpf_core_relo::type_id"]
+        [::core::mem::offset_of!(bpf_core_relo, type_id) - 4usize];
+    ["Offset of field: bpf_core_relo::access_str_off"]
+        [::core::mem::offset_of!(bpf_core_relo, access_str_off) - 8usize];
+    ["Offset of field: bpf_core_relo::kind"]
+        [::core::mem::offset_of!(bpf_core_relo, kind) - 12usize];
+};
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct btf_ext_header {
@@ -43,3 +56,28 @@ pub struct btf_ext_header {
     pub core_relo_off: __u32,
     pub core_relo_len: __u32,
 }
+#[allow(clippy::unnecessary_operation, clippy::identity_op)]
+const _: () = {
+    ["Size of btf_ext_header"][::core::mem::size_of::<btf_ext_header>() - 32usize];
+    ["Alignment of btf_ext_header"][::core::mem::align_of::<btf_ext_header>() - 4usize];
+    ["Offset of field: btf_ext_header::magic"]
+        [::core::mem::offset_of!(btf_ext_header, magic) - 0usize];
+    ["Offset of field: btf_ext_header::version"]
+        [::core::mem::offset_of!(btf_ext_header, version) - 2usize];
+    ["Offset of field: btf_ext_header::flags"]
+        [::core::mem::offset_of!(btf_ext_header, flags) - 3usize];
+    ["Offset of field: btf_ext_header::hdr_len"]
+        [::core::mem::offset_of!(btf_ext_header, hdr_len) - 4usize];
+    ["Offset of field: btf_ext_header::func_info_off"]
+        [::core::mem::offset_of!(btf_ext_header, func_info_off) - 8usize];
+    ["Offset of field: btf_ext_header::func_info_len"]
+        [::core::mem::offset_of!(btf_ext_header, func_info_len) - 12usize];
+    ["Offset of field: btf_ext_header::line_info_off"]
+        [::core::mem::offset_of!(btf_ext_header, line_info_off) - 16usize];
+    ["Offset of field: btf_ext_header::line_info_len"]
+        [::core::mem::offset_of!(btf_ext_header, line_info_len) - 20usize];
+    ["Offset of field: btf_ext_header::core_relo_off"]
+        [::core::mem::offset_of!(btf_ext_header, core_relo_off) - 24usize];
+    ["Offset of field: btf_ext_header::core_relo_len"]
+        [::core::mem::offset_of!(btf_ext_header, core_relo_len) - 28usize];
+};
