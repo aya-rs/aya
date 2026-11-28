@@ -170,8 +170,22 @@ impl KernelVersion {
         // terminated by a null byte ('\0').
         let s = unsafe { CStr::from_ptr(info.version.as_ptr()) };
         let s = s.to_str()?;
+        Self::parse_debian_kernel_version(s)
+    }
+
+    fn parse_debian_kernel_version(s: &str) -> Result<Option<Self>, CurrentKernelVersionError> {
         let Some((_prefix, kernel_version_string)) = s.split_once("Debian ") else {
             return Ok(None);
+        };
+        // The package version may start with an epoch, as on Raspberry Pi OS
+        // ("Debian 1:6.18.50-1+rpt1"): the kernel version follows the colon.
+        let kernel_version_string = match kernel_version_string.split_once(':') {
+            Some((epoch, rest))
+                if !epoch.is_empty() && epoch.bytes().all(|b| b.is_ascii_digit()) =>
+            {
+                rest
+            }
+            _ => kernel_version_string,
         };
         Self::parse_kernel_version_string(kernel_version_string).map(Some)
     }
@@ -545,6 +559,29 @@ mod tests {
         assert_matches!(KernelVersion::parse_kernel_version_string("6.3.11-200.fc38.x86_64"), Ok(kernel_version) => {
             assert_eq!(kernel_version, KernelVersion::new(6, 3, 11))
         });
+        // uname -v on Debian 12.
+        assert_matches!(KernelVersion::parse_debian_kernel_version("#1 SMP PREEMPT_DYNAMIC Debian 6.1.187-1 (2026-09-07)"), Ok(Some(kernel_version)) => {
+            assert_eq!(kernel_version, KernelVersion::new(6, 1, 187))
+        });
+        // uname -v on Debian 13 with a backports kernel.
+        assert_matches!(KernelVersion::parse_debian_kernel_version("#1 SMP PREEMPT_DYNAMIC Debian 7.1.13-1~bpo13+1 (2026-09-15)"), Ok(Some(kernel_version)) => {
+            assert_eq!(kernel_version, KernelVersion::new(7, 1, 13))
+        });
+        // uname -v on Raspberry Pi OS, whose kernel package version has an epoch.
+        assert_matches!(KernelVersion::parse_debian_kernel_version("#1 SMP PREEMPT Debian 1:6.18.50-1+rpt1 (2026-09-11)"), Ok(Some(kernel_version)) => {
+            assert_eq!(kernel_version, KernelVersion::new(6, 18, 50))
+        });
+        // A colon after the version, as in a time, is not an epoch.
+        assert_matches!(KernelVersion::parse_debian_kernel_version("#1 SMP Debian 6.1.187-1 Wed Sep  2 14:29:37 UTC 2026"), Ok(Some(kernel_version)) => {
+            assert_eq!(kernel_version, KernelVersion::new(6, 1, 187))
+        });
+        // uname -v on Ubuntu 26.04: not a Debian version string.
+        assert_matches!(
+            KernelVersion::parse_debian_kernel_version(
+                "#34-Ubuntu SMP PREEMPT_DYNAMIC Wed Sep  2 14:29:37 UTC 2026"
+            ),
+            Ok(None)
+        );
     }
 
     #[rstest]
