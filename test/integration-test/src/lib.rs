@@ -47,6 +47,8 @@ bpf_file!(
     POINTER_RELOC_BTF => "pointer_reloc.bpf.target.o",
     STRUCT_FLAVORS_RELOC_BPF => "struct_flavors_reloc.bpf.o",
     STRUCT_FLAVORS_RELOC_BTF => "struct_flavors_reloc.bpf.target.o",
+    TYPE_MATCHES_RELOC_BPF => "type_matches_reloc.bpf.o",
+    TYPE_MATCHES_RELOC_BTF => "type_matches_reloc.bpf.target.o",
 
     TEXT_64_64_RELOC => "text_64_64_reloc.o",
     VARIABLES_RELOC => "variables_reloc.bpf.o",

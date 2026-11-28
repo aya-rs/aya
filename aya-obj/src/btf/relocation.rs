@@ -14,7 +14,7 @@ use crate::{
     Function, Object,
     btf::{
         Array, Btf, BtfError, BtfKind, BtfMember, BtfType, IntEncoding, MAX_SPEC_LEN, Struct,
-        Union, fields_are_compatible, types_are_compatible,
+        Union, fields_are_compatible, types_are_compatible, types_match,
     },
     generated::{
         BPF_ALU, BPF_ALU64, BPF_B, BPF_CALL, BPF_DW, BPF_H, BPF_JMP, BPF_K, BPF_LD, BPF_LDX,
@@ -164,6 +164,7 @@ enum RelocationKind {
     TypeIdTarget = bpf_core_relo_kind::BPF_CORE_TYPE_ID_TARGET,
     TypeExists = bpf_core_relo_kind::BPF_CORE_TYPE_EXISTS,
     TypeSize = bpf_core_relo_kind::BPF_CORE_TYPE_SIZE,
+    TypeMatches = bpf_core_relo_kind::BPF_CORE_TYPE_MATCHES,
     EnumVariantExists = bpf_core_relo_kind::BPF_CORE_ENUMVAL_EXISTS,
     EnumVariantValue = bpf_core_relo_kind::BPF_CORE_ENUMVAL_VALUE,
 }
@@ -183,6 +184,7 @@ impl TryFrom<u32> for RelocationKind {
             bpf_core_relo_kind::BPF_CORE_TYPE_ID_TARGET => Self::TypeIdTarget,
             bpf_core_relo_kind::BPF_CORE_TYPE_EXISTS => Self::TypeExists,
             bpf_core_relo_kind::BPF_CORE_TYPE_SIZE => Self::TypeSize,
+            bpf_core_relo_kind::BPF_CORE_TYPE_MATCHES => Self::TypeMatches,
             bpf_core_relo_kind::BPF_CORE_ENUMVAL_EXISTS => Self::EnumVariantExists,
             bpf_core_relo_kind::BPF_CORE_ENUMVAL_VALUE => Self::EnumVariantValue,
             kind => return Err(BtfError::InvalidRelocationKind { kind }),
@@ -429,7 +431,7 @@ fn find_candidates<'target>(
 
     // When we downgrade an ENUM64 to a UNION we still want to match the enum
     // definition recorded in the target BTF. If the sanitized type has a
-    // fallback, allow ENUM64 candidates through the kind check.
+    // fallback, allow enum candidates through the kind check.
     //
     // Note that we do not sanitize the target BTF so the kinds will not
     // naturally match!
@@ -440,10 +442,15 @@ fn find_candidates<'target>(
             ..
         })
     );
+    // As in libbpf, ENUM and ENUM64 are compatible kinds: the same enum is encoded
+    // either way depending on its values and on the BTF generator. Kernels before 6.0
+    // and pahole before v1.24 have no ENUM64, and encode 64-bit enums as 8-byte ENUMs.
+    let is_enum = |kind| matches!(kind, BtfKind::Enum | BtfKind::Enum64);
+    let local_is_enum = allow_enum_match || is_enum(local_kind);
 
     for (type_id, ty) in target_btf.types().enumerate().filter(|(_, ty)| {
         let candidate_kind = ty.kind();
-        candidate_kind == local_kind || (allow_enum_match && candidate_kind == BtfKind::Enum64)
+        candidate_kind == local_kind || (local_is_enum && is_enum(candidate_kind))
     }) {
         let name = &*target_btf.type_name(ty)?;
         if local_name != flavorless_name(name) {
@@ -480,6 +487,18 @@ fn match_candidate<'target>(
         | RelocationKind::TypeExists
         | RelocationKind::TypeSize => {
             if types_are_compatible(
+                local_spec.btf,
+                local_spec.root_type_id,
+                candidate.btf,
+                candidate.type_id,
+            )? {
+                Ok(Some(target_spec))
+            } else {
+                Ok(None)
+            }
+        }
+        RelocationKind::TypeMatches => {
+            if types_match(
                 local_spec.btf,
                 local_spec.root_type_id,
                 candidate.btf,
@@ -701,7 +720,8 @@ impl<'a> AccessSpec<'a> {
             RelocationKind::TypeIdLocal
             | RelocationKind::TypeIdTarget
             | RelocationKind::TypeExists
-            | RelocationKind::TypeSize => {
+            | RelocationKind::TypeSize
+            | RelocationKind::TypeMatches => {
                 if parts != [0] {
                     return Err(RelocationError::InvalidAccessString {
                         access_str: spec.to_string(),
@@ -955,6 +975,12 @@ struct ComputedRelocationValue {
     type_id: Option<u32>,
 }
 
+/// Whether `value` can be stored in a 32-bit instruction immediate, read either
+/// zero-extended (up to `u32::MAX`) or sign-extended (an `i32` stored as `u64`).
+fn fits_in_imm32(value: u64) -> bool {
+    u32::try_from(value).is_ok() || i32::try_from(value as i64).is_ok()
+}
+
 fn poison_insn(ins: &mut bpf_insn) {
     ins.code = (BPF_JMP | BPF_CALL) as u8;
     ins.set_dst_reg(0);
@@ -982,7 +1008,8 @@ impl ComputedRelocation {
             RelocationKind::TypeIdLocal
             | RelocationKind::TypeIdTarget
             | RelocationKind::TypeExists
-            | RelocationKind::TypeSize => Self {
+            | RelocationKind::TypeSize
+            | RelocationKind::TypeMatches => Self {
                 local: Self::compute_type_relocation(rel, local_spec, target_spec)?,
                 target: Self::compute_type_relocation(rel, local_spec, target_spec).ok(),
             },
@@ -1046,6 +1073,15 @@ impl ComputedRelocation {
                         relocation_number: rel.number,
                         index: ins_index,
                         error: format!("invalid src_reg={src_reg:x} expected {BPF_K:x}").into(),
+                    });
+                }
+
+                if !fits_in_imm32(target_value) {
+                    return Err(RelocationError::InvalidInstruction {
+                        relocation_number: rel.number,
+                        index: ins_index,
+                        error: format!("value `{target_value}` overflows 32 bits immediate field")
+                            .into(),
                     });
                 }
 
@@ -1307,6 +1343,7 @@ impl ComputedRelocation {
             | RelocationKind::TypeIdTarget
             | RelocationKind::TypeExists
             | RelocationKind::TypeSize
+            | RelocationKind::TypeMatches
             | RelocationKind::EnumVariantExists
             | RelocationKind::EnumVariantValue) => {
                 #[expect(
@@ -1332,7 +1369,9 @@ impl ComputedRelocation {
             (RelocationKind::TypeIdTarget, Some(target_spec)) => {
                 u64::from(target_spec.root_type_id)
             }
-            (RelocationKind::TypeExists, target_spec) => u64::from(target_spec.is_some()),
+            (RelocationKind::TypeExists | RelocationKind::TypeMatches, target_spec) => {
+                u64::from(target_spec.is_some())
+            }
             (RelocationKind::TypeSize, Some(target_spec)) => {
                 target_spec.btf.type_size(target_spec.root_type_id)? as u64
             }
@@ -1350,5 +1389,64 @@ impl ComputedRelocation {
             size: 0,
             type_id: None,
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::btf::{BtfEnum, BtfEnum64, Enum, Enum64, Enum64Fallback, Enum64VariantFallback};
+
+    fn candidate_ids(local_ty: &BtfType, target: &Btf) -> Vec<u32> {
+        find_candidates(local_ty, "e", target)
+            .unwrap()
+            .iter()
+            .map(|candidate| candidate.type_id)
+            .collect()
+    }
+
+    #[test]
+    fn test_find_candidates_enum_enum64() {
+        let mut target = Btf::new();
+        let name = target.add_string("e");
+        let a = target.add_string("A");
+        let variants = vec![BtfEnum::new(a, 1)];
+        let target_enum = target.add_type(BtfType::Enum(Enum::new(name, false, variants)));
+        let variants = vec![BtfEnum64::new(a, 1 << 40)];
+        let target_enum64 = target.add_type(BtfType::Enum64(Enum64::new(name, false, variants)));
+        let target_struct = target.add_type(BtfType::Struct(Struct::new(name, Vec::new(), 0)));
+
+        let local_enum = BtfType::Enum(Enum::new(0, false, Vec::new()));
+        let local_enum64 = BtfType::Enum64(Enum64::new(0, false, Vec::new()));
+        // What sanitization turns an ENUM64 into on kernels without ENUM64.
+        let local_sanitized_enum64 = BtfType::Union(Union::new(
+            0,
+            8,
+            Vec::new(),
+            Some(Enum64Fallback {
+                signed: false,
+                variants: vec![Enum64VariantFallback {
+                    name_offset: 0,
+                    value: 1 << 40,
+                }],
+            }),
+        ));
+        let local_struct = BtfType::Struct(Struct::new(0, Vec::new(), 0));
+
+        let enums = vec![target_enum, target_enum64];
+        assert_eq!(candidate_ids(&local_enum, &target), enums);
+        assert_eq!(candidate_ids(&local_enum64, &target), enums);
+        assert_eq!(candidate_ids(&local_sanitized_enum64, &target), enums);
+        assert_eq!(candidate_ids(&local_struct, &target), vec![target_struct]);
+    }
+
+    #[test]
+    fn test_fits_in_imm32() {
+        assert!(fits_in_imm32(0));
+        assert!(fits_in_imm32(u64::from(u32::MAX)));
+        assert!(fits_in_imm32(-1i64 as u64));
+        assert!(fits_in_imm32(i64::from(i32::MIN) as u64));
+        assert!(!fits_in_imm32(1 << 32));
+        assert!(!fits_in_imm32((i64::from(i32::MIN) - 1) as u64));
     }
 }
