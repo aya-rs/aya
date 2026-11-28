@@ -32,7 +32,7 @@ fn xdp() {
 
     let mut bpf = Ebpf::load(crate::PASS).unwrap();
     let dispatcher: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
-    dispatcher.load().unwrap();
+    dispatcher.load(None).unwrap();
     dispatcher.attach(c"lo", XdpMode::default()).unwrap();
 }
 
@@ -70,7 +70,7 @@ fn extension() {
 
     let mut bpf = Ebpf::load(crate::MAIN).unwrap();
     let pass: &mut Xdp = bpf.program_mut("xdp_pass").unwrap().try_into().unwrap();
-    pass.load().unwrap();
+    pass.load(None).unwrap();
     pass.attach(c"lo", XdpMode::default()).unwrap();
 
     let mut bpf = EbpfLoader::new()
