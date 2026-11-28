@@ -55,12 +55,12 @@ pub fn aya_obj::btf::BtfError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core
 impl core::fmt::Display for aya_obj::btf::BtfError
 pub fn aya_obj::btf::BtfError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Forget for aya_obj::btf::BtfError
-impl core::marker::Freeze for aya_obj::btf::BtfError
+impl core::marker::Freeze for aya_obj::btf::BtfError where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Freeze, core::marker::PhantomData<u8>: core::marker::Freeze, https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Freeze, core::marker::PhantomData<core::io::error::ErrorData<core::io::error::CustomOwner>>: core::marker::Freeze
 impl core::marker::Move for aya_obj::btf::BtfError
-impl core::marker::Send for aya_obj::btf::BtfError
-impl core::marker::Sync for aya_obj::btf::BtfError
-impl core::marker::Unpin for aya_obj::btf::BtfError
-impl core::marker::UnsafeUnpin for aya_obj::btf::BtfError
+impl core::marker::Send for aya_obj::btf::BtfError where alloc::raw_vec::RawVecInner: core::marker::Send, core::io::error::repr::Repr: core::marker::Send
+impl core::marker::Sync for aya_obj::btf::BtfError where alloc::raw_vec::RawVecInner: core::marker::Sync, core::io::error::repr::Repr: core::marker::Sync
+impl core::marker::Unpin for aya_obj::btf::BtfError where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Unpin, https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Unpin, &'static core::io::error::SimpleMessage: core::marker::Unpin, https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Unpin
+impl core::marker::UnsafeUnpin for aya_obj::btf::BtfError where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::UnsafeUnpin, core::marker::PhantomData<u8>: core::marker::UnsafeUnpin, https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::UnsafeUnpin, core::marker::PhantomData<core::io::error::ErrorData<core::io::error::CustomOwner>>: core::marker::UnsafeUnpin
 impl !core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::BtfError
 impl !core::panic::unwind_safe::UnwindSafe for aya_obj::btf::BtfError
 pub enum aya_obj::btf::BtfFeature
@@ -164,14 +164,14 @@ pub fn aya_obj::btf::BtfType::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::btf::BtfType
 pub fn aya_obj::btf::BtfType::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Forget for aya_obj::btf::BtfType
-impl core::marker::Freeze for aya_obj::btf::BtfType
+impl core::marker::Freeze for aya_obj::btf::BtfType where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Freeze, core::marker::PhantomData<aya_obj::btf::BtfEnum>: core::marker::Freeze, core::marker::PhantomData<BtfMember>: core::marker::Freeze, core::marker::PhantomData<Enum64VariantFallback>: core::marker::Freeze, core::marker::PhantomData<aya_obj::btf::BtfParam>: core::marker::Freeze, core::marker::PhantomData<aya_obj::btf::DataSecEntry>: core::marker::Freeze, core::marker::PhantomData<aya_obj::btf::BtfEnum64>: core::marker::Freeze
 impl core::marker::Move for aya_obj::btf::BtfType
-impl core::marker::Send for aya_obj::btf::BtfType
-impl core::marker::Sync for aya_obj::btf::BtfType
-impl core::marker::Unpin for aya_obj::btf::BtfType
-impl core::marker::UnsafeUnpin for aya_obj::btf::BtfType
+impl core::marker::Send for aya_obj::btf::BtfType where alloc::raw_vec::RawVecInner: core::marker::Send
+impl core::marker::Sync for aya_obj::btf::BtfType where alloc::raw_vec::RawVecInner: core::marker::Sync
+impl core::marker::Unpin for aya_obj::btf::BtfType where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Unpin
+impl core::marker::UnsafeUnpin for aya_obj::btf::BtfType where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::UnsafeUnpin, core::marker::PhantomData<aya_obj::btf::BtfEnum>: core::marker::UnsafeUnpin, core::marker::PhantomData<BtfMember>: core::marker::UnsafeUnpin, core::marker::PhantomData<Enum64VariantFallback>: core::marker::UnsafeUnpin, core::marker::PhantomData<aya_obj::btf::BtfParam>: core::marker::UnsafeUnpin, core::marker::PhantomData<aya_obj::btf::DataSecEntry>: core::marker::UnsafeUnpin, core::marker::PhantomData<aya_obj::btf::BtfEnum64>: core::marker::UnsafeUnpin
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::BtfType
-impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::BtfType
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::BtfType where alloc::raw_vec::RawVecInner: core::panic::unwind_safe::UnwindSafe
 #[repr(u32)] pub enum aya_obj::btf::FuncLinkage
 pub aya_obj::btf::FuncLinkage::Extern = 2
 pub aya_obj::btf::FuncLinkage::Global = 1
@@ -276,14 +276,14 @@ pub fn aya_obj::btf::Btf::default() -> Self
 impl core::fmt::Debug for aya_obj::btf::Btf
 pub fn aya_obj::btf::Btf::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Forget for aya_obj::btf::Btf
-impl core::marker::Freeze for aya_obj::btf::Btf
+impl core::marker::Freeze for aya_obj::btf::Btf where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Freeze, core::marker::PhantomData<u8>: core::marker::Freeze, core::marker::PhantomData<aya_obj::btf::BtfType>: core::marker::Freeze, core::marker::PhantomData<(alloc::string::String, ExternDesc)>: core::marker::Freeze
 impl core::marker::Move for aya_obj::btf::Btf
-impl core::marker::Send for aya_obj::btf::Btf
-impl core::marker::Sync for aya_obj::btf::Btf
-impl core::marker::Unpin for aya_obj::btf::Btf
-impl core::marker::UnsafeUnpin for aya_obj::btf::Btf
+impl core::marker::Send for aya_obj::btf::Btf where alloc::raw_vec::RawVecInner: core::marker::Send, hashbrown::raw::RawTable<(alloc::string::String, ExternDesc)>: core::marker::Send
+impl core::marker::Sync for aya_obj::btf::Btf where alloc::raw_vec::RawVecInner: core::marker::Sync, hashbrown::raw::RawTable<(alloc::string::String, ExternDesc)>: core::marker::Sync
+impl core::marker::Unpin for aya_obj::btf::Btf where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Unpin
+impl core::marker::UnsafeUnpin for aya_obj::btf::Btf where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::UnsafeUnpin, core::marker::PhantomData<u8>: core::marker::UnsafeUnpin, core::marker::PhantomData<aya_obj::btf::BtfType>: core::marker::UnsafeUnpin, core::marker::PhantomData<(alloc::string::String, ExternDesc)>: core::marker::UnsafeUnpin
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::Btf
-impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::Btf
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::Btf where alloc::raw_vec::RawVecInner: core::panic::unwind_safe::UnwindSafe, std::collections::hash::map::HashMap<alloc::string::String, ExternDesc>: core::panic::unwind_safe::UnwindSafe
 #[repr(C)] pub struct aya_obj::btf::BtfEnum
 pub aya_obj::btf::BtfEnum::name_offset: u32
 pub aya_obj::btf::BtfEnum::value: u32
@@ -325,14 +325,14 @@ pub fn aya_obj::btf::BtfExt::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::btf::BtfExt
 pub fn aya_obj::btf::BtfExt::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Forget for aya_obj::btf::BtfExt
-impl core::marker::Freeze for aya_obj::btf::BtfExt
+impl core::marker::Freeze for aya_obj::btf::BtfExt where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Freeze, core::marker::PhantomData<u8>: core::marker::Freeze, core::marker::PhantomData<(u32, alloc::vec::Vec<Relocation>)>: core::marker::Freeze, core::marker::PhantomData<(alloc::string::String, aya_obj::btf::FuncSecInfo)>: core::marker::Freeze, core::marker::PhantomData<(alloc::string::String, aya_obj::btf::LineSecInfo)>: core::marker::Freeze
 impl core::marker::Move for aya_obj::btf::BtfExt
-impl core::marker::Send for aya_obj::btf::BtfExt
-impl core::marker::Sync for aya_obj::btf::BtfExt
-impl core::marker::Unpin for aya_obj::btf::BtfExt
-impl core::marker::UnsafeUnpin for aya_obj::btf::BtfExt
+impl core::marker::Send for aya_obj::btf::BtfExt where alloc::raw_vec::RawVecInner: core::marker::Send, hashbrown::raw::RawTable<(alloc::string::String, aya_obj::btf::FuncSecInfo)>: core::marker::Send, hashbrown::raw::RawTable<(alloc::string::String, aya_obj::btf::LineSecInfo)>: core::marker::Send
+impl core::marker::Sync for aya_obj::btf::BtfExt where alloc::raw_vec::RawVecInner: core::marker::Sync, hashbrown::raw::RawTable<(alloc::string::String, aya_obj::btf::FuncSecInfo)>: core::marker::Sync, hashbrown::raw::RawTable<(alloc::string::String, aya_obj::btf::LineSecInfo)>: core::marker::Sync
+impl core::marker::Unpin for aya_obj::btf::BtfExt where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Unpin
+impl core::marker::UnsafeUnpin for aya_obj::btf::BtfExt where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::UnsafeUnpin, core::marker::PhantomData<u8>: core::marker::UnsafeUnpin, core::marker::PhantomData<(u32, alloc::vec::Vec<Relocation>)>: core::marker::UnsafeUnpin, core::marker::PhantomData<(alloc::string::String, aya_obj::btf::FuncSecInfo)>: core::marker::UnsafeUnpin, core::marker::PhantomData<(alloc::string::String, aya_obj::btf::LineSecInfo)>: core::marker::UnsafeUnpin
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::BtfExt
-impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::BtfExt
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::BtfExt where alloc::raw_vec::RawVecInner: core::panic::unwind_safe::UnwindSafe, std::collections::hash::map::HashMap<alloc::string::String, aya_obj::btf::FuncSecInfo>: core::panic::unwind_safe::UnwindSafe, std::collections::hash::map::HashMap<alloc::string::String, aya_obj::btf::LineSecInfo>: core::panic::unwind_safe::UnwindSafe
 #[repr(C)] pub struct aya_obj::btf::BtfParam
 pub aya_obj::btf::BtfParam::btf_type: u32
 pub aya_obj::btf::BtfParam::name_offset: u32
@@ -358,12 +358,12 @@ pub fn aya_obj::btf::BtfRelocationError::fmt(&self, &mut core::fmt::Formatter<'_
 impl core::fmt::Display for aya_obj::btf::BtfRelocationError
 pub fn aya_obj::btf::BtfRelocationError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Forget for aya_obj::btf::BtfRelocationError
-impl core::marker::Freeze for aya_obj::btf::BtfRelocationError
+impl core::marker::Freeze for aya_obj::btf::BtfRelocationError where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Freeze, core::marker::PhantomData<u8>: core::marker::Freeze, https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Freeze, core::marker::PhantomData<core::io::error::ErrorData<core::io::error::CustomOwner>>: core::marker::Freeze, core::marker::PhantomData<alloc::string::String>: core::marker::Freeze, &'static str: core::marker::Freeze, alloc::string::String: core::marker::Freeze
 impl core::marker::Move for aya_obj::btf::BtfRelocationError
-impl core::marker::Send for aya_obj::btf::BtfRelocationError
-impl core::marker::Sync for aya_obj::btf::BtfRelocationError
-impl core::marker::Unpin for aya_obj::btf::BtfRelocationError
-impl core::marker::UnsafeUnpin for aya_obj::btf::BtfRelocationError
+impl core::marker::Send for aya_obj::btf::BtfRelocationError where alloc::raw_vec::RawVecInner: core::marker::Send, core::io::error::repr::Repr: core::marker::Send, &'static str: core::marker::Send, alloc::string::String: core::marker::Send
+impl core::marker::Sync for aya_obj::btf::BtfRelocationError where alloc::raw_vec::RawVecInner: core::marker::Sync, core::io::error::repr::Repr: core::marker::Sync, alloc::string::String: core::marker::Sync
+impl core::marker::Unpin for aya_obj::btf::BtfRelocationError where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Unpin, https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Unpin, &'static core::io::error::SimpleMessage: core::marker::Unpin, https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Unpin, &'static str: core::marker::Unpin, alloc::string::String: core::marker::Unpin
+impl core::marker::UnsafeUnpin for aya_obj::btf::BtfRelocationError where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::UnsafeUnpin, core::marker::PhantomData<u8>: core::marker::UnsafeUnpin, https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::UnsafeUnpin, core::marker::PhantomData<core::io::error::ErrorData<core::io::error::CustomOwner>>: core::marker::UnsafeUnpin, core::marker::PhantomData<alloc::string::String>: core::marker::UnsafeUnpin, &'static str: core::marker::UnsafeUnpin, alloc::string::String: core::marker::UnsafeUnpin
 impl !core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::BtfRelocationError
 impl !core::panic::unwind_safe::UnwindSafe for aya_obj::btf::BtfRelocationError
 #[repr(C)] pub struct aya_obj::btf::Const
@@ -388,14 +388,14 @@ pub fn aya_obj::btf::DataSec::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::btf::DataSec
 pub fn aya_obj::btf::DataSec::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Forget for aya_obj::btf::DataSec
-impl core::marker::Freeze for aya_obj::btf::DataSec
+impl core::marker::Freeze for aya_obj::btf::DataSec where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Freeze, core::marker::PhantomData<aya_obj::btf::DataSecEntry>: core::marker::Freeze
 impl core::marker::Move for aya_obj::btf::DataSec
-impl core::marker::Send for aya_obj::btf::DataSec
-impl core::marker::Sync for aya_obj::btf::DataSec
-impl core::marker::Unpin for aya_obj::btf::DataSec
-impl core::marker::UnsafeUnpin for aya_obj::btf::DataSec
+impl core::marker::Send for aya_obj::btf::DataSec where alloc::raw_vec::RawVecInner: core::marker::Send
+impl core::marker::Sync for aya_obj::btf::DataSec where alloc::raw_vec::RawVecInner: core::marker::Sync
+impl core::marker::Unpin for aya_obj::btf::DataSec where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Unpin
+impl core::marker::UnsafeUnpin for aya_obj::btf::DataSec where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::UnsafeUnpin, core::marker::PhantomData<aya_obj::btf::DataSecEntry>: core::marker::UnsafeUnpin
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::DataSec
-impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::DataSec
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::DataSec where alloc::raw_vec::RawVecInner: core::panic::unwind_safe::UnwindSafe
 #[repr(C)] pub struct aya_obj::btf::DataSecEntry
 pub aya_obj::btf::DataSecEntry::btf_type: u32
 pub aya_obj::btf::DataSecEntry::offset: u32
@@ -437,14 +437,14 @@ pub fn aya_obj::btf::Enum::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::btf::Enum
 pub fn aya_obj::btf::Enum::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Forget for aya_obj::btf::Enum
-impl core::marker::Freeze for aya_obj::btf::Enum
+impl core::marker::Freeze for aya_obj::btf::Enum where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Freeze, core::marker::PhantomData<aya_obj::btf::BtfEnum>: core::marker::Freeze
 impl core::marker::Move for aya_obj::btf::Enum
-impl core::marker::Send for aya_obj::btf::Enum
-impl core::marker::Sync for aya_obj::btf::Enum
-impl core::marker::Unpin for aya_obj::btf::Enum
-impl core::marker::UnsafeUnpin for aya_obj::btf::Enum
+impl core::marker::Send for aya_obj::btf::Enum where alloc::raw_vec::RawVecInner: core::marker::Send
+impl core::marker::Sync for aya_obj::btf::Enum where alloc::raw_vec::RawVecInner: core::marker::Sync
+impl core::marker::Unpin for aya_obj::btf::Enum where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Unpin
+impl core::marker::UnsafeUnpin for aya_obj::btf::Enum where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::UnsafeUnpin, core::marker::PhantomData<aya_obj::btf::BtfEnum>: core::marker::UnsafeUnpin
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::Enum
-impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::Enum
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::Enum where alloc::raw_vec::RawVecInner: core::panic::unwind_safe::UnwindSafe
 #[repr(C)] pub struct aya_obj::btf::Enum64
 impl aya_obj::btf::Enum64
 pub const fn aya_obj::btf::Enum64::new(u32, bool, alloc::vec::Vec<aya_obj::btf::BtfEnum64>) -> Self
@@ -453,14 +453,14 @@ pub fn aya_obj::btf::Enum64::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::btf::Enum64
 pub fn aya_obj::btf::Enum64::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Forget for aya_obj::btf::Enum64
-impl core::marker::Freeze for aya_obj::btf::Enum64
+impl core::marker::Freeze for aya_obj::btf::Enum64 where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Freeze, core::marker::PhantomData<aya_obj::btf::BtfEnum64>: core::marker::Freeze
 impl core::marker::Move for aya_obj::btf::Enum64
-impl core::marker::Send for aya_obj::btf::Enum64
-impl core::marker::Sync for aya_obj::btf::Enum64
-impl core::marker::Unpin for aya_obj::btf::Enum64
-impl core::marker::UnsafeUnpin for aya_obj::btf::Enum64
+impl core::marker::Send for aya_obj::btf::Enum64 where alloc::raw_vec::RawVecInner: core::marker::Send
+impl core::marker::Sync for aya_obj::btf::Enum64 where alloc::raw_vec::RawVecInner: core::marker::Sync
+impl core::marker::Unpin for aya_obj::btf::Enum64 where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Unpin
+impl core::marker::UnsafeUnpin for aya_obj::btf::Enum64 where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::UnsafeUnpin, core::marker::PhantomData<aya_obj::btf::BtfEnum64>: core::marker::UnsafeUnpin
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::Enum64
-impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::Enum64
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::Enum64 where alloc::raw_vec::RawVecInner: core::panic::unwind_safe::UnwindSafe
 #[repr(C)] pub struct aya_obj::btf::Float
 impl aya_obj::btf::Float
 pub const fn aya_obj::btf::Float::new(u32, u32) -> Self
@@ -500,14 +500,14 @@ pub fn aya_obj::btf::FuncInfo::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::btf::FuncInfo
 pub fn aya_obj::btf::FuncInfo::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Forget for aya_obj::btf::FuncInfo
-impl core::marker::Freeze for aya_obj::btf::FuncInfo
+impl core::marker::Freeze for aya_obj::btf::FuncInfo where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Freeze, core::marker::PhantomData<(alloc::string::String, aya_obj::btf::FuncSecInfo)>: core::marker::Freeze
 impl core::marker::Move for aya_obj::btf::FuncInfo
-impl core::marker::Send for aya_obj::btf::FuncInfo
-impl core::marker::Sync for aya_obj::btf::FuncInfo
-impl core::marker::Unpin for aya_obj::btf::FuncInfo
-impl core::marker::UnsafeUnpin for aya_obj::btf::FuncInfo
+impl core::marker::Send for aya_obj::btf::FuncInfo where hashbrown::raw::RawTable<(alloc::string::String, aya_obj::btf::FuncSecInfo)>: core::marker::Send
+impl core::marker::Sync for aya_obj::btf::FuncInfo where hashbrown::raw::RawTable<(alloc::string::String, aya_obj::btf::FuncSecInfo)>: core::marker::Sync
+impl core::marker::Unpin for aya_obj::btf::FuncInfo where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Unpin
+impl core::marker::UnsafeUnpin for aya_obj::btf::FuncInfo where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::UnsafeUnpin, core::marker::PhantomData<(alloc::string::String, aya_obj::btf::FuncSecInfo)>: core::marker::UnsafeUnpin
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::FuncInfo
-impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::FuncInfo
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::FuncInfo where std::collections::hash::map::HashMap<alloc::string::String, aya_obj::btf::FuncSecInfo>: core::panic::unwind_safe::UnwindSafe
 #[repr(C)] pub struct aya_obj::btf::FuncProto
 impl aya_obj::btf::FuncProto
 pub const fn aya_obj::btf::FuncProto::new(alloc::vec::Vec<aya_obj::btf::BtfParam>, u32) -> Self
@@ -516,14 +516,14 @@ pub fn aya_obj::btf::FuncProto::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::btf::FuncProto
 pub fn aya_obj::btf::FuncProto::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Forget for aya_obj::btf::FuncProto
-impl core::marker::Freeze for aya_obj::btf::FuncProto
+impl core::marker::Freeze for aya_obj::btf::FuncProto where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Freeze, core::marker::PhantomData<aya_obj::btf::BtfParam>: core::marker::Freeze
 impl core::marker::Move for aya_obj::btf::FuncProto
-impl core::marker::Send for aya_obj::btf::FuncProto
-impl core::marker::Sync for aya_obj::btf::FuncProto
-impl core::marker::Unpin for aya_obj::btf::FuncProto
-impl core::marker::UnsafeUnpin for aya_obj::btf::FuncProto
+impl core::marker::Send for aya_obj::btf::FuncProto where alloc::raw_vec::RawVecInner: core::marker::Send
+impl core::marker::Sync for aya_obj::btf::FuncProto where alloc::raw_vec::RawVecInner: core::marker::Sync
+impl core::marker::Unpin for aya_obj::btf::FuncProto where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Unpin
+impl core::marker::UnsafeUnpin for aya_obj::btf::FuncProto where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::UnsafeUnpin, core::marker::PhantomData<aya_obj::btf::BtfParam>: core::marker::UnsafeUnpin
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::FuncProto
-impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::FuncProto
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::FuncProto where alloc::raw_vec::RawVecInner: core::panic::unwind_safe::UnwindSafe
 pub struct aya_obj::btf::FuncSecInfo
 pub aya_obj::btf::FuncSecInfo::func_info: alloc::vec::Vec<aya_obj::generated::bpf_func_info>
 pub aya_obj::btf::FuncSecInfo::num_info: u32
@@ -537,14 +537,14 @@ pub fn aya_obj::btf::FuncSecInfo::default() -> Self
 impl core::fmt::Debug for aya_obj::btf::FuncSecInfo
 pub fn aya_obj::btf::FuncSecInfo::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Forget for aya_obj::btf::FuncSecInfo
-impl core::marker::Freeze for aya_obj::btf::FuncSecInfo
+impl core::marker::Freeze for aya_obj::btf::FuncSecInfo where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Freeze, core::marker::PhantomData<aya_obj::generated::bpf_func_info>: core::marker::Freeze
 impl core::marker::Move for aya_obj::btf::FuncSecInfo
-impl core::marker::Send for aya_obj::btf::FuncSecInfo
-impl core::marker::Sync for aya_obj::btf::FuncSecInfo
-impl core::marker::Unpin for aya_obj::btf::FuncSecInfo
-impl core::marker::UnsafeUnpin for aya_obj::btf::FuncSecInfo
+impl core::marker::Send for aya_obj::btf::FuncSecInfo where alloc::raw_vec::RawVecInner: core::marker::Send
+impl core::marker::Sync for aya_obj::btf::FuncSecInfo where alloc::raw_vec::RawVecInner: core::marker::Sync
+impl core::marker::Unpin for aya_obj::btf::FuncSecInfo where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Unpin
+impl core::marker::UnsafeUnpin for aya_obj::btf::FuncSecInfo where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::UnsafeUnpin, core::marker::PhantomData<aya_obj::generated::bpf_func_info>: core::marker::UnsafeUnpin
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::FuncSecInfo
-impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::FuncSecInfo
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::FuncSecInfo where alloc::raw_vec::RawVecInner: core::panic::unwind_safe::UnwindSafe
 #[repr(C)] pub struct aya_obj::btf::Fwd
 impl core::clone::Clone for aya_obj::btf::Fwd
 pub fn aya_obj::btf::Fwd::clone(&self) -> Self
@@ -588,14 +588,14 @@ pub fn aya_obj::btf::LineSecInfo::default() -> Self
 impl core::fmt::Debug for aya_obj::btf::LineSecInfo
 pub fn aya_obj::btf::LineSecInfo::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Forget for aya_obj::btf::LineSecInfo
-impl core::marker::Freeze for aya_obj::btf::LineSecInfo
+impl core::marker::Freeze for aya_obj::btf::LineSecInfo where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Freeze, core::marker::PhantomData<aya_obj::generated::bpf_line_info>: core::marker::Freeze
 impl core::marker::Move for aya_obj::btf::LineSecInfo
-impl core::marker::Send for aya_obj::btf::LineSecInfo
-impl core::marker::Sync for aya_obj::btf::LineSecInfo
-impl core::marker::Unpin for aya_obj::btf::LineSecInfo
-impl core::marker::UnsafeUnpin for aya_obj::btf::LineSecInfo
+impl core::marker::Send for aya_obj::btf::LineSecInfo where alloc::raw_vec::RawVecInner: core::marker::Send
+impl core::marker::Sync for aya_obj::btf::LineSecInfo where alloc::raw_vec::RawVecInner: core::marker::Sync
+impl core::marker::Unpin for aya_obj::btf::LineSecInfo where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Unpin
+impl core::marker::UnsafeUnpin for aya_obj::btf::LineSecInfo where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::UnsafeUnpin, core::marker::PhantomData<aya_obj::generated::bpf_line_info>: core::marker::UnsafeUnpin
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::LineSecInfo
-impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::LineSecInfo
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::LineSecInfo where alloc::raw_vec::RawVecInner: core::panic::unwind_safe::UnwindSafe
 #[repr(C)] pub struct aya_obj::btf::Ptr
 impl aya_obj::btf::Ptr
 pub const fn aya_obj::btf::Ptr::new(u32, u32) -> Self
@@ -632,14 +632,14 @@ pub fn aya_obj::btf::Struct::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::btf::Struct
 pub fn aya_obj::btf::Struct::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Forget for aya_obj::btf::Struct
-impl core::marker::Freeze for aya_obj::btf::Struct
+impl core::marker::Freeze for aya_obj::btf::Struct where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Freeze, core::marker::PhantomData<BtfMember>: core::marker::Freeze
 impl core::marker::Move for aya_obj::btf::Struct
-impl core::marker::Send for aya_obj::btf::Struct
-impl core::marker::Sync for aya_obj::btf::Struct
-impl core::marker::Unpin for aya_obj::btf::Struct
-impl core::marker::UnsafeUnpin for aya_obj::btf::Struct
+impl core::marker::Send for aya_obj::btf::Struct where alloc::raw_vec::RawVecInner: core::marker::Send
+impl core::marker::Sync for aya_obj::btf::Struct where alloc::raw_vec::RawVecInner: core::marker::Sync
+impl core::marker::Unpin for aya_obj::btf::Struct where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Unpin
+impl core::marker::UnsafeUnpin for aya_obj::btf::Struct where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::UnsafeUnpin, core::marker::PhantomData<BtfMember>: core::marker::UnsafeUnpin
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::Struct
-impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::Struct
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::Struct where alloc::raw_vec::RawVecInner: core::panic::unwind_safe::UnwindSafe
 #[repr(C)] pub struct aya_obj::btf::TypeTag
 impl aya_obj::btf::TypeTag
 pub const fn aya_obj::btf::TypeTag::new(u32, u32) -> Self
@@ -676,14 +676,14 @@ pub fn aya_obj::btf::Union::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::btf::Union
 pub fn aya_obj::btf::Union::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Forget for aya_obj::btf::Union
-impl core::marker::Freeze for aya_obj::btf::Union
+impl core::marker::Freeze for aya_obj::btf::Union where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Freeze, core::marker::PhantomData<BtfMember>: core::marker::Freeze, core::marker::PhantomData<Enum64VariantFallback>: core::marker::Freeze
 impl core::marker::Move for aya_obj::btf::Union
-impl core::marker::Send for aya_obj::btf::Union
-impl core::marker::Sync for aya_obj::btf::Union
-impl core::marker::Unpin for aya_obj::btf::Union
-impl core::marker::UnsafeUnpin for aya_obj::btf::Union
+impl core::marker::Send for aya_obj::btf::Union where alloc::raw_vec::RawVecInner: core::marker::Send
+impl core::marker::Sync for aya_obj::btf::Union where alloc::raw_vec::RawVecInner: core::marker::Sync
+impl core::marker::Unpin for aya_obj::btf::Union where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Unpin
+impl core::marker::UnsafeUnpin for aya_obj::btf::Union where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::UnsafeUnpin, core::marker::PhantomData<BtfMember>: core::marker::UnsafeUnpin, core::marker::PhantomData<Enum64VariantFallback>: core::marker::UnsafeUnpin
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::Union
-impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::Union
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::Union where alloc::raw_vec::RawVecInner: core::panic::unwind_safe::UnwindSafe
 #[repr(C)] pub struct aya_obj::btf::Var
 impl aya_obj::btf::Var
 pub const fn aya_obj::btf::Var::new(u32, u32, aya_obj::btf::VarLinkage) -> Self
@@ -2805,14 +2805,14 @@ pub fn aya_obj::generated::__IncompleteArrayField<T>::default() -> Self
 impl<T> core::fmt::Debug for aya_obj::generated::__IncompleteArrayField<T>
 pub fn aya_obj::generated::__IncompleteArrayField<T>::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl<T> core::marker::Forget for aya_obj::generated::__IncompleteArrayField<T>
-impl<T> core::marker::Freeze for aya_obj::generated::__IncompleteArrayField<T> where core::marker::PhantomData<T>: core::marker::Freeze, [T; 0]: core::marker::Freeze
+impl<T> core::marker::Freeze for aya_obj::generated::__IncompleteArrayField<T> where core::marker::PhantomData<T>: core::marker::Freeze, T: core::marker::Freeze
 impl<T> core::marker::Move for aya_obj::generated::__IncompleteArrayField<T>
-impl<T> core::marker::Send for aya_obj::generated::__IncompleteArrayField<T> where core::marker::PhantomData<T>: core::marker::Send, [T; 0]: core::marker::Send
-impl<T> core::marker::Sync for aya_obj::generated::__IncompleteArrayField<T> where core::marker::PhantomData<T>: core::marker::Sync, [T; 0]: core::marker::Sync
-impl<T> core::marker::Unpin for aya_obj::generated::__IncompleteArrayField<T> where core::marker::PhantomData<T>: core::marker::Unpin, [T; 0]: core::marker::Unpin
-impl<T> core::marker::UnsafeUnpin for aya_obj::generated::__IncompleteArrayField<T> where core::marker::PhantomData<T>: core::marker::UnsafeUnpin, [T; 0]: core::marker::UnsafeUnpin
-impl<T> core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::__IncompleteArrayField<T> where core::marker::PhantomData<T>: core::panic::unwind_safe::RefUnwindSafe, [T; 0]: core::panic::unwind_safe::RefUnwindSafe
-impl<T> core::panic::unwind_safe::UnwindSafe for aya_obj::generated::__IncompleteArrayField<T> where core::marker::PhantomData<T>: core::panic::unwind_safe::UnwindSafe, [T; 0]: core::panic::unwind_safe::UnwindSafe
+impl<T> core::marker::Send for aya_obj::generated::__IncompleteArrayField<T> where T: core::marker::Send
+impl<T> core::marker::Sync for aya_obj::generated::__IncompleteArrayField<T> where T: core::marker::Sync
+impl<T> core::marker::Unpin for aya_obj::generated::__IncompleteArrayField<T> where T: core::marker::Unpin
+impl<T> core::marker::UnsafeUnpin for aya_obj::generated::__IncompleteArrayField<T> where core::marker::PhantomData<T>: core::marker::UnsafeUnpin, T: core::marker::UnsafeUnpin
+impl<T> core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::__IncompleteArrayField<T> where T: core::panic::unwind_safe::RefUnwindSafe
+impl<T> core::panic::unwind_safe::UnwindSafe for aya_obj::generated::__IncompleteArrayField<T> where T: core::panic::unwind_safe::UnwindSafe
 #[repr(C)] pub struct aya_obj::generated::bpf_attr__bindgen_ty_1
 pub aya_obj::generated::bpf_attr__bindgen_ty_1::btf_fd: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_1::btf_key_type_id: aya_obj::generated::__u32
@@ -4026,12 +4026,12 @@ pub aya_obj::generated::bpf_lpm_trie_key::prefixlen: aya_obj::generated::__u32
 impl core::fmt::Debug for aya_obj::generated::bpf_lpm_trie_key
 pub fn aya_obj::generated::bpf_lpm_trie_key::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Forget for aya_obj::generated::bpf_lpm_trie_key
-impl core::marker::Freeze for aya_obj::generated::bpf_lpm_trie_key
+impl core::marker::Freeze for aya_obj::generated::bpf_lpm_trie_key where core::marker::PhantomData<u8>: core::marker::Freeze
 impl core::marker::Move for aya_obj::generated::bpf_lpm_trie_key
 impl core::marker::Send for aya_obj::generated::bpf_lpm_trie_key
 impl core::marker::Sync for aya_obj::generated::bpf_lpm_trie_key
 impl core::marker::Unpin for aya_obj::generated::bpf_lpm_trie_key
-impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_lpm_trie_key
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_lpm_trie_key where core::marker::PhantomData<u8>: core::marker::UnsafeUnpin
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_lpm_trie_key
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_lpm_trie_key
 #[repr(C)] pub struct aya_obj::generated::bpf_map_info
@@ -5155,14 +5155,14 @@ pub fn aya_obj::maps::Map::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::maps::Map
 pub fn aya_obj::maps::Map::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Forget for aya_obj::maps::Map
-impl core::marker::Freeze for aya_obj::maps::Map
+impl core::marker::Freeze for aya_obj::maps::Map where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Freeze, core::marker::PhantomData<u8>: core::marker::Freeze
 impl core::marker::Move for aya_obj::maps::Map
-impl core::marker::Send for aya_obj::maps::Map
-impl core::marker::Sync for aya_obj::maps::Map
-impl core::marker::Unpin for aya_obj::maps::Map
-impl core::marker::UnsafeUnpin for aya_obj::maps::Map
+impl core::marker::Send for aya_obj::maps::Map where alloc::raw_vec::RawVecInner: core::marker::Send
+impl core::marker::Sync for aya_obj::maps::Map where alloc::raw_vec::RawVecInner: core::marker::Sync
+impl core::marker::Unpin for aya_obj::maps::Map where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Unpin
+impl core::marker::UnsafeUnpin for aya_obj::maps::Map where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::UnsafeUnpin, core::marker::PhantomData<u8>: core::marker::UnsafeUnpin
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::maps::Map
-impl core::panic::unwind_safe::UnwindSafe for aya_obj::maps::Map
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::maps::Map where alloc::raw_vec::RawVecInner: core::panic::unwind_safe::UnwindSafe
 pub enum aya_obj::maps::PinningError
 pub aya_obj::maps::PinningError::Unsupported
 pub aya_obj::maps::PinningError::Unsupported::pinning_type: u32
@@ -5213,14 +5213,14 @@ pub fn aya_obj::maps::BtfMap::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::maps::BtfMap
 pub fn aya_obj::maps::BtfMap::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Forget for aya_obj::maps::BtfMap
-impl core::marker::Freeze for aya_obj::maps::BtfMap
+impl core::marker::Freeze for aya_obj::maps::BtfMap where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Freeze, core::marker::PhantomData<u8>: core::marker::Freeze
 impl core::marker::Move for aya_obj::maps::BtfMap
-impl core::marker::Send for aya_obj::maps::BtfMap
-impl core::marker::Sync for aya_obj::maps::BtfMap
-impl core::marker::Unpin for aya_obj::maps::BtfMap
-impl core::marker::UnsafeUnpin for aya_obj::maps::BtfMap
+impl core::marker::Send for aya_obj::maps::BtfMap where alloc::raw_vec::RawVecInner: core::marker::Send
+impl core::marker::Sync for aya_obj::maps::BtfMap where alloc::raw_vec::RawVecInner: core::marker::Sync
+impl core::marker::Unpin for aya_obj::maps::BtfMap where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Unpin
+impl core::marker::UnsafeUnpin for aya_obj::maps::BtfMap where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::UnsafeUnpin, core::marker::PhantomData<u8>: core::marker::UnsafeUnpin
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::maps::BtfMap
-impl core::panic::unwind_safe::UnwindSafe for aya_obj::maps::BtfMap
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::maps::BtfMap where alloc::raw_vec::RawVecInner: core::panic::unwind_safe::UnwindSafe
 pub struct aya_obj::maps::BtfMapDef
 pub aya_obj::maps::BtfMapDef::btf_key_type_id: u32
 pub aya_obj::maps::BtfMapDef::btf_value_type_id: u32
@@ -5256,14 +5256,14 @@ pub fn aya_obj::maps::LegacyMap::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::maps::LegacyMap
 pub fn aya_obj::maps::LegacyMap::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Forget for aya_obj::maps::LegacyMap
-impl core::marker::Freeze for aya_obj::maps::LegacyMap
+impl core::marker::Freeze for aya_obj::maps::LegacyMap where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Freeze, core::marker::PhantomData<u8>: core::marker::Freeze
 impl core::marker::Move for aya_obj::maps::LegacyMap
-impl core::marker::Send for aya_obj::maps::LegacyMap
-impl core::marker::Sync for aya_obj::maps::LegacyMap
-impl core::marker::Unpin for aya_obj::maps::LegacyMap
-impl core::marker::UnsafeUnpin for aya_obj::maps::LegacyMap
+impl core::marker::Send for aya_obj::maps::LegacyMap where alloc::raw_vec::RawVecInner: core::marker::Send
+impl core::marker::Sync for aya_obj::maps::LegacyMap where alloc::raw_vec::RawVecInner: core::marker::Sync
+impl core::marker::Unpin for aya_obj::maps::LegacyMap where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Unpin
+impl core::marker::UnsafeUnpin for aya_obj::maps::LegacyMap where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::UnsafeUnpin, core::marker::PhantomData<u8>: core::marker::UnsafeUnpin
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::maps::LegacyMap
-impl core::panic::unwind_safe::UnwindSafe for aya_obj::maps::LegacyMap
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::maps::LegacyMap where alloc::raw_vec::RawVecInner: core::panic::unwind_safe::UnwindSafe
 #[repr(C)] pub struct aya_obj::maps::bpf_map_def
 pub aya_obj::maps::bpf_map_def::id: u32
 pub aya_obj::maps::bpf_map_def::key_size: u32
@@ -5373,12 +5373,12 @@ pub fn aya_obj::ParseError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::f
 impl core::fmt::Display for aya_obj::ParseError
 pub fn aya_obj::ParseError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Forget for aya_obj::ParseError
-impl core::marker::Freeze for aya_obj::ParseError
+impl core::marker::Freeze for aya_obj::ParseError where &'static str: core::marker::Freeze, https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Freeze, core::marker::PhantomData<u8>: core::marker::Freeze, https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Freeze, core::marker::PhantomData<core::io::error::ErrorData<core::io::error::CustomOwner>>: core::marker::Freeze
 impl core::marker::Move for aya_obj::ParseError
-impl core::marker::Send for aya_obj::ParseError
-impl core::marker::Sync for aya_obj::ParseError
-impl core::marker::Unpin for aya_obj::ParseError
-impl core::marker::UnsafeUnpin for aya_obj::ParseError
+impl core::marker::Send for aya_obj::ParseError where &'static str: core::marker::Send, alloc::raw_vec::RawVecInner: core::marker::Send, core::io::error::repr::Repr: core::marker::Send
+impl core::marker::Sync for aya_obj::ParseError where alloc::raw_vec::RawVecInner: core::marker::Sync, core::io::error::repr::Repr: core::marker::Sync
+impl core::marker::Unpin for aya_obj::ParseError where &'static str: core::marker::Unpin, https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Unpin, https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Unpin, &'static core::io::error::SimpleMessage: core::marker::Unpin, https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Unpin
+impl core::marker::UnsafeUnpin for aya_obj::ParseError where &'static str: core::marker::UnsafeUnpin, https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::UnsafeUnpin, core::marker::PhantomData<u8>: core::marker::UnsafeUnpin, https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::UnsafeUnpin, core::marker::PhantomData<core::io::error::ErrorData<core::io::error::CustomOwner>>: core::marker::UnsafeUnpin
 impl !core::panic::unwind_safe::RefUnwindSafe for aya_obj::ParseError
 impl !core::panic::unwind_safe::UnwindSafe for aya_obj::ParseError
 pub enum aya_obj::obj::ProgramSection
@@ -5459,14 +5459,14 @@ pub fn aya_obj::Function::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::Function
 pub fn aya_obj::Function::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Forget for aya_obj::Function
-impl core::marker::Freeze for aya_obj::Function
+impl core::marker::Freeze for aya_obj::Function where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Freeze, core::marker::PhantomData<u8>: core::marker::Freeze, core::marker::PhantomData<aya_obj::generated::bpf_insn>: core::marker::Freeze, core::marker::PhantomData<aya_obj::generated::bpf_func_info>: core::marker::Freeze, core::marker::PhantomData<aya_obj::generated::bpf_line_info>: core::marker::Freeze
 impl core::marker::Move for aya_obj::Function
-impl core::marker::Send for aya_obj::Function
-impl core::marker::Sync for aya_obj::Function
-impl core::marker::Unpin for aya_obj::Function
-impl core::marker::UnsafeUnpin for aya_obj::Function
+impl core::marker::Send for aya_obj::Function where alloc::raw_vec::RawVecInner: core::marker::Send
+impl core::marker::Sync for aya_obj::Function where alloc::raw_vec::RawVecInner: core::marker::Sync
+impl core::marker::Unpin for aya_obj::Function where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Unpin
+impl core::marker::UnsafeUnpin for aya_obj::Function where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::UnsafeUnpin, core::marker::PhantomData<u8>: core::marker::UnsafeUnpin, core::marker::PhantomData<aya_obj::generated::bpf_insn>: core::marker::UnsafeUnpin, core::marker::PhantomData<aya_obj::generated::bpf_func_info>: core::marker::UnsafeUnpin, core::marker::PhantomData<aya_obj::generated::bpf_line_info>: core::marker::UnsafeUnpin
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::Function
-impl core::panic::unwind_safe::UnwindSafe for aya_obj::Function
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::Function where alloc::raw_vec::RawVecInner: core::panic::unwind_safe::UnwindSafe
 pub struct aya_obj::obj::InvalidTypeBinding<T>
 pub aya_obj::obj::InvalidTypeBinding::value: T
 impl<T> core::marker::Forget for aya_obj::InvalidTypeBinding<T>
@@ -5509,14 +5509,14 @@ pub fn aya_obj::Object::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::Object
 pub fn aya_obj::Object::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Forget for aya_obj::Object
-impl core::marker::Freeze for aya_obj::Object
+impl core::marker::Freeze for aya_obj::Object where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Freeze, core::marker::PhantomData<[u8]>: core::marker::Freeze, https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Freeze, core::marker::PhantomData<u8>: core::marker::Freeze, core::marker::PhantomData<aya_obj::btf::BtfType>: core::marker::Freeze, core::marker::PhantomData<(alloc::string::String, ExternDesc)>: core::marker::Freeze, core::marker::PhantomData<(u32, alloc::vec::Vec<Relocation>)>: core::marker::Freeze, core::marker::PhantomData<(alloc::string::String, aya_obj::btf::FuncSecInfo)>: core::marker::Freeze, core::marker::PhantomData<(alloc::string::String, aya_obj::btf::LineSecInfo)>: core::marker::Freeze, core::marker::PhantomData<(alloc::string::String, aya_obj::maps::Map)>: core::marker::Freeze, core::marker::PhantomData<(alloc::string::String, aya_obj::Program)>: core::marker::Freeze, https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Freeze, core::marker::PhantomData<(alloc::collections::btree::node::marker::Owned, alloc::collections::btree::node::marker::LeafOrInternal)>: core::marker::Freeze, core::marker::PhantomData<alloc::boxed::Box<((usize, u64), aya_obj::Function)>>: core::marker::Freeze, core::marker::PhantomData<(object::read::SectionIndex, std::collections::hash::map::HashMap<u64, Relocation>)>: core::marker::Freeze, core::marker::PhantomData<(usize, Symbol)>: core::marker::Freeze, core::marker::PhantomData<(object::read::SectionIndex, alloc::vec::Vec<usize>)>: core::marker::Freeze, core::marker::PhantomData<(alloc::string::String, (object::read::SectionIndex, u64))>: core::marker::Freeze, core::marker::PhantomData<(alloc::string::String, u64)>: core::marker::Freeze
 impl core::marker::Move for aya_obj::Object
-impl core::marker::Send for aya_obj::Object
-impl core::marker::Sync for aya_obj::Object
-impl core::marker::Unpin for aya_obj::Object
-impl core::marker::UnsafeUnpin for aya_obj::Object
+impl core::marker::Send for aya_obj::Object where alloc::boxed::BoxRaw<[u8]>: core::marker::Send, alloc::raw_vec::RawVecInner: core::marker::Send, hashbrown::raw::RawTable<(alloc::string::String, ExternDesc)>: core::marker::Send, hashbrown::raw::RawTable<(alloc::string::String, aya_obj::btf::FuncSecInfo)>: core::marker::Send, hashbrown::raw::RawTable<(alloc::string::String, aya_obj::btf::LineSecInfo)>: core::marker::Send, hashbrown::raw::RawTable<(alloc::string::String, aya_obj::maps::Map)>: core::marker::Send, hashbrown::raw::RawTable<(alloc::string::String, aya_obj::Program)>: core::marker::Send, alloc::collections::btree::node::NodeRef<alloc::collections::btree::node::marker::Owned, (usize, u64), aya_obj::Function, alloc::collections::btree::node::marker::LeafOrInternal>: core::marker::Send, alloc::boxed::BoxRaw<((usize, u64), aya_obj::Function)>: core::marker::Send, hashbrown::raw::RawTable<(object::read::SectionIndex, std::collections::hash::map::HashMap<u64, Relocation>)>: core::marker::Send, hashbrown::raw::RawTable<(usize, Symbol)>: core::marker::Send, hashbrown::raw::RawTable<(object::read::SectionIndex, alloc::vec::Vec<usize>)>: core::marker::Send, hashbrown::raw::RawTable<(alloc::string::String, (object::read::SectionIndex, u64))>: core::marker::Send, hashbrown::raw::RawTable<(alloc::string::String, u64)>: core::marker::Send
+impl core::marker::Sync for aya_obj::Object where alloc::boxed::BoxRaw<[u8]>: core::marker::Sync, alloc::raw_vec::RawVecInner: core::marker::Sync, hashbrown::raw::RawTable<(alloc::string::String, ExternDesc)>: core::marker::Sync, hashbrown::raw::RawTable<(alloc::string::String, aya_obj::btf::FuncSecInfo)>: core::marker::Sync, hashbrown::raw::RawTable<(alloc::string::String, aya_obj::btf::LineSecInfo)>: core::marker::Sync, hashbrown::raw::RawTable<(alloc::string::String, aya_obj::maps::Map)>: core::marker::Sync, hashbrown::raw::RawTable<(alloc::string::String, aya_obj::Program)>: core::marker::Sync, alloc::collections::btree::node::NodeRef<alloc::collections::btree::node::marker::Owned, (usize, u64), aya_obj::Function, alloc::collections::btree::node::marker::LeafOrInternal>: core::marker::Sync, alloc::boxed::BoxRaw<((usize, u64), aya_obj::Function)>: core::marker::Sync, hashbrown::raw::RawTable<(object::read::SectionIndex, std::collections::hash::map::HashMap<u64, Relocation>)>: core::marker::Sync, hashbrown::raw::RawTable<(usize, Symbol)>: core::marker::Sync, hashbrown::raw::RawTable<(object::read::SectionIndex, alloc::vec::Vec<usize>)>: core::marker::Sync, hashbrown::raw::RawTable<(alloc::string::String, (object::read::SectionIndex, u64))>: core::marker::Sync, hashbrown::raw::RawTable<(alloc::string::String, u64)>: core::marker::Sync
+impl core::marker::Unpin for aya_obj::Object where alloc::boxed::Box<[u8]>: core::marker::Unpin, https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Unpin, https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Unpin, alloc::boxed::Box<((usize, u64), aya_obj::Function)>: core::marker::Unpin
+impl core::marker::UnsafeUnpin for aya_obj::Object where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::UnsafeUnpin, core::marker::PhantomData<[u8]>: core::marker::UnsafeUnpin, https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::UnsafeUnpin, core::marker::PhantomData<u8>: core::marker::UnsafeUnpin, core::marker::PhantomData<aya_obj::btf::BtfType>: core::marker::UnsafeUnpin, core::marker::PhantomData<(alloc::string::String, ExternDesc)>: core::marker::UnsafeUnpin, core::marker::PhantomData<(u32, alloc::vec::Vec<Relocation>)>: core::marker::UnsafeUnpin, core::marker::PhantomData<(alloc::string::String, aya_obj::btf::FuncSecInfo)>: core::marker::UnsafeUnpin, core::marker::PhantomData<(alloc::string::String, aya_obj::btf::LineSecInfo)>: core::marker::UnsafeUnpin, core::marker::PhantomData<(alloc::string::String, aya_obj::maps::Map)>: core::marker::UnsafeUnpin, core::marker::PhantomData<(alloc::string::String, aya_obj::Program)>: core::marker::UnsafeUnpin, https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::UnsafeUnpin, core::marker::PhantomData<(alloc::collections::btree::node::marker::Owned, alloc::collections::btree::node::marker::LeafOrInternal)>: core::marker::UnsafeUnpin, core::marker::PhantomData<alloc::boxed::Box<((usize, u64), aya_obj::Function)>>: core::marker::UnsafeUnpin, core::marker::PhantomData<(object::read::SectionIndex, std::collections::hash::map::HashMap<u64, Relocation>)>: core::marker::UnsafeUnpin, core::marker::PhantomData<(usize, Symbol)>: core::marker::UnsafeUnpin, core::marker::PhantomData<(object::read::SectionIndex, alloc::vec::Vec<usize>)>: core::marker::UnsafeUnpin, core::marker::PhantomData<(alloc::string::String, (object::read::SectionIndex, u64))>: core::marker::UnsafeUnpin, core::marker::PhantomData<(alloc::string::String, u64)>: core::marker::UnsafeUnpin
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::Object
-impl core::panic::unwind_safe::UnwindSafe for aya_obj::Object
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::Object where alloc::boxed::BoxRaw<[u8]>: core::panic::unwind_safe::UnwindSafe, alloc::raw_vec::RawVecInner: core::panic::unwind_safe::UnwindSafe, std::collections::hash::map::HashMap<alloc::string::String, ExternDesc>: core::panic::unwind_safe::UnwindSafe, std::collections::hash::map::HashMap<alloc::string::String, aya_obj::btf::FuncSecInfo>: core::panic::unwind_safe::UnwindSafe, std::collections::hash::map::HashMap<alloc::string::String, aya_obj::btf::LineSecInfo>: core::panic::unwind_safe::UnwindSafe, std::collections::hash::map::HashMap<alloc::string::String, aya_obj::maps::Map>: core::panic::unwind_safe::UnwindSafe, std::collections::hash::map::HashMap<alloc::string::String, aya_obj::Program>: core::panic::unwind_safe::UnwindSafe, alloc::collections::btree::map::BTreeMap<(usize, u64), aya_obj::Function>: core::panic::unwind_safe::UnwindSafe, std::collections::hash::map::HashMap<object::read::SectionIndex, std::collections::hash::map::HashMap<u64, Relocation>>: core::panic::unwind_safe::UnwindSafe, std::collections::hash::map::HashMap<usize, Symbol>: core::panic::unwind_safe::UnwindSafe, std::collections::hash::map::HashMap<object::read::SectionIndex, alloc::vec::Vec<usize>>: core::panic::unwind_safe::UnwindSafe, std::collections::hash::map::HashMap<alloc::string::String, (object::read::SectionIndex, u64)>: core::panic::unwind_safe::UnwindSafe, std::collections::hash::map::HashMap<alloc::string::String, u64>: core::panic::unwind_safe::UnwindSafe
 pub struct aya_obj::obj::Program
 pub aya_obj::obj::Program::address: u64
 pub aya_obj::obj::Program::kernel_version: core::option::Option<u32>
@@ -5530,14 +5530,14 @@ pub fn aya_obj::Program::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::Program
 pub fn aya_obj::Program::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Forget for aya_obj::Program
-impl core::marker::Freeze for aya_obj::Program
+impl core::marker::Freeze for aya_obj::Program where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Freeze, core::marker::PhantomData<[u8]>: core::marker::Freeze
 impl core::marker::Move for aya_obj::Program
-impl core::marker::Send for aya_obj::Program
-impl core::marker::Sync for aya_obj::Program
-impl core::marker::Unpin for aya_obj::Program
-impl core::marker::UnsafeUnpin for aya_obj::Program
+impl core::marker::Send for aya_obj::Program where alloc::boxed::BoxRaw<[u8]>: core::marker::Send
+impl core::marker::Sync for aya_obj::Program where alloc::boxed::BoxRaw<[u8]>: core::marker::Sync
+impl core::marker::Unpin for aya_obj::Program where alloc::boxed::Box<[u8]>: core::marker::Unpin
+impl core::marker::UnsafeUnpin for aya_obj::Program where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::UnsafeUnpin, core::marker::PhantomData<[u8]>: core::marker::UnsafeUnpin
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::Program
-impl core::panic::unwind_safe::UnwindSafe for aya_obj::Program
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::Program where alloc::boxed::BoxRaw<[u8]>: core::panic::unwind_safe::UnwindSafe
 pub fn aya_obj::obj::copy_instructions(&[u8]) -> core::result::Result<alloc::vec::Vec<aya_obj::generated::bpf_insn>, aya_obj::ParseError>
 pub const fn aya_obj::obj::parse_map_info(aya_obj::generated::bpf_map_info, aya_obj::maps::PinningType) -> aya_obj::maps::Map
 pub mod aya_obj::programs
@@ -5873,14 +5873,14 @@ pub fn aya_obj::relocation::RelocationError::fmt(&self, &mut core::fmt::Formatte
 impl core::fmt::Display for aya_obj::relocation::RelocationError
 pub fn aya_obj::relocation::RelocationError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Forget for aya_obj::relocation::RelocationError
-impl core::marker::Freeze for aya_obj::relocation::RelocationError
+impl core::marker::Freeze for aya_obj::relocation::RelocationError where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Freeze, core::marker::PhantomData<u8>: core::marker::Freeze
 impl core::marker::Move for aya_obj::relocation::RelocationError
-impl core::marker::Send for aya_obj::relocation::RelocationError
-impl core::marker::Sync for aya_obj::relocation::RelocationError
-impl core::marker::Unpin for aya_obj::relocation::RelocationError
-impl core::marker::UnsafeUnpin for aya_obj::relocation::RelocationError
+impl core::marker::Send for aya_obj::relocation::RelocationError where alloc::raw_vec::RawVecInner: core::marker::Send
+impl core::marker::Sync for aya_obj::relocation::RelocationError where alloc::raw_vec::RawVecInner: core::marker::Sync
+impl core::marker::Unpin for aya_obj::relocation::RelocationError where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Unpin
+impl core::marker::UnsafeUnpin for aya_obj::relocation::RelocationError where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::UnsafeUnpin, core::marker::PhantomData<u8>: core::marker::UnsafeUnpin
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::relocation::RelocationError
-impl core::panic::unwind_safe::UnwindSafe for aya_obj::relocation::RelocationError
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::relocation::RelocationError where alloc::raw_vec::RawVecInner: core::panic::unwind_safe::UnwindSafe
 pub struct aya_obj::relocation::EbpfRelocationError
 impl core::error::Error for aya_obj::relocation::EbpfRelocationError
 pub fn aya_obj::relocation::EbpfRelocationError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
@@ -5889,14 +5889,14 @@ pub fn aya_obj::relocation::EbpfRelocationError::fmt(&self, &mut core::fmt::Form
 impl core::fmt::Display for aya_obj::relocation::EbpfRelocationError
 pub fn aya_obj::relocation::EbpfRelocationError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Forget for aya_obj::relocation::EbpfRelocationError
-impl core::marker::Freeze for aya_obj::relocation::EbpfRelocationError
+impl core::marker::Freeze for aya_obj::relocation::EbpfRelocationError where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Freeze, core::marker::PhantomData<u8>: core::marker::Freeze
 impl core::marker::Move for aya_obj::relocation::EbpfRelocationError
-impl core::marker::Send for aya_obj::relocation::EbpfRelocationError
-impl core::marker::Sync for aya_obj::relocation::EbpfRelocationError
-impl core::marker::Unpin for aya_obj::relocation::EbpfRelocationError
-impl core::marker::UnsafeUnpin for aya_obj::relocation::EbpfRelocationError
+impl core::marker::Send for aya_obj::relocation::EbpfRelocationError where alloc::raw_vec::RawVecInner: core::marker::Send
+impl core::marker::Sync for aya_obj::relocation::EbpfRelocationError where alloc::raw_vec::RawVecInner: core::marker::Sync
+impl core::marker::Unpin for aya_obj::relocation::EbpfRelocationError where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Unpin
+impl core::marker::UnsafeUnpin for aya_obj::relocation::EbpfRelocationError where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::UnsafeUnpin, core::marker::PhantomData<u8>: core::marker::UnsafeUnpin
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::relocation::EbpfRelocationError
-impl core::panic::unwind_safe::UnwindSafe for aya_obj::relocation::EbpfRelocationError
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::relocation::EbpfRelocationError where alloc::raw_vec::RawVecInner: core::panic::unwind_safe::UnwindSafe
 pub enum aya_obj::EbpfSectionKind
 pub aya_obj::EbpfSectionKind::Bss
 pub aya_obj::EbpfSectionKind::Btf
@@ -5958,12 +5958,12 @@ pub fn aya_obj::KsymsError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::f
 impl core::fmt::Display for aya_obj::KsymsError
 pub fn aya_obj::KsymsError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Forget for aya_obj::KsymsError
-impl core::marker::Freeze for aya_obj::KsymsError
+impl core::marker::Freeze for aya_obj::KsymsError where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Freeze, core::marker::PhantomData<u8>: core::marker::Freeze, https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Freeze, core::marker::PhantomData<core::io::error::ErrorData<core::io::error::CustomOwner>>: core::marker::Freeze
 impl core::marker::Move for aya_obj::KsymsError
-impl core::marker::Send for aya_obj::KsymsError
-impl core::marker::Sync for aya_obj::KsymsError
-impl core::marker::Unpin for aya_obj::KsymsError
-impl core::marker::UnsafeUnpin for aya_obj::KsymsError
+impl core::marker::Send for aya_obj::KsymsError where alloc::raw_vec::RawVecInner: core::marker::Send, core::io::error::repr::Repr: core::marker::Send
+impl core::marker::Sync for aya_obj::KsymsError where alloc::raw_vec::RawVecInner: core::marker::Sync, core::io::error::repr::Repr: core::marker::Sync
+impl core::marker::Unpin for aya_obj::KsymsError where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Unpin, https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Unpin, &'static core::io::error::SimpleMessage: core::marker::Unpin, https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Unpin
+impl core::marker::UnsafeUnpin for aya_obj::KsymsError where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::UnsafeUnpin, core::marker::PhantomData<u8>: core::marker::UnsafeUnpin, https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::UnsafeUnpin, core::marker::PhantomData<core::io::error::ErrorData<core::io::error::CustomOwner>>: core::marker::UnsafeUnpin
 impl !core::panic::unwind_safe::RefUnwindSafe for aya_obj::KsymsError
 impl !core::panic::unwind_safe::UnwindSafe for aya_obj::KsymsError
 pub enum aya_obj::Map
@@ -5991,14 +5991,14 @@ pub fn aya_obj::maps::Map::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::maps::Map
 pub fn aya_obj::maps::Map::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Forget for aya_obj::maps::Map
-impl core::marker::Freeze for aya_obj::maps::Map
+impl core::marker::Freeze for aya_obj::maps::Map where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Freeze, core::marker::PhantomData<u8>: core::marker::Freeze
 impl core::marker::Move for aya_obj::maps::Map
-impl core::marker::Send for aya_obj::maps::Map
-impl core::marker::Sync for aya_obj::maps::Map
-impl core::marker::Unpin for aya_obj::maps::Map
-impl core::marker::UnsafeUnpin for aya_obj::maps::Map
+impl core::marker::Send for aya_obj::maps::Map where alloc::raw_vec::RawVecInner: core::marker::Send
+impl core::marker::Sync for aya_obj::maps::Map where alloc::raw_vec::RawVecInner: core::marker::Sync
+impl core::marker::Unpin for aya_obj::maps::Map where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Unpin
+impl core::marker::UnsafeUnpin for aya_obj::maps::Map where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::UnsafeUnpin, core::marker::PhantomData<u8>: core::marker::UnsafeUnpin
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::maps::Map
-impl core::panic::unwind_safe::UnwindSafe for aya_obj::maps::Map
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::maps::Map where alloc::raw_vec::RawVecInner: core::panic::unwind_safe::UnwindSafe
 pub enum aya_obj::ParseError
 pub aya_obj::ParseError::BtfError(aya_obj::btf::BtfError)
 pub aya_obj::ParseError::ElfError(object::read::Error)
@@ -6048,12 +6048,12 @@ pub fn aya_obj::ParseError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::f
 impl core::fmt::Display for aya_obj::ParseError
 pub fn aya_obj::ParseError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Forget for aya_obj::ParseError
-impl core::marker::Freeze for aya_obj::ParseError
+impl core::marker::Freeze for aya_obj::ParseError where &'static str: core::marker::Freeze, https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Freeze, core::marker::PhantomData<u8>: core::marker::Freeze, https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Freeze, core::marker::PhantomData<core::io::error::ErrorData<core::io::error::CustomOwner>>: core::marker::Freeze
 impl core::marker::Move for aya_obj::ParseError
-impl core::marker::Send for aya_obj::ParseError
-impl core::marker::Sync for aya_obj::ParseError
-impl core::marker::Unpin for aya_obj::ParseError
-impl core::marker::UnsafeUnpin for aya_obj::ParseError
+impl core::marker::Send for aya_obj::ParseError where &'static str: core::marker::Send, alloc::raw_vec::RawVecInner: core::marker::Send, core::io::error::repr::Repr: core::marker::Send
+impl core::marker::Sync for aya_obj::ParseError where alloc::raw_vec::RawVecInner: core::marker::Sync, core::io::error::repr::Repr: core::marker::Sync
+impl core::marker::Unpin for aya_obj::ParseError where &'static str: core::marker::Unpin, https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Unpin, https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Unpin, &'static core::io::error::SimpleMessage: core::marker::Unpin, https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Unpin
+impl core::marker::UnsafeUnpin for aya_obj::ParseError where &'static str: core::marker::UnsafeUnpin, https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::UnsafeUnpin, core::marker::PhantomData<u8>: core::marker::UnsafeUnpin, https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::UnsafeUnpin, core::marker::PhantomData<core::io::error::ErrorData<core::io::error::CustomOwner>>: core::marker::UnsafeUnpin
 impl !core::panic::unwind_safe::RefUnwindSafe for aya_obj::ParseError
 impl !core::panic::unwind_safe::UnwindSafe for aya_obj::ParseError
 pub enum aya_obj::ProgramSection
@@ -6134,14 +6134,14 @@ pub fn aya_obj::Function::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::Function
 pub fn aya_obj::Function::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Forget for aya_obj::Function
-impl core::marker::Freeze for aya_obj::Function
+impl core::marker::Freeze for aya_obj::Function where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Freeze, core::marker::PhantomData<u8>: core::marker::Freeze, core::marker::PhantomData<aya_obj::generated::bpf_insn>: core::marker::Freeze, core::marker::PhantomData<aya_obj::generated::bpf_func_info>: core::marker::Freeze, core::marker::PhantomData<aya_obj::generated::bpf_line_info>: core::marker::Freeze
 impl core::marker::Move for aya_obj::Function
-impl core::marker::Send for aya_obj::Function
-impl core::marker::Sync for aya_obj::Function
-impl core::marker::Unpin for aya_obj::Function
-impl core::marker::UnsafeUnpin for aya_obj::Function
+impl core::marker::Send for aya_obj::Function where alloc::raw_vec::RawVecInner: core::marker::Send
+impl core::marker::Sync for aya_obj::Function where alloc::raw_vec::RawVecInner: core::marker::Sync
+impl core::marker::Unpin for aya_obj::Function where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Unpin
+impl core::marker::UnsafeUnpin for aya_obj::Function where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::UnsafeUnpin, core::marker::PhantomData<u8>: core::marker::UnsafeUnpin, core::marker::PhantomData<aya_obj::generated::bpf_insn>: core::marker::UnsafeUnpin, core::marker::PhantomData<aya_obj::generated::bpf_func_info>: core::marker::UnsafeUnpin, core::marker::PhantomData<aya_obj::generated::bpf_line_info>: core::marker::UnsafeUnpin
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::Function
-impl core::panic::unwind_safe::UnwindSafe for aya_obj::Function
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::Function where alloc::raw_vec::RawVecInner: core::panic::unwind_safe::UnwindSafe
 pub struct aya_obj::InvalidTypeBinding<T>
 pub aya_obj::InvalidTypeBinding::value: T
 impl<T> core::marker::Forget for aya_obj::InvalidTypeBinding<T>
@@ -6184,14 +6184,14 @@ pub fn aya_obj::Object::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::Object
 pub fn aya_obj::Object::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Forget for aya_obj::Object
-impl core::marker::Freeze for aya_obj::Object
+impl core::marker::Freeze for aya_obj::Object where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Freeze, core::marker::PhantomData<[u8]>: core::marker::Freeze, https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Freeze, core::marker::PhantomData<u8>: core::marker::Freeze, core::marker::PhantomData<aya_obj::btf::BtfType>: core::marker::Freeze, core::marker::PhantomData<(alloc::string::String, ExternDesc)>: core::marker::Freeze, core::marker::PhantomData<(u32, alloc::vec::Vec<Relocation>)>: core::marker::Freeze, core::marker::PhantomData<(alloc::string::String, aya_obj::btf::FuncSecInfo)>: core::marker::Freeze, core::marker::PhantomData<(alloc::string::String, aya_obj::btf::LineSecInfo)>: core::marker::Freeze, core::marker::PhantomData<(alloc::string::String, aya_obj::maps::Map)>: core::marker::Freeze, core::marker::PhantomData<(alloc::string::String, aya_obj::Program)>: core::marker::Freeze, https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Freeze, core::marker::PhantomData<(alloc::collections::btree::node::marker::Owned, alloc::collections::btree::node::marker::LeafOrInternal)>: core::marker::Freeze, core::marker::PhantomData<alloc::boxed::Box<((usize, u64), aya_obj::Function)>>: core::marker::Freeze, core::marker::PhantomData<(object::read::SectionIndex, std::collections::hash::map::HashMap<u64, Relocation>)>: core::marker::Freeze, core::marker::PhantomData<(usize, Symbol)>: core::marker::Freeze, core::marker::PhantomData<(object::read::SectionIndex, alloc::vec::Vec<usize>)>: core::marker::Freeze, core::marker::PhantomData<(alloc::string::String, (object::read::SectionIndex, u64))>: core::marker::Freeze, core::marker::PhantomData<(alloc::string::String, u64)>: core::marker::Freeze
 impl core::marker::Move for aya_obj::Object
-impl core::marker::Send for aya_obj::Object
-impl core::marker::Sync for aya_obj::Object
-impl core::marker::Unpin for aya_obj::Object
-impl core::marker::UnsafeUnpin for aya_obj::Object
+impl core::marker::Send for aya_obj::Object where alloc::boxed::BoxRaw<[u8]>: core::marker::Send, alloc::raw_vec::RawVecInner: core::marker::Send, hashbrown::raw::RawTable<(alloc::string::String, ExternDesc)>: core::marker::Send, hashbrown::raw::RawTable<(alloc::string::String, aya_obj::btf::FuncSecInfo)>: core::marker::Send, hashbrown::raw::RawTable<(alloc::string::String, aya_obj::btf::LineSecInfo)>: core::marker::Send, hashbrown::raw::RawTable<(alloc::string::String, aya_obj::maps::Map)>: core::marker::Send, hashbrown::raw::RawTable<(alloc::string::String, aya_obj::Program)>: core::marker::Send, alloc::collections::btree::node::NodeRef<alloc::collections::btree::node::marker::Owned, (usize, u64), aya_obj::Function, alloc::collections::btree::node::marker::LeafOrInternal>: core::marker::Send, alloc::boxed::BoxRaw<((usize, u64), aya_obj::Function)>: core::marker::Send, hashbrown::raw::RawTable<(object::read::SectionIndex, std::collections::hash::map::HashMap<u64, Relocation>)>: core::marker::Send, hashbrown::raw::RawTable<(usize, Symbol)>: core::marker::Send, hashbrown::raw::RawTable<(object::read::SectionIndex, alloc::vec::Vec<usize>)>: core::marker::Send, hashbrown::raw::RawTable<(alloc::string::String, (object::read::SectionIndex, u64))>: core::marker::Send, hashbrown::raw::RawTable<(alloc::string::String, u64)>: core::marker::Send
+impl core::marker::Sync for aya_obj::Object where alloc::boxed::BoxRaw<[u8]>: core::marker::Sync, alloc::raw_vec::RawVecInner: core::marker::Sync, hashbrown::raw::RawTable<(alloc::string::String, ExternDesc)>: core::marker::Sync, hashbrown::raw::RawTable<(alloc::string::String, aya_obj::btf::FuncSecInfo)>: core::marker::Sync, hashbrown::raw::RawTable<(alloc::string::String, aya_obj::btf::LineSecInfo)>: core::marker::Sync, hashbrown::raw::RawTable<(alloc::string::String, aya_obj::maps::Map)>: core::marker::Sync, hashbrown::raw::RawTable<(alloc::string::String, aya_obj::Program)>: core::marker::Sync, alloc::collections::btree::node::NodeRef<alloc::collections::btree::node::marker::Owned, (usize, u64), aya_obj::Function, alloc::collections::btree::node::marker::LeafOrInternal>: core::marker::Sync, alloc::boxed::BoxRaw<((usize, u64), aya_obj::Function)>: core::marker::Sync, hashbrown::raw::RawTable<(object::read::SectionIndex, std::collections::hash::map::HashMap<u64, Relocation>)>: core::marker::Sync, hashbrown::raw::RawTable<(usize, Symbol)>: core::marker::Sync, hashbrown::raw::RawTable<(object::read::SectionIndex, alloc::vec::Vec<usize>)>: core::marker::Sync, hashbrown::raw::RawTable<(alloc::string::String, (object::read::SectionIndex, u64))>: core::marker::Sync, hashbrown::raw::RawTable<(alloc::string::String, u64)>: core::marker::Sync
+impl core::marker::Unpin for aya_obj::Object where alloc::boxed::Box<[u8]>: core::marker::Unpin, https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Unpin, https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Unpin, alloc::boxed::Box<((usize, u64), aya_obj::Function)>: core::marker::Unpin
+impl core::marker::UnsafeUnpin for aya_obj::Object where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::UnsafeUnpin, core::marker::PhantomData<[u8]>: core::marker::UnsafeUnpin, https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::UnsafeUnpin, core::marker::PhantomData<u8>: core::marker::UnsafeUnpin, core::marker::PhantomData<aya_obj::btf::BtfType>: core::marker::UnsafeUnpin, core::marker::PhantomData<(alloc::string::String, ExternDesc)>: core::marker::UnsafeUnpin, core::marker::PhantomData<(u32, alloc::vec::Vec<Relocation>)>: core::marker::UnsafeUnpin, core::marker::PhantomData<(alloc::string::String, aya_obj::btf::FuncSecInfo)>: core::marker::UnsafeUnpin, core::marker::PhantomData<(alloc::string::String, aya_obj::btf::LineSecInfo)>: core::marker::UnsafeUnpin, core::marker::PhantomData<(alloc::string::String, aya_obj::maps::Map)>: core::marker::UnsafeUnpin, core::marker::PhantomData<(alloc::string::String, aya_obj::Program)>: core::marker::UnsafeUnpin, https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::UnsafeUnpin, core::marker::PhantomData<(alloc::collections::btree::node::marker::Owned, alloc::collections::btree::node::marker::LeafOrInternal)>: core::marker::UnsafeUnpin, core::marker::PhantomData<alloc::boxed::Box<((usize, u64), aya_obj::Function)>>: core::marker::UnsafeUnpin, core::marker::PhantomData<(object::read::SectionIndex, std::collections::hash::map::HashMap<u64, Relocation>)>: core::marker::UnsafeUnpin, core::marker::PhantomData<(usize, Symbol)>: core::marker::UnsafeUnpin, core::marker::PhantomData<(object::read::SectionIndex, alloc::vec::Vec<usize>)>: core::marker::UnsafeUnpin, core::marker::PhantomData<(alloc::string::String, (object::read::SectionIndex, u64))>: core::marker::UnsafeUnpin, core::marker::PhantomData<(alloc::string::String, u64)>: core::marker::UnsafeUnpin
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::Object
-impl core::panic::unwind_safe::UnwindSafe for aya_obj::Object
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::Object where alloc::boxed::BoxRaw<[u8]>: core::panic::unwind_safe::UnwindSafe, alloc::raw_vec::RawVecInner: core::panic::unwind_safe::UnwindSafe, std::collections::hash::map::HashMap<alloc::string::String, ExternDesc>: core::panic::unwind_safe::UnwindSafe, std::collections::hash::map::HashMap<alloc::string::String, aya_obj::btf::FuncSecInfo>: core::panic::unwind_safe::UnwindSafe, std::collections::hash::map::HashMap<alloc::string::String, aya_obj::btf::LineSecInfo>: core::panic::unwind_safe::UnwindSafe, std::collections::hash::map::HashMap<alloc::string::String, aya_obj::maps::Map>: core::panic::unwind_safe::UnwindSafe, std::collections::hash::map::HashMap<alloc::string::String, aya_obj::Program>: core::panic::unwind_safe::UnwindSafe, alloc::collections::btree::map::BTreeMap<(usize, u64), aya_obj::Function>: core::panic::unwind_safe::UnwindSafe, std::collections::hash::map::HashMap<object::read::SectionIndex, std::collections::hash::map::HashMap<u64, Relocation>>: core::panic::unwind_safe::UnwindSafe, std::collections::hash::map::HashMap<usize, Symbol>: core::panic::unwind_safe::UnwindSafe, std::collections::hash::map::HashMap<object::read::SectionIndex, alloc::vec::Vec<usize>>: core::panic::unwind_safe::UnwindSafe, std::collections::hash::map::HashMap<alloc::string::String, (object::read::SectionIndex, u64)>: core::panic::unwind_safe::UnwindSafe, std::collections::hash::map::HashMap<alloc::string::String, u64>: core::panic::unwind_safe::UnwindSafe
 pub struct aya_obj::Program
 pub aya_obj::Program::address: u64
 pub aya_obj::Program::kernel_version: core::option::Option<u32>
@@ -6205,14 +6205,14 @@ pub fn aya_obj::Program::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::Program
 pub fn aya_obj::Program::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Forget for aya_obj::Program
-impl core::marker::Freeze for aya_obj::Program
+impl core::marker::Freeze for aya_obj::Program where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Freeze, core::marker::PhantomData<[u8]>: core::marker::Freeze
 impl core::marker::Move for aya_obj::Program
-impl core::marker::Send for aya_obj::Program
-impl core::marker::Sync for aya_obj::Program
-impl core::marker::Unpin for aya_obj::Program
-impl core::marker::UnsafeUnpin for aya_obj::Program
+impl core::marker::Send for aya_obj::Program where alloc::boxed::BoxRaw<[u8]>: core::marker::Send
+impl core::marker::Sync for aya_obj::Program where alloc::boxed::BoxRaw<[u8]>: core::marker::Sync
+impl core::marker::Unpin for aya_obj::Program where alloc::boxed::Box<[u8]>: core::marker::Unpin
+impl core::marker::UnsafeUnpin for aya_obj::Program where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::UnsafeUnpin, core::marker::PhantomData<[u8]>: core::marker::UnsafeUnpin
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::Program
-impl core::panic::unwind_safe::UnwindSafe for aya_obj::Program
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::Program where alloc::boxed::BoxRaw<[u8]>: core::panic::unwind_safe::UnwindSafe
 pub struct aya_obj::VerifierLog(_)
 impl aya_obj::VerifierLog
 pub const fn aya_obj::VerifierLog::new(alloc::string::String) -> Self
@@ -6221,13 +6221,13 @@ pub fn aya_obj::VerifierLog::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::
 impl core::fmt::Display for aya_obj::VerifierLog
 pub fn aya_obj::VerifierLog::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Forget for aya_obj::VerifierLog
-impl core::marker::Freeze for aya_obj::VerifierLog
+impl core::marker::Freeze for aya_obj::VerifierLog where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Freeze, core::marker::PhantomData<u8>: core::marker::Freeze
 impl core::marker::Move for aya_obj::VerifierLog
-impl core::marker::Send for aya_obj::VerifierLog
-impl core::marker::Sync for aya_obj::VerifierLog
-impl core::marker::Unpin for aya_obj::VerifierLog
-impl core::marker::UnsafeUnpin for aya_obj::VerifierLog
+impl core::marker::Send for aya_obj::VerifierLog where alloc::raw_vec::RawVecInner: core::marker::Send
+impl core::marker::Sync for aya_obj::VerifierLog where alloc::raw_vec::RawVecInner: core::marker::Sync
+impl core::marker::Unpin for aya_obj::VerifierLog where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Unpin
+impl core::marker::UnsafeUnpin for aya_obj::VerifierLog where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::UnsafeUnpin, core::marker::PhantomData<u8>: core::marker::UnsafeUnpin
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::VerifierLog
-impl core::panic::unwind_safe::UnwindSafe for aya_obj::VerifierLog
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::VerifierLog where alloc::raw_vec::RawVecInner: core::panic::unwind_safe::UnwindSafe
 pub fn aya_obj::copy_instructions(&[u8]) -> core::result::Result<alloc::vec::Vec<aya_obj::generated::bpf_insn>, aya_obj::ParseError>
 pub const fn aya_obj::parse_map_info(aya_obj::generated::bpf_map_info, aya_obj::maps::PinningType) -> aya_obj::maps::Map

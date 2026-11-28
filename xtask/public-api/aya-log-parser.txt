@@ -11,14 +11,14 @@ impl core::fmt::Debug for aya_log_parser::Fragment
 pub fn aya_log_parser::Fragment::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::StructuralPartialEq for aya_log_parser::Fragment
 impl core::marker::Forget for aya_log_parser::Fragment
-impl core::marker::Freeze for aya_log_parser::Fragment
+impl core::marker::Freeze for aya_log_parser::Fragment where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Freeze, core::marker::PhantomData<u8>: core::marker::Freeze
 impl core::marker::Move for aya_log_parser::Fragment
-impl core::marker::Send for aya_log_parser::Fragment
-impl core::marker::Sync for aya_log_parser::Fragment
-impl core::marker::Unpin for aya_log_parser::Fragment
-impl core::marker::UnsafeUnpin for aya_log_parser::Fragment
+impl core::marker::Send for aya_log_parser::Fragment where alloc::raw_vec::RawVecInner: core::marker::Send
+impl core::marker::Sync for aya_log_parser::Fragment where alloc::raw_vec::RawVecInner: core::marker::Sync
+impl core::marker::Unpin for aya_log_parser::Fragment where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::Unpin
+impl core::marker::UnsafeUnpin for aya_log_parser::Fragment where https://github.com/rust-lang/rust/issues/123646 is unstable and not supported: core::marker::UnsafeUnpin, core::marker::PhantomData<u8>: core::marker::UnsafeUnpin
 impl core::panic::unwind_safe::RefUnwindSafe for aya_log_parser::Fragment
-impl core::panic::unwind_safe::UnwindSafe for aya_log_parser::Fragment
+impl core::panic::unwind_safe::UnwindSafe for aya_log_parser::Fragment where alloc::raw_vec::RawVecInner: core::panic::unwind_safe::UnwindSafe
 pub struct aya_log_parser::Parameter
 pub aya_log_parser::Parameter::hint: aya_log_common::DisplayHint
 impl core::clone::Clone for aya_log_parser::Parameter

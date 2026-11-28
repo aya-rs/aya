@@ -6,14 +6,14 @@ pub aya_build::Toolchain::Nightly
 impl<'a> core::default::Default for aya_build::Toolchain<'a>
 pub fn aya_build::Toolchain<'a>::default() -> Self
 impl<'a> core::marker::Forget for aya_build::Toolchain<'a>
-impl<'a> core::marker::Freeze for aya_build::Toolchain<'a>
+impl<'a> core::marker::Freeze for aya_build::Toolchain<'a> where &'a str: core::marker::Freeze
 impl<'a> core::marker::Move for aya_build::Toolchain<'a>
-impl<'a> core::marker::Send for aya_build::Toolchain<'a>
+impl<'a> core::marker::Send for aya_build::Toolchain<'a> where &'a str: core::marker::Send
 impl<'a> core::marker::Sync for aya_build::Toolchain<'a>
-impl<'a> core::marker::Unpin for aya_build::Toolchain<'a>
-impl<'a> core::marker::UnsafeUnpin for aya_build::Toolchain<'a>
+impl<'a> core::marker::Unpin for aya_build::Toolchain<'a> where &'a str: core::marker::Unpin
+impl<'a> core::marker::UnsafeUnpin for aya_build::Toolchain<'a> where &'a str: core::marker::UnsafeUnpin
 impl<'a> core::panic::unwind_safe::RefUnwindSafe for aya_build::Toolchain<'a>
-impl<'a> core::panic::unwind_safe::UnwindSafe for aya_build::Toolchain<'a>
+impl<'a> core::panic::unwind_safe::UnwindSafe for aya_build::Toolchain<'a> where &'a str: core::panic::unwind_safe::UnwindSafe
 pub struct aya_build::Package<'a>
 pub aya_build::Package::features: &'a [&'a str]
 pub aya_build::Package::name: &'a str
@@ -22,13 +22,13 @@ pub aya_build::Package::root_dir: &'a str
 impl<'a> core::default::Default for aya_build::Package<'a>
 pub fn aya_build::Package<'a>::default() -> Self
 impl<'a> core::marker::Forget for aya_build::Package<'a>
-impl<'a> core::marker::Freeze for aya_build::Package<'a>
+impl<'a> core::marker::Freeze for aya_build::Package<'a> where &'a str: core::marker::Freeze, &'a [&'a str]: core::marker::Freeze
 impl<'a> core::marker::Move for aya_build::Package<'a>
-impl<'a> core::marker::Send for aya_build::Package<'a>
+impl<'a> core::marker::Send for aya_build::Package<'a> where &'a str: core::marker::Send, &'a [&'a str]: core::marker::Send
 impl<'a> core::marker::Sync for aya_build::Package<'a>
-impl<'a> core::marker::Unpin for aya_build::Package<'a>
-impl<'a> core::marker::UnsafeUnpin for aya_build::Package<'a>
+impl<'a> core::marker::Unpin for aya_build::Package<'a> where &'a str: core::marker::Unpin, &'a [&'a str]: core::marker::Unpin
+impl<'a> core::marker::UnsafeUnpin for aya_build::Package<'a> where &'a str: core::marker::UnsafeUnpin, &'a [&'a str]: core::marker::UnsafeUnpin
 impl<'a> core::panic::unwind_safe::RefUnwindSafe for aya_build::Package<'a>
-impl<'a> core::panic::unwind_safe::UnwindSafe for aya_build::Package<'a>
+impl<'a> core::panic::unwind_safe::UnwindSafe for aya_build::Package<'a> where &'a str: core::panic::unwind_safe::UnwindSafe, &'a [&'a str]: core::panic::unwind_safe::UnwindSafe
 pub fn aya_build::build_ebpf<'a>(impl core::iter::traits::collect::IntoIterator<Item = aya_build::Package<'a>>, aya_build::Toolchain<'a>) -> anyhow::Result<()>
 pub fn aya_build::emit_bpf_target_arch_cfg() -> anyhow::Result<()>
