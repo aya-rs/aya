@@ -53,6 +53,7 @@ bpf_file!(
     FUNC_INFO_MISSING_CALLEE => "func_info_missing_callee.bpf.o",
     FUNC_INFO_MISSING_PROGRAM => "func_info_missing_program.bpf.o",
     FUNC_INFO_ABSENT => "func_info_absent.bpf.o",
+    GLOBAL_SPIN_LOCK => "global_spin_lock.bpf.o",
 
     ARRAY => "array",
     BLOOM_FILTER => "bloom-filter",

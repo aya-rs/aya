@@ -5245,6 +5245,7 @@ impl core::marker::UnsafeUnpin for aya_obj::maps::BtfMapDef
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::maps::BtfMapDef
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::maps::BtfMapDef
 pub struct aya_obj::maps::LegacyMap
+pub aya_obj::maps::LegacyMap::btf_value_type_id: core::option::Option<u32>
 pub aya_obj::maps::LegacyMap::data: alloc::vec::Vec<u8>
 pub aya_obj::maps::LegacyMap::def: aya_obj::maps::bpf_map_def
 pub aya_obj::maps::LegacyMap::inner_def: core::option::Option<aya_obj::maps::bpf_map_def>
