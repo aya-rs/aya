@@ -1,6 +1,6 @@
 //! Extension programs.
 
-use std::os::fd::{AsFd as _, BorrowedFd};
+use std::os::fd::{AsFd, BorrowedFd};
 
 use aya_obj::{
     btf::BtfKind,
@@ -76,9 +76,13 @@ impl Extension {
     /// The extension code will be loaded but inactive until it's attached.
     /// There are no restrictions on what functions may be replaced, so you could replace
     /// the main entry point of your program with an extension.
+    ///
+    /// If the extension was loaded with a [BPF token](crate::token::BpfToken), the BTF of
+    /// `program` is looked up through the token as well, which requires Linux 6.15.
     pub fn load(&mut self, program: ProgramFd, func_name: &str) -> Result<(), ProgramError> {
         let Self { data } = self;
-        let (btf_fd, btf_id) = get_btf_info(program.as_fd(), func_name)?;
+        let token_fd = data.token.as_ref().map(AsFd::as_fd);
+        let (btf_fd, btf_id) = get_btf_info(program.as_fd(), func_name, token_fd)?;
 
         data.attach_btf_obj_fd = Some(btf_fd);
         data.attach_prog_fd = Some(program);
@@ -137,7 +141,8 @@ impl Extension {
         func_name: &str,
     ) -> Result<ExtensionLinkId, ProgramError> {
         let target_fd = program.as_fd();
-        let (_, btf_id) = get_btf_info(target_fd, func_name)?;
+        let token_fd = self.data.token.as_ref().map(AsFd::as_fd);
+        let (_, btf_id) = get_btf_info(target_fd, func_name, token_fd)?;
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
         // the attach type must be set as 0, which is bpf_attach_type::BPF_CGROUP_INET_INGRESS
@@ -160,9 +165,13 @@ impl Extension {
 
 /// Retrieves the FD of the BTF object for the provided `prog_fd` and the BTF ID of the function
 /// with the name `func_name` within that BTF object.
+/// Returns the BTF of the program `prog_fd` and the BTF ID of its function `func_name`.
+///
+/// The BTF is looked up through `token_fd` if any, which requires Linux 6.15.
 fn get_btf_info(
     prog_fd: BorrowedFd<'_>,
     func_name: &str,
+    token_fd: Option<BorrowedFd<'_>>,
 ) -> Result<(crate::MockableFd, u32), ProgramError> {
     // retrieve program information
     let info = sys::bpf_prog_get_info_by_fd(prog_fd, &mut [])?;
@@ -173,7 +182,7 @@ fn get_btf_info(
     }
 
     // the bpf fd of the BTF object
-    let btf_fd = sys::bpf_btf_get_fd_by_id(info.btf_id)?;
+    let btf_fd = sys::bpf_btf_get_fd_by_id(info.btf_id, token_fd)?;
 
     // we need to read the btf bytes into a buffer but we don't know the size ahead of time.
     // assume 4kb. if this is too small we can resize based on the size obtained in the response.

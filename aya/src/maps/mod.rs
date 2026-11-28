@@ -875,7 +875,7 @@ impl MapData {
         name: &str,
         btf_fd: Option<BorrowedFd<'_>>,
     ) -> Result<Self, MapError> {
-        Self::create_with_inner_map_fd(obj, name, btf_fd, None)
+        Self::create_with_inner_map_fd(obj, name, btf_fd, None, None)
     }
 
     /// Creates a new map with the provided `name` and optional `inner_map_fd` for map-of-maps types.
@@ -884,6 +884,7 @@ impl MapData {
         name: &str,
         btf_fd: Option<BorrowedFd<'_>>,
         inner_map_fd: Option<BorrowedFd<'_>>,
+        token_fd: Option<BorrowedFd<'_>>,
     ) -> Result<Self, MapError> {
         let c_name = CString::new(name)
             .map_err(|std::ffi::NulError { .. }| MapError::InvalidName { name: name.into() })?;
@@ -900,12 +901,13 @@ impl MapData {
             obj.set_max_entries(nr_cpus.get());
         }
 
-        let fd = bpf_create_map(&c_name, &obj, btf_fd, inner_map_fd).map_err(|io_error| {
-            MapError::CreateError {
-                name: name.into(),
-                io_error,
-            }
-        })?;
+        let fd =
+            bpf_create_map(&c_name, &obj, btf_fd, inner_map_fd, token_fd).map_err(|io_error| {
+                MapError::CreateError {
+                    name: name.into(),
+                    io_error,
+                }
+            })?;
         Ok(Self {
             obj,
             fd: MapFd::from_fd(fd),
@@ -914,10 +916,11 @@ impl MapData {
 
     pub(crate) fn create_pinned_by_name<P: AsRef<Path>>(
         path: P,
-        obj: aya_obj::Map,
+        mut obj: aya_obj::Map,
         name: &str,
         btf_fd: Option<BorrowedFd<'_>>,
         inner_map_obj: Option<aya_obj::Map>,
+        token_fd: Option<BorrowedFd<'_>>,
     ) -> Result<Self, MapError> {
         use std::os::unix::ffi::OsStrExt as _;
 
@@ -953,10 +956,19 @@ impl MapData {
                     // the kernel round it without requiring access to CPU sysfs.
                     max_entries = lru_max_entries(max_entries, info.max_entries, nr_cpus)?;
                 }
+                // The loader sizes the values of CPU and device maps from probed kernel
+                // features, which don't tell how a map created elsewhere is laid out, e.g.
+                // when probing through a BPF token that doesn't delegate the map type. The
+                // map types derive program support from the value size, so reuse the
+                // pinned map's.
+                bpf_map_type::BPF_MAP_TYPE_CPUMAP => {
+                    obj.set_value_size(info.value_size);
+                }
                 bpf_map_type::BPF_MAP_TYPE_DEVMAP | bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH => {
                     // Newer kernels add this flag when creating a device map.
                     // https://github.com/torvalds/linux/blob/e8f897f4a/kernel/bpf/devmap.c#L127
                     map_flags |= info.map_flags & BPF_F_RDONLY_PROG;
+                    obj.set_value_size(info.value_size);
                 }
                 _ => {}
             }
@@ -991,12 +1003,18 @@ impl MapData {
         } else {
             let inner_map;
             let inner_map_fd = if let Some(inner) = inner_map_obj {
-                inner_map = Self::create(inner, &format!("{name}.inner"), btf_fd)?;
+                inner_map = Self::create_with_inner_map_fd(
+                    inner,
+                    &format!("{name}.inner"),
+                    btf_fd,
+                    None,
+                    token_fd,
+                )?;
                 Some(inner_map.fd().as_fd())
             } else {
                 None
             };
-            let map = Self::create_with_inner_map_fd(obj, name, btf_fd, inner_map_fd)?;
+            let map = Self::create_with_inner_map_fd(obj, name, btf_fd, inner_map_fd, token_fd)?;
             map.pin(path).map_err(|error| MapError::PinError {
                 name: Some(name.into()),
                 error,
@@ -1490,13 +1508,29 @@ mod tests {
         });
         let mut obj = aya_obj::Map::new_from_params(map_type as u32, 4, 4, 1024, flags);
         obj.data_mut().extend_from_slice(&DATA);
-        let map = MapData::create_pinned_by_name("/pin/foo", obj, "foo", None, None).unwrap();
+        let map = MapData::create_pinned_by_name("/pin/foo", obj, "foo", None, None, None).unwrap();
         assert_eq!(
             map.fd().as_fd().as_raw_fd(),
             crate::MockableFd::mock_signed_fd()
         );
         assert_eq!(map.obj.data(), &DATA);
         assert_eq!(map.obj.map_flags(), flags);
+    }
+
+    #[rstest]
+    #[case::cpumap(bpf_map_type::BPF_MAP_TYPE_CPUMAP)]
+    #[case::devmap(bpf_map_type::BPF_MAP_TYPE_DEVMAP)]
+    #[case::devmap_hash(bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH)]
+    fn test_reuse_pinned_map_value_size(#[case] map_type: bpf_map_type) {
+        // The object was sized without program ids, but the pinned map has them.
+        mock_pinned_map(bpf_map_info {
+            type_: map_type as u32,
+            value_size: 8,
+            ..pinned_map_info()
+        });
+        let obj = aya_obj::Map::new_from_params(map_type as u32, 4, 4, 1024, 0);
+        let map = MapData::create_pinned_by_name("/pin/foo", obj, "foo", None, None, None).unwrap();
+        assert_eq!(map.obj.value_size(), 8);
     }
 
     #[rstest]
@@ -1522,7 +1556,7 @@ mod tests {
     ) {
         mock_pinned_map(info);
         assert_matches!(
-            MapData::create_pinned_by_name("/pin/foo", obj, "foo", None, None),
+            MapData::create_pinned_by_name("/pin/foo", obj, "foo", None, None, None),
             Err(MapError::IncompatiblePinnedMap {
                 name,
                 property: got_property,
@@ -1551,7 +1585,7 @@ mod tests {
             call => panic!("unexpected syscall {call:?}"),
         });
         assert_matches!(
-            MapData::create_pinned_by_name("/pin/foo", new_obj_map(), "foo", None, None),
+            MapData::create_pinned_by_name("/pin/foo", new_obj_map(), "foo", None, None, None),
             Err(MapError::SyscallError(SyscallError { call, io_error })) => {
                 assert_eq!(call, "bpf_obj_get_info_by_fd");
                 assert_eq!(io_error.raw_os_error(), Some(EFAULT));
@@ -1617,7 +1651,7 @@ mod tests {
             ..pinned_map_info()
         });
         let obj = aya_obj::Map::new_from_params(map_type as u32, 4, 4, requested, flags);
-        let result = MapData::create_pinned_by_name("/pin/foo", obj, "foo", None, None);
+        let result = MapData::create_pinned_by_name("/pin/foo", obj, "foo", None, None, None);
         if incompatible {
             assert_matches!(
                 result,
@@ -1673,7 +1707,7 @@ mod tests {
             5,
             BPF_F_NO_COMMON_LRU,
         );
-        let map = MapData::create_pinned_by_name("/pin/foo", obj, "foo", None, None).unwrap();
+        let map = MapData::create_pinned_by_name("/pin/foo", obj, "foo", None, None, None).unwrap();
         assert_eq!(map.obj.max_entries(), 5);
     }
 

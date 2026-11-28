@@ -10,8 +10,9 @@ use aya_obj::generated::bpf_devmap_val;
 
 use super::{XdpMapError, dev_map::DevMapValue};
 use crate::{
-    kernel_features::{FEATURES, Feature},
-    maps::{IterableMap, MapData, MapError, MapIter, MapKeys, check_kv_size, hash_map},
+    maps::{
+        IterableMap, MapData, MapError, MapIter, MapKeys, check_kv_size, hash_map, xdp::has_prog_id,
+    },
     programs::ProgramFd,
     sys::{SyscallError, bpf_map_lookup_elem},
 };
@@ -49,7 +50,7 @@ impl<T: Borrow<MapData>> DevMapHash<T> {
     pub(crate) fn new(map: T) -> Result<Self, MapError> {
         let data = map.borrow();
 
-        if FEATURES.is_supported(Feature::DevMapProgId) {
+        if has_prog_id::<bpf_devmap_val>(data) {
             check_kv_size::<u32, bpf_devmap_val>(data)?;
         } else {
             check_kv_size::<u32, u32>(data)?;
@@ -66,7 +67,7 @@ impl<T: Borrow<MapData>> DevMapHash<T> {
     pub fn get(&self, key: u32, flags: u64) -> Result<DevMapValue, MapError> {
         let fd = self.inner.borrow().fd().as_fd();
 
-        let value = if FEATURES.is_supported(Feature::DevMapProgId) {
+        let value = if has_prog_id::<bpf_devmap_val>(self.inner.borrow()) {
             bpf_map_lookup_elem::<_, bpf_devmap_val>(fd, &key, flags).map(|value| {
                 value.map(|value| DevMapValue {
                     if_index: value.ifindex,
@@ -136,7 +137,7 @@ impl<T: BorrowMut<MapData>> DevMapHash<T> {
         program: Option<&ProgramFd>,
         flags: u64,
     ) -> Result<(), XdpMapError> {
-        if FEATURES.is_supported(Feature::DevMapProgId) {
+        if has_prog_id::<bpf_devmap_val>(self.inner.borrow()) {
             let mut value = unsafe { std::mem::zeroed::<bpf_devmap_val>() };
             value.ifindex = target_if_index;
             // Default is valid as the kernel will only consider fd > 0:
