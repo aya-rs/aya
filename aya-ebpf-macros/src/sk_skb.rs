@@ -48,10 +48,15 @@ impl SkSkb {
         } = item;
         let section_name: Cow<'_, _> = format!("sk_skb/{kind}").into();
         let fn_name = &sig.ident;
+        let return_type = match kind {
+            SkSkbKind::StreamVerdict => quote! { u32 },
+            SkSkbKind::StreamParser => quote! { i32 },
+        };
+
         quote! {
             #[unsafe(no_mangle)]
             #[unsafe(link_section = #section_name)]
-            #vis fn #fn_name(ctx: *mut ::aya_ebpf::bindings::__sk_buff) -> u32 {
+            #vis fn #fn_name(ctx: *mut ::aya_ebpf::bindings::__sk_buff) -> #return_type {
                 // SAFETY: The `ctx` pointer provided by the kernel should be valid.
                 let ctx = unsafe { ::core::ptr::NonNull::new_unchecked(ctx) };
                 return #fn_name(::aya_ebpf::programs::SkBuffContext::new(ctx));
@@ -74,7 +79,7 @@ mod tests {
             SkSkbKind::StreamParser,
             parse_quote! {},
             parse_quote! {
-                fn prog(ctx: &mut ::aya_ebpf::programs::SkBuffContext) -> u32 {
+                fn prog(ctx: &mut ::aya_ebpf::programs::SkBuffContext) -> i32 {
                     0
                 }
             },
@@ -84,12 +89,12 @@ mod tests {
         let expected = quote! {
             #[unsafe(no_mangle)]
             #[unsafe(link_section = "sk_skb/stream_parser")]
-            fn prog(ctx: *mut ::aya_ebpf::bindings::__sk_buff) -> u32 {
+            fn prog(ctx: *mut ::aya_ebpf::bindings::__sk_buff) -> i32 {
                 // SAFETY: The `ctx` pointer provided by the kernel should be valid.
                 let ctx = unsafe { ::core::ptr::NonNull::new_unchecked(ctx) };
                 return prog(::aya_ebpf::programs::SkBuffContext::new(ctx));
 
-                fn prog(ctx: &mut ::aya_ebpf::programs::SkBuffContext) -> u32 {
+                fn prog(ctx: &mut ::aya_ebpf::programs::SkBuffContext) -> i32 {
                     0
                 }
             }
