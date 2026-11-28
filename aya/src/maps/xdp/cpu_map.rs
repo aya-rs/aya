@@ -11,7 +11,6 @@ use aya_obj::generated::bpf_cpumap_val;
 use super::XdpMapError;
 use crate::{
     Pod,
-    kernel_features::{FEATURES, Feature},
     maps::{IterableMap, MapData, MapError, check_bounds, check_kv_size},
     programs::ProgramFd,
     sys::{SyscallError, bpf_map_lookup_elem, bpf_map_update_elem},
@@ -59,10 +58,15 @@ impl<T: Borrow<MapData>> CpuMap<T> {
     pub(crate) fn new(map: T) -> Result<Self, MapError> {
         let data = map.borrow();
 
-        if FEATURES.is_supported(Feature::CpuMapProgId) {
-            check_kv_size::<u32, bpf_cpumap_val>(data)?;
-        } else {
-            check_kv_size::<u32, u32>(data)?;
+        match data.obj.value_size() {
+            4 => check_kv_size::<u32, u32>(data)?,
+            8 => check_kv_size::<u32, bpf_cpumap_val>(data)?,
+            size => {
+                return Err(MapError::InvalidValueSize {
+                    size: size as usize,
+                    expected: 4,
+                });
+            }
         }
 
         Ok(Self { inner: map })
@@ -86,7 +90,7 @@ impl<T: Borrow<MapData>> CpuMap<T> {
         check_bounds(data, cpu_index)?;
         let fd = data.fd().as_fd();
 
-        let value = if FEATURES.is_supported(Feature::CpuMapProgId) {
+        let value = if data.obj.value_size() == 8 {
             bpf_map_lookup_elem::<_, bpf_cpumap_val>(fd, &cpu_index, flags).map(|value| {
                 value.map(|value| CpuMapValue {
                     queue_size: value.qsize,
@@ -134,9 +138,11 @@ impl<T: BorrowMut<MapData>> CpuMap<T> {
     ///
     /// # Errors
     ///
-    /// Returns [`MapError::OutOfBounds`] if `index` is out of bounds, [`MapError::SyscallError`]
-    /// if `bpf_map_update_elem` fails, [`XdpMapError::ChainedProgramNotSupported`] if the kernel
-    /// does not support chained programs and one is provided.
+    /// Returns [`MapError::OutOfBounds`] if `index` is out of bounds,
+    /// [`MapError::SyscallError`] if `bpf_map_update_elem` fails,
+    /// [`XdpMapError::ChainedProgramNotSupported`] if a program is provided
+    /// but the map uses a 4-byte value layout (no program-fd slot) or the
+    /// kernel does not support chained programs for this map type.
     pub fn set(
         &mut self,
         cpu_index: u32,
@@ -148,7 +154,7 @@ impl<T: BorrowMut<MapData>> CpuMap<T> {
         check_bounds(data, cpu_index)?;
         let fd = data.fd().as_fd();
 
-        let res = if FEATURES.is_supported(Feature::CpuMapProgId) {
+        let res = if data.obj.value_size() == 8 {
             let mut value = unsafe { std::mem::zeroed::<bpf_cpumap_val>() };
             value.qsize = queue_size;
             // Default is valid as the kernel will only consider fd > 0:
